@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Filter } from "lucide-react"
+import { Download, Filter, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import { AppointmentsTable } from "@/components/admin/appointments-table"
@@ -8,7 +8,7 @@ import { listAllDoctors, listAppointments } from "@/lib/admin/queries"
 import type { AppointmentStatus } from "@/lib/supabase/types"
 import { appointmentStatuses } from "@/lib/validations/admin"
 
-type Props = { searchParams: Promise<{ date?: string; doctor?: string; status?: string }> }
+type Props = { searchParams: Promise<{ date?: string; doctor?: string; status?: string; q?: string }> }
 
 const control =
   "h-10 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -20,14 +20,46 @@ export default async function AdminAppointmentsPage({ searchParams }: Props) {
     ? (params.status as AppointmentStatus)
     : undefined
   const doctorId = params.doctor || undefined
+  const search = params.q?.trim() || undefined
 
-  const [appointments, doctors] = await Promise.all([listAppointments({ date, doctorId, status }), listAllDoctors()])
+  const [appointments, doctors] = await Promise.all([listAppointments({ date, doctorId, status, search }), listAllDoctors()])
+
+  const exportParams = new URLSearchParams()
+  if (date) exportParams.set("date", date)
+  if (doctorId) exportParams.set("doctor", doctorId)
+  if (status) exportParams.set("status", status)
+  if (search) exportParams.set("q", search)
 
   return (
     <>
-      <AdminPageHeader title="Appointments" description={`${appointments.length} appointments match your filters.`} />
+      <AdminPageHeader
+        title="Appointments"
+        description={`${appointments.length} appointments match your filters.`}
+        actions={
+          <Link
+            href={`/admin/appointments/export?${exportParams}`}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-medium transition-colors hover:border-primary/40"
+          >
+            <Download className="size-4" />
+            Export CSV
+          </Link>
+        }
+      />
 
       <form className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <label className="flex min-w-56 flex-1 flex-col gap-1 text-xs font-medium text-muted-foreground">
+          Search patient
+          <span className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+            <input
+              type="search"
+              name="q"
+              defaultValue={search}
+              placeholder="Name, phone or reference"
+              className={`${control} w-full pl-9`}
+            />
+          </span>
+        </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           Date
           <input type="date" name="date" defaultValue={date} className={control} />
