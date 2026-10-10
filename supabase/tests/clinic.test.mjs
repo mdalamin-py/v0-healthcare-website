@@ -402,6 +402,18 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   await q(`delete from appointments where reference = 'DHC-5E7C1CE0'`)
 }
 
+// Public stats are live counts, readable without signing in
+{
+  await db.exec(`reset role; set request.jwt.claim.sub = ''; set role anon`)
+  const stats = (await q(`select * from get_public_stats()`))[0]
+  const view = await q(`select doctor_name, doctor_specialty from published_reviews limit 1`)
+  await db.exec(`reset role`)
+  const expected = (await q(`select count(*)::int c from doctors where is_active and kind = 'consultant'`))[0].c
+  check("public stats count active consultants", stats.doctors === expected, `${stats.doctors}/${expected}`)
+  check("public stats count available ambulances", stats.ambulances_ready === 3, `${stats.ambulances_ready}`)
+  check("published reviews include the doctor", view.length === 0 || Boolean(view[0].doctor_name))
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

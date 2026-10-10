@@ -8,17 +8,19 @@ import { ReviewCard } from "@/components/review-card"
 import { SectionHeading } from "@/components/section-heading"
 import { StatsStrip } from "@/components/stats-strip"
 import { currentShift } from "@/components/schedule/on-call-now"
-import { getOnCallShifts } from "@/lib/clinic/queries"
-import { reviews, services, trustBadges, whyChooseUs } from "@/lib/content"
+import { getOnCallShifts, getPublishedReviews } from "@/lib/clinic/queries"
+import { toReview } from "@/lib/clinic/reviews"
+import { services, trustBadges, whyChooseUs } from "@/lib/content"
 import { site } from "@/lib/site"
 
 const featuredServices = services.slice(0, 5)
-const featuredReviews = reviews.slice(0, 3)
 
 export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
-  const onCall = currentShift(await getOnCallShifts({ days: 1 }))
+  const [shifts, reviews] = await Promise.all([getOnCallShifts({ days: 1 }), getPublishedReviews(12)])
+  const onCall = currentShift(shifts)
+  const featuredReviews = reviews.filter((review) => review.comment).slice(0, 3).map(toReview)
 
   return (
     <>
@@ -217,29 +219,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 lg:py-24">
-        <div className="container-page">
-          <SectionHeading
-            eyebrow="Testimonials"
-            title="What families say about us"
-            description="Our patients and their families trust us to provide compassionate, professional care."
-          />
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {featuredReviews.map((review) => (
-              <ReviewCard key={review.name} review={review} />
-            ))}
+      {/* Testimonials: verified patient reviews */}
+      {featuredReviews.length > 0 && (
+        <section className="py-16 lg:py-24">
+          <div className="container-page">
+            <SectionHeading
+              eyebrow="Testimonials"
+              title="What families say about us"
+              description="Verified reviews from patients after a completed visit with our doctors."
+            />
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {featuredReviews.map((review, index) => (
+                <ReviewCard key={`${review.name}-${index}`} review={review} />
+              ))}
+            </div>
+            <div className="mt-10 text-center">
+              <Button variant="outline" asChild className="rounded-full">
+                <Link href="/reviews">
+                  Read all reviews
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
-          <div className="mt-10 text-center">
-            <Button variant="outline" asChild className="rounded-full">
-              <Link href="/reviews">
-                Read all reviews
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <FaqSection />
 

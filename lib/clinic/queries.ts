@@ -7,6 +7,7 @@ import type {
   DutyType,
   DoctorLeave,
   DoctorRating,
+  PublicStats,
   PublishedReview,
   DoctorWithSchedules,
   NearbyFacility,
@@ -194,4 +195,28 @@ export async function getOtBoard(): Promise<{ theatres: OperationTheatre[]; case
     return { theatres: [], cases: [] }
   }
   return { theatres: theatres.data, cases: cases.data }
+}
+
+export async function getPublishedReviews(limit = 60): Promise<PublishedReview[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient()
+    .from("published_reviews")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  if (error) {
+    logError("published reviews", error)
+    return []
+  }
+  return data
+}
+
+export async function getPublicStats(): Promise<PublicStats | null> {
+  if (!isSupabaseConfigured()) return null
+  const { data, error } = await createPublicClient().rpc("get_public_stats")
+  if (error) {
+    logError("public stats", error)
+    return null
+  }
+  return data[0] ?? null
 }

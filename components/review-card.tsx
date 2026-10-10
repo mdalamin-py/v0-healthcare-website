@@ -18,7 +18,9 @@ export function ReviewCard({ review }: { review: Review }) {
         </span>
         <span className="flex-1">
           <span className="block font-semibold text-foreground">{review.name}</span>
-          <span className="block text-xs text-muted-foreground">{review.date}</span>
+          <span className="block text-xs text-muted-foreground">
+            {review.doctor ? `${review.doctor} · ${review.date}` : review.date}
+          </span>
         </span>
         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{review.service}</span>
       </figcaption>

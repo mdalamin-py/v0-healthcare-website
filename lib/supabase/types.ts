@@ -396,11 +396,24 @@ export type Database = {
           rating: number
           comment: string | null
           created_at: string
+          doctor_name: string
+          doctor_specialty: string
         }
         Relationships: []
       }
     }
     Functions: {
+      get_public_stats: {
+        Args: Record<never, never>
+        Returns: {
+          doctors: number
+          specialties: number
+          rating: number | null
+          reviews: number
+          completed_visits: number
+          ambulances_ready: number
+        }[]
+      }
       is_admin: { Args: Record<never, never>; Returns: boolean }
       clinic_today: { Args: Record<never, never>; Returns: string }
       get_availability: {
@@ -521,7 +534,8 @@ export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]
 export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
-export type PublishedReview = Pick<DoctorReview, "id" | "doctor_id" | "author_name" | "rating" | "comment" | "created_at">
+export type PublishedReview = Database["public"]["Views"]["published_reviews"]["Row"]
+export type PublicStats = Database["public"]["Functions"]["get_public_stats"]["Returns"][number]
 export type DoctorRating = { average: number; total: number }
 export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
 export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row"]

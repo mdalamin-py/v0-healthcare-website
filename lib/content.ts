@@ -178,13 +178,6 @@ export const trustBadges = [
   { icon: Clock, label: "24/7 On-Call" },
 ] as const
 
-export const stats = [
-  { value: site.rating.value, label: "Google Rating" },
-  { value: site.rating.count, label: "Google Reviews" },
-  { value: "5+", label: "Years Serving Fresno" },
-  { value: "24/7", label: "On-Call Support" },
-] as const
-
 export const careSteps = [
   {
     title: "Contact Us",
@@ -263,91 +256,5 @@ export type Review = {
   rating: number
   text: string
   service: string
+  doctor?: string
 }
-
-export const reviews: Review[] = [
-  {
-    name: "Maria G.",
-    date: "2 months ago",
-    rating: 5,
-    text: "Dignity Home Health Care has been a blessing for our family. The nurses are incredibly compassionate and professional. My mother looks forward to their visits every day. They treat her with such respect and genuine care. I cannot recommend them enough to anyone looking for quality home health care in Fresno.",
-    service: "Skilled Nursing",
-  },
-  {
-    name: "Robert T.",
-    date: "3 months ago",
-    rating: 5,
-    text: "After my hip replacement surgery, the physical therapist from Dignity helped me regain my mobility. Their patience and expertise made all the difference in my recovery. Within weeks, I was walking again with confidence. The team was always on time and very professional.",
-    service: "Physical Therapy",
-  },
-  {
-    name: "Susan L.",
-    date: "1 month ago",
-    rating: 5,
-    text: "The caregivers treat my father with such dignity and respect. They truly live up to their name. I can finally have peace of mind knowing he is in good hands. The staff is well-trained, kind, and always goes above and beyond. Thank you for giving our family such excellent care.",
-    service: "Personal Care",
-  },
-  {
-    name: "James M.",
-    date: "4 months ago",
-    rating: 5,
-    text: "Outstanding service from start to finish. The intake process was smooth, and they matched us with a wonderful caregiver who has become like family. My wife receives excellent care, and I appreciate how they keep me informed about her progress. Five stars all around!",
-    service: "Companion Care",
-  },
-  {
-    name: "Patricia H.",
-    date: "2 weeks ago",
-    rating: 5,
-    text: "I was hesitant about home health care at first, but Dignity has exceeded all my expectations. The nursing staff is top-notch, and they coordinate perfectly with my doctors. Having professional care at home has made managing my diabetes so much easier.",
-    service: "Skilled Nursing",
-  },
-  {
-    name: "Michael R.",
-    date: "1 month ago",
-    rating: 5,
-    text: "My mother had a stroke and needed speech therapy. The speech therapist from Dignity was patient, encouraging, and skilled. Mom has made remarkable progress in her communication abilities. We are so grateful for their dedication and expertise.",
-    service: "Speech Therapy",
-  },
-  {
-    name: "Jennifer K.",
-    date: "3 weeks ago",
-    rating: 5,
-    text: "The occupational therapist helped my dad learn to dress himself again after his stroke. Small victories like this mean the world to us. The entire team at Dignity is compassionate and truly cares about their patients' quality of life.",
-    service: "Occupational Therapy",
-  },
-  {
-    name: "David S.",
-    date: "2 months ago",
-    rating: 4,
-    text: "Very professional and caring staff. They helped my grandmother with her daily activities while I was at work. The only reason I am giving 4 stars instead of 5 is because scheduling was a bit challenging at first, but once we got into a routine, everything was perfect.",
-    service: "Personal Care",
-  },
-  {
-    name: "Linda W.",
-    date: "5 months ago",
-    rating: 5,
-    text: "Dignity Home Health Care provided excellent care for my husband during his cancer treatment. The nurses were knowledgeable, compassionate, and always available when we had questions. They made a difficult time much more manageable for our entire family.",
-    service: "Skilled Nursing",
-  },
-  {
-    name: "Thomas B.",
-    date: "1 month ago",
-    rating: 5,
-    text: "I am so impressed with the level of care my mother receives. The caregivers are not just employees — they genuinely care about her wellbeing. They remember her preferences, engage her in conversation, and treat her like family. Cannot thank them enough!",
-    service: "Companion Care",
-  },
-  {
-    name: "Angela C.",
-    date: "6 weeks ago",
-    rating: 5,
-    text: "The physical therapy team helped me recover from knee surgery faster than I expected. They were motivating, professional, and always on time. My surgeon was impressed with my progress. Highly recommend their rehabilitation services!",
-    service: "Physical Therapy",
-  },
-  {
-    name: "Richard N.",
-    date: "4 weeks ago",
-    rating: 5,
-    text: "From the first phone call, I knew Dignity was different. They took the time to understand our needs and matched us with the perfect caregiver. My dad is happier and healthier thanks to their excellent care. They truly embody their name.",
-    service: "Personal Care",
-  },
-]

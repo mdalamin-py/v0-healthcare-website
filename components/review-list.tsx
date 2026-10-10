@@ -52,7 +52,7 @@ export function ReviewList({ reviews }: { reviews: Review[] }) {
 
       <div className="mt-10 columns-1 gap-6 md:columns-2 lg:columns-3">
         {visible.map((review) => (
-          <div key={review.name} className="mb-6 break-inside-avoid animate-in fade-in duration-300">
+          <div key={`${review.name}-${review.date}-${review.doctor ?? ""}`} className="mb-6 break-inside-avoid animate-in fade-in duration-300">
             <ReviewCard review={review} />
           </div>
         ))}

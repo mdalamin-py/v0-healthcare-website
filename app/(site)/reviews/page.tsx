@@ -5,7 +5,8 @@ import { CtaSection } from "@/components/cta-section"
 import { PageHero } from "@/components/page-hero"
 import { ReviewList } from "@/components/review-list"
 import { StatsStrip } from "@/components/stats-strip"
-import { reviews } from "@/lib/content"
+import { getPublishedReviews } from "@/lib/clinic/queries"
+import { toReview } from "@/lib/clinic/reviews"
 import { site } from "@/lib/site"
 
 export const metadata: Metadata = {
@@ -15,7 +16,11 @@ export const metadata: Metadata = {
 
 const googleReviewsUrl = "https://www.google.com/maps/place/1589+W+Shaw+Ave+Ste+10,+Fresno,+CA+93711"
 
-export default function ReviewsPage() {
+export const dynamic = "force-dynamic"
+
+export default async function ReviewsPage() {
+  const reviews = (await getPublishedReviews()).filter((review) => review.comment).map(toReview)
+
   return (
     <>
       <PageHero
@@ -58,7 +63,13 @@ export default function ReviewsPage() {
       {/* Reviews */}
       <section className="py-16 lg:py-24">
         <div className="container-page">
-          <ReviewList reviews={reviews} />
+          {reviews.length > 0 ? (
+            <ReviewList reviews={reviews} />
+          ) : (
+            <p className="rounded-3xl border border-dashed border-border bg-card px-6 py-14 text-center text-muted-foreground">
+              Verified patient reviews will appear here after their visits. You can also read our reviews on Google.
+            </p>
+          )}
         </div>
       </section>
 
