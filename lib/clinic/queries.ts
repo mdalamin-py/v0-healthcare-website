@@ -6,6 +6,12 @@ export type OnCallWithDoctor = OnCallShift & {
   doctor: Pick<Doctor, "full_name" | "slug" | "specialty">
 }
 
+// Public pages degrade to a "call us" fallback instead of failing the build or
+// the request when the database is unreachable or not migrated yet.
+function logError(resource: string, error: { message: string }) {
+  console.error(`[clinic] Failed to load ${resource}: ${error.message}`)
+}
+
 function sortSchedules(doctor: DoctorWithSchedules): DoctorWithSchedules {
   return {
     ...doctor,
@@ -23,7 +29,10 @@ export async function getDoctors(): Promise<DoctorWithSchedules[]> {
     .eq("is_active", true)
     .order("full_name")
 
-  if (error) throw new Error(`Failed to load doctors: ${error.message}`)
+  if (error) {
+    logError("doctors", error)
+    return []
+  }
   return (data as DoctorWithSchedules[]).map(sortSchedules)
 }
 
@@ -36,7 +45,10 @@ export async function getDoctorBySlug(slug: string): Promise<DoctorWithSchedules
     .eq("is_active", true)
     .maybeSingle()
 
-  if (error) throw new Error(`Failed to load doctor: ${error.message}`)
+  if (error) {
+    logError("doctor", error)
+    return null
+  }
   return data ? sortSchedules(data as DoctorWithSchedules) : null
 }
 
@@ -58,6 +70,9 @@ export async function getOnCallShifts({
   if (doctorId) query = query.eq("doctor_id", doctorId)
 
   const { data, error } = await query
-  if (error) throw new Error(`Failed to load on-call shifts: ${error.message}`)
+  if (error) {
+    logError("on-call shifts", error)
+    return []
+  }
   return data as unknown as OnCallWithDoctor[]
 }
