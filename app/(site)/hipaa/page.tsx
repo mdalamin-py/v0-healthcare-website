@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "HIPAA Notice | Dignity Home Health Care",
+  title: "HIPAA Notice",
   description: "HIPAA Notice of Privacy Practices for Dignity Home Health Care. Understanding your health information rights.",
 }
 

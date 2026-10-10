@@ -4,7 +4,7 @@ import { StatusLookup } from "@/components/appointments/status-lookup"
 import { PageHero } from "@/components/page-hero"
 
 export const metadata: Metadata = {
-  title: "Check Appointment Status | Dignity Home Health Care",
+  title: "Check Appointment Status",
   description: "Check your appointment status and serial number, or cancel a booking online.",
   robots: { index: false },
 }

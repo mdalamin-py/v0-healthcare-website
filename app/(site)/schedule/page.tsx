@@ -11,7 +11,7 @@ import { getDoctors, getOnCallShifts, type OnCallWithDoctor } from "@/lib/clinic
 export const revalidate = 60
 
 export const metadata: Metadata = {
-  title: "Doctor Schedule & On-Call | Dignity Home Health Care",
+  title: "Doctor Schedule & On-Call",
   description:
     "See which doctors are in clinic each day, their hours, and who is on call right now at Dignity Home Health Care in Fresno, CA.",
 }

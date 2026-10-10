@@ -7,7 +7,7 @@ import { PageHero } from "@/components/page-hero"
 import { getDoctors } from "@/lib/clinic/queries"
 
 export const metadata: Metadata = {
-  title: "Book an Appointment | Dignity Home Health Care",
+  title: "Book an Appointment",
   description: "Book a doctor's appointment online in a few steps and get your serial number instantly.",
 }
 

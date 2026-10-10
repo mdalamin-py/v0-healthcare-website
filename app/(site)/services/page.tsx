@@ -9,7 +9,7 @@ import { careSteps, insuranceProviders, services } from "@/lib/content"
 import { site } from "@/lib/site"
 
 export const metadata: Metadata = {
-  title: "Our Services | Dignity Home Health Care",
+  title: "Our Services",
   description:
     "Comprehensive home health services including skilled nursing, physical therapy, occupational therapy, speech therapy, personal care, and more in Fresno, CA.",
 }

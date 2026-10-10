@@ -7,7 +7,7 @@ import { PageHero } from "@/components/page-hero"
 import { site } from "@/lib/site"
 
 export const metadata: Metadata = {
-  title: "Contact Us | Dignity Home Health Care",
+  title: "Contact Us",
   description: `Contact ${site.name} in Fresno, CA for a free home health care consultation. Call ${site.phone.display} or send us a message.`,
 }
 

@@ -6,7 +6,7 @@ import { SectionHeading } from "@/components/section-heading"
 import { serviceAreas } from "@/lib/site"
 
 export const metadata: Metadata = {
-  title: "About Us | Dignity Home Health Care",
+  title: "About Us",
   description:
     "Learn about Dignity Home Health Care's mission, values, and dedicated team of healthcare professionals serving Fresno, CA.",
 }

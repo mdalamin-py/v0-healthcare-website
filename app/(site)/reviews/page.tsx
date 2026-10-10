@@ -9,7 +9,7 @@ import { reviews } from "@/lib/content"
 import { site } from "@/lib/site"
 
 export const metadata: Metadata = {
-  title: "Patient Reviews | Dignity Home Health Care",
+  title: "Patient Reviews",
   description: `Read what our patients and their families say about ${site.name}. ${site.rating.value} star rating with ${site.rating.count} reviews in Fresno, CA.`,
 }
 

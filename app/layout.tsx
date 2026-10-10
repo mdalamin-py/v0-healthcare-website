@@ -13,15 +13,22 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: `${site.name} | Compassionate Home Care in Fresno, CA`,
+  metadataBase: new URL(site.url),
+  title: {
+    default: `${site.name} | Compassionate Home Care in Fresno, CA`,
+    template: `%s | ${site.name}`,
+  },
+  applicationName: site.name,
   description: `${site.name} provides professional, compassionate home health services in Fresno, CA. Skilled nursing, personal care, therapy services, and more. Call ${site.phone.display} today.`,
   keywords: "home health care, Fresno, CA, skilled nursing, personal care, therapy, elderly care, home care services",
   openGraph: {
     title: `${site.name} | Compassionate Home Care in Fresno, CA`,
     description: site.description,
+    siteName: site.name,
     type: "website",
     locale: "en_US",
   },
+  twitter: { card: "summary_large_image" },
   robots: "index, follow",
 }
 

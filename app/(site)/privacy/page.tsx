@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Dignity Home Health Care",
+  title: "Privacy Policy",
   description: "Privacy Policy for Dignity Home Health Care. Learn how we protect your personal and health information.",
 }
 

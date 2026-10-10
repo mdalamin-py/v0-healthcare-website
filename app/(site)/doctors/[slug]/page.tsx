@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const doctor = await getDoctorBySlug((await params).slug)
   if (!doctor) return { title: "Doctor not found" }
   return {
-    title: `${doctor.full_name}, ${doctor.specialty} | ${site.name}`,
+    title: `${doctor.full_name}, ${doctor.specialty}`,
     description:
       doctor.bio ?? `${doctor.full_name} is a ${doctor.specialty} specialist at ${site.name}. View schedule and book online.`,
   }

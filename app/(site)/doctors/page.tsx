@@ -9,7 +9,7 @@ import { getDoctors } from "@/lib/clinic/queries"
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: "Our Doctors | Dignity Home Health Care",
+  title: "Our Doctors",
   description:
     "Meet our doctors and specialists in Fresno, CA. See specialties, weekly schedules and book an appointment online.",
 }

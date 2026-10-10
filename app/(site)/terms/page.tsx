@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Dignity Home Health Care",
+  title: "Terms of Service",
   description: "Terms of Service for Dignity Home Health Care website and services.",
 }
 
