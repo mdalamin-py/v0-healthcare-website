@@ -12,7 +12,8 @@ import {
 } from "lucide-react"
 
 export type NavItem = { href: string; label: string; description: string; icon: LucideIcon }
-export type NavGroup = { label: string; items: NavItem[] }
+export type NavFeature = { eyebrow: string; title: string; description: string; href: string; cta: string }
+export type NavGroup = { label: string; items: NavItem[]; feature: NavFeature }
 export type NavEntry = { href: string; label: string } | NavGroup
 
 export const navigation: NavEntry[] = [
@@ -25,6 +26,13 @@ export const navigation: NavEntry[] = [
       { href: "/services", label: "Services", description: "Nursing, therapy and personal care", icon: HeartHandshake },
       { href: "/schedule", label: "Schedule & On-call", description: "Clinic hours and who is on call now", icon: CalendarClock },
     ],
+    feature: {
+      eyebrow: "24/7 support",
+      title: "A doctor is always on call",
+      description: "See who is on call right now and the clinic timetable for the week.",
+      href: "/schedule",
+      cta: "View on-call roster",
+    },
   },
   {
     label: "Patients",
@@ -33,6 +41,13 @@ export const navigation: NavEntry[] = [
       { href: "/account", label: "My Account", description: "Your appointments and profile", icon: UserRound },
       { href: "/appointments/status", label: "Check Appointment", description: "Look up a booking by reference", icon: Search },
     ],
+    feature: {
+      eyebrow: "Online booking",
+      title: "Book in under a minute",
+      description: "Choose a doctor and visit type, then get your serial number instantly.",
+      href: "/appointments/book",
+      cta: "Book an appointment",
+    },
   },
   {
     label: "About",
@@ -40,6 +55,13 @@ export const navigation: NavEntry[] = [
       { href: "/about", label: "About Us", description: "Our mission, values and leadership", icon: Users },
       { href: "/reviews", label: "Patient Reviews", description: "What families say about our care", icon: Star },
     ],
+    feature: {
+      eyebrow: "Rated 4.9 on Google",
+      title: "Trusted by Fresno families",
+      description: "Compassionate, professional care that preserves independence and dignity.",
+      href: "/reviews",
+      cta: "Read patient reviews",
+    },
   },
   { href: "/contact", label: "Contact" },
 ]
