@@ -2,6 +2,7 @@ import { z } from "zod"
 import { visitTypeValues } from "@/lib/clinic/visit-types"
 import { dutyTypeValues } from "@/lib/clinic/duty"
 import { ambulanceStatusValues, ambulanceTypeValues } from "@/lib/clinic/ambulance"
+import { facilityTypeValues } from "@/lib/clinic/facilities"
 
 const optionalText = (max: number) =>
   z
@@ -79,6 +80,44 @@ export const ambulanceSchema = z.object({
     ),
   base_location: optionalText(120),
   driver_name: optionalText(100),
+})
+
+const coordinate = (label: string, limit: number) =>
+  z.coerce
+    .number({ invalid_type_error: `Enter a valid ${label}` })
+    .min(-limit, `Enter a valid ${label}`)
+    .max(limit, `Enter a valid ${label}`)
+
+export const facilitySchema = z.object({
+  name: z.string().trim().min(2, "Enter a name").max(120),
+  type: z.enum(facilityTypeValues),
+  address: z.string().trim().min(5, "Enter the full address").max(200),
+  city: z.string().trim().min(2, "Enter the city").max(60),
+  phone: z
+    .string()
+    .trim()
+    .refine((value) => !value || /^[\d\s()+-]{7,25}$/.test(value), "Enter a valid phone number")
+    .transform((value) => value || null),
+  latitude: coordinate("latitude", 90),
+  longitude: coordinate("longitude", 180),
+  open_24h: z.boolean(),
+  has_emergency: z.boolean(),
+  is_active: z.boolean(),
+  services: z
+    .string()
+    .trim()
+    .transform((value) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  hours: optionalText(120),
+  website: z
+    .string()
+    .trim()
+    .refine((value) => !value || /^https:\/\/\S+$/.test(value), "Website must start with https://")
+    .transform((value) => value || null),
 })
 
 export const leaveSchema = z.object({

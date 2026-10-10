@@ -292,6 +292,21 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("requests are private, fleet is public", anonRequests[0].c === 0 && anonFleet[0].c === 5)
 }
 
+// Nearby facilities
+{
+  const seeded = await q(`select count(*)::int c, count(*) filter (where has_emergency)::int er from nearby_facilities`)
+  check("nearby facilities seeded", seeded[0].c === 8 && seeded[0].er === 4, JSON.stringify(seeded[0]))
+  await q(`update nearby_facilities set is_active = false where name = 'Accelerated Urgent Care'`)
+  await expectError("facility website must use https", `update nearby_facilities set website = 'http://x.com' where name = 'Everyday Healthcare'`, [], "check constraint")
+  await db.exec(`set role anon`)
+  const visible = await q(`select count(*)::int c from nearby_facilities`)
+  const write = await q(`update nearby_facilities set name = 'Hacked' where true returning id`)
+  await db.exec(`reset role`)
+  check("public sees only active facilities", visible[0].c === 7, `${visible[0].c}`)
+  check("public cannot edit facilities", write.length === 0)
+  await q(`update nearby_facilities set is_active = true`)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

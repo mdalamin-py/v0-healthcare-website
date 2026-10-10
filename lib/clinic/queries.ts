@@ -9,6 +9,7 @@ import type {
   DoctorRating,
   DoctorReview,
   DoctorWithSchedules,
+  NearbyFacility,
   OnCallShift,
   QueueSession,
   RosterEntry,
@@ -165,6 +166,16 @@ export async function getAmbulances(): Promise<Ambulance[]> {
   const { data, error } = await createPublicClient().from("ambulances").select("*").order("code")
   if (error) {
     logError("ambulances", error)
+    return []
+  }
+  return data
+}
+
+export async function getNearbyFacilities(): Promise<NearbyFacility[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient().from("nearby_facilities").select("*").eq("is_active", true).order("name")
+  if (error) {
+    logError("nearby facilities", error)
     return []
   }
   return data

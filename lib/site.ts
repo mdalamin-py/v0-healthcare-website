@@ -17,6 +17,7 @@ export const site = {
     postalCode: "93711",
     country: "US",
     mapsUrl: "https://maps.google.com/?q=1589+W+Shaw+Ave+Ste+10,+Fresno,+CA+93711",
+    geo: { latitude: 36.8083, longitude: -119.8167 },
   },
   hours: {
     office: "Mon – Fri: 8:00 AM – 5:00 PM",

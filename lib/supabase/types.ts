@@ -8,6 +8,7 @@ export type DutyType = "on_call" | "emergency" | "ward"
 export type AmbulanceType = "bls" | "als" | "icu" | "transport" | "neonatal"
 export type AmbulanceStatus = "available" | "on_trip" | "maintenance" | "offline"
 export type AmbulanceRequestStatus = "pending" | "dispatched" | "completed" | "cancelled"
+export type FacilityType = "hospital" | "urgent_care" | "clinic" | "pharmacy" | "diagnostic"
 
 export type Database = {
   public: {
@@ -60,6 +61,43 @@ export type Database = {
         }
         Insert: never
         Update: never
+        Relationships: []
+      }
+      nearby_facilities: {
+        Row: {
+          id: string
+          name: string
+          type: FacilityType
+          address: string
+          city: string
+          phone: string | null
+          latitude: number
+          longitude: number
+          open_24h: boolean
+          has_emergency: boolean
+          services: string[]
+          hours: string | null
+          website: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          name: string
+          type: FacilityType
+          address: string
+          city: string
+          phone?: string | null
+          latitude: number
+          longitude: number
+          open_24h?: boolean
+          has_emergency?: boolean
+          services?: string[]
+          hours?: string | null
+          website?: string | null
+          is_active?: boolean
+        }
+        Update: Partial<Database["public"]["Tables"]["nearby_facilities"]["Insert"]>
         Relationships: []
       }
       doctor_contacts: {
@@ -396,6 +434,7 @@ export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
 export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row"]
 export type Ambulance = Database["public"]["Tables"]["ambulances"]["Row"]
 export type AmbulanceRequest = Database["public"]["Tables"]["ambulance_requests"]["Row"]
+export type NearbyFacility = Database["public"]["Tables"]["nearby_facilities"]["Row"]
 export type RosterEntry = Database["public"]["Functions"]["get_doctor_roster"]["Returns"][number]
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

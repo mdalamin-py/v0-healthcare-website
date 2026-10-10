@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Ambulance, CalendarDays, LayoutDashboard, ListOrdered, Moon, PhoneCall, Star, Stethoscope } from "lucide-react"
+import { Ambulance, CalendarDays, Hospital, LayoutDashboard, ListOrdered, Moon, PhoneCall, Star, Stethoscope } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const links = [
@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/admin/queue", label: "Live queue", icon: ListOrdered },
   { href: "/admin/ambulances", label: "Ambulances", icon: Ambulance },
+  { href: "/admin/facilities", label: "Nearby facilities", icon: Hospital },
   { href: "/admin/callbacks", label: "Callbacks", icon: PhoneCall },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },

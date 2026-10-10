@@ -12,6 +12,7 @@ import {
   appointmentStatuses,
   contactSchema,
   doctorSchema,
+  facilitySchema,
   leaveSchema,
   onCallSchema,
   scheduleSchema,
@@ -297,6 +298,40 @@ export async function closeAmbulanceRequest(requestId: string, status: "complete
 
   revalidatePath("/", "layout")
   return { success: status === "completed" ? "Trip completed." : "Request cancelled." }
+}
+
+// ---------------------------------------------------------------------------
+// Nearby facilities
+// ---------------------------------------------------------------------------
+
+export async function saveFacility(facilityId: string | null, _: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = facilitySchema.safeParse({
+    ...Object.fromEntries(formData),
+    open_24h: formData.get("open_24h") === "on",
+    has_emergency: formData.get("has_emergency") === "on",
+    is_active: formData.get("is_active") === "on",
+  })
+  if (!parsed.success) {
+    return { error: "Please fix the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { error } = facilityId
+    ? await supabase.from("nearby_facilities").update(parsed.data).eq("id", facilityId)
+    : await supabase.from("nearby_facilities").insert(parsed.data)
+  if (error) return { error: dbError(error, "Could not save the facility.") }
+
+  revalidatePath("/", "layout")
+  return { success: facilityId ? "Facility updated." : "Facility added." }
+}
+
+export async function deleteFacility(facilityId: string): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from("nearby_facilities").delete().eq("id", facilityId)
+  if (error) return { error: dbError(error, "Could not remove the facility.") }
+
+  revalidatePath("/", "layout")
+  return { success: "Facility removed." }
 }
 
 // ---------------------------------------------------------------------------

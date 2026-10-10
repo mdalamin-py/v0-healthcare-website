@@ -123,3 +123,24 @@ values
    array['Ventilator', 'Infusion pumps', 'Cardiac monitor', 'Defibrillator', 'Suction unit'], 'Fresno main station', 'Priya Nair'),
   ('AMB-05', 'Chevrolet G4500 Type III', '8MNO345', 'neonatal', 'maintenance',
    array['Transport incubator', 'Neonatal ventilator', 'Oxygen'], 'Fresno main station', null);
+
+-- Nearby facilities
+insert into public.nearby_facilities
+  (name, type, address, city, phone, latitude, longitude, open_24h, has_emergency, services, hours, website)
+values
+  ('Community Regional Medical Center', 'hospital', '2823 Fresno St, Fresno, CA 93721', 'Fresno', '(559) 459-7435',
+   36.7432, -119.7838, true, true, array['Level I trauma center', 'Burn unit', 'Stroke center'], null, 'https://www.communitymedical.org'),
+  ('Saint Agnes Medical Center', 'hospital', '1303 E Herndon Ave, Fresno, CA 93720', 'Fresno', '(559) 450-3205',
+   36.8372, -119.7706, true, true, array['Cardiac care', 'Stroke center', 'Maternity'], null, 'https://www.samc.com'),
+  ('Kaiser Permanente Fresno Medical Center', 'hospital', '7300 N Fresno St, Fresno, CA 93720', 'Fresno', '(559) 448-3152',
+   36.8415, -119.7826, true, true, array['Emergency', 'Surgery', 'Maternity'], null, 'https://healthy.kaiserpermanente.org'),
+  ('Clovis Community Medical Center', 'hospital', '2755 Herndon Ave, Clovis, CA 93611', 'Clovis', '(559) 324-4000',
+   36.8366, -119.6855, true, true, array['Emergency', 'Cancer institute', 'Maternity'], null, 'https://www.communitymedical.org'),
+  ('AFC Urgent Care Fresno', 'urgent_care', '3656 W Shaw Ave, Fresno, CA 93711', 'Fresno', '(559) 388-8430',
+   36.8079, -119.8615, false, false, array['Walk-in care', 'X-ray', 'Lab tests'], null, 'https://www.afcurgentcare.com/fresno'),
+  ('Accelerated Urgent Care', 'urgent_care', '761 W Shaw Ave, Fresno, CA 93704', 'Fresno', '(559) 712-7272',
+   36.8083, -119.8020, false, false, array['Walk-in care', 'Minor injuries'], null, null),
+  ('Everyday Healthcare', 'clinic', '4177 W Shaw Ave Ste 107, Fresno, CA 93722', 'Fresno', '(559) 225-4706',
+   36.8079, -119.8720, false, false, array['Primary care', 'Physicals'], null, null),
+  ('Clovis Urgent Care', 'urgent_care', '1555 Shaw Ave Ste 101, Clovis, CA 93611', 'Clovis', '(559) 324-7001',
+   36.8086, -119.6900, false, false, array['Walk-in care', 'Minor injuries'], null, null);
