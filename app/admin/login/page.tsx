@@ -1,14 +1,28 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { LoginForm } from "@/components/admin/login-form"
 import { Logo } from "@/components/logo"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
+import { createClient } from "@/lib/supabase/server"
 
 type Props = { searchParams: Promise<{ error?: string }> }
 
 export default async function AdminLoginPage({ searchParams }: Props) {
   const { error } = await searchParams
   const configured = isSupabaseConfigured()
+
+  if (configured) {
+    // Signed-in admins skip the form; signed-in non-admins see it with an error.
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (user) {
+      const { data: isAdmin } = await supabase.rpc("is_admin")
+      if (isAdmin) redirect("/admin")
+    }
+  }
 
   return (
     <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-muted/40 px-4 py-12">

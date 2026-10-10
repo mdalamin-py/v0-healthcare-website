@@ -33,9 +33,6 @@ export async function proxy(request: NextRequest) {
   if (!user && !isLogin) {
     return NextResponse.redirect(new URL("/admin/login", request.url))
   }
-  if (user && isLogin) {
-    return NextResponse.redirect(new URL("/admin", request.url))
-  }
 
   return response
 }
