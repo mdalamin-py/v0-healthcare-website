@@ -1,146 +1,81 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
+import { contactSchema } from "@/lib/validations/contact"
+import { isEmailConfigured, sendContactEmail } from "@/lib/email"
+import { site } from "@/lib/site"
 
-// In-memory store for demo (in production, use a database)
-const contacts: Array<{
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  service: string
-  message: string
-  patientRelation: string
-  createdAt: string
-}> = []
+const MAX_BODY_BYTES = 10_000
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 5
 
-// Rate limiting map
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+// Best-effort, per-instance rate limiting. Use a shared store (e.g. Upstash Redis)
+// if the site needs strict limits across serverless instances.
+const rateLimits = new Map<string, { count: number; resetAt: number }>()
 
-function getRateLimitKey(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for")
-  const ip = forwarded ? forwarded.split(",")[0] : "unknown"
-  return ip
+function clientIp(request: NextRequest) {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown"
 }
 
-function isRateLimited(key: string): boolean {
+function isRateLimited(key: string) {
   const now = Date.now()
-  const limit = rateLimitMap.get(key)
 
-  if (!limit || now > limit.resetTime) {
-    rateLimitMap.set(key, { count: 1, resetTime: now + 60000 }) // 1 minute window
+  for (const [entryKey, entry] of rateLimits) {
+    if (now > entry.resetAt) rateLimits.delete(entryKey)
+  }
+
+  const entry = rateLimits.get(key)
+  if (!entry) {
+    rateLimits.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
     return false
   }
 
-  if (limit.count >= 5) { // 5 requests per minute
-    return true
-  }
-
-  limit.count++
-  return false
+  entry.count += 1
+  return entry.count > RATE_LIMIT_MAX
 }
 
-function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function validatePhone(phone: string): boolean {
-  return /^[\d\s\-()+ ]{10,}$/.test(phone.replace(/\s/g, ""))
-}
-
-function sanitizeInput(input: string): string {
-  return input
-    .trim()
-    .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .slice(0, 1000) // Limit length
+function error(message: string, status: number, fieldErrors?: Record<string, string[] | undefined>) {
+  return NextResponse.json({ error: message, fieldErrors }, { status })
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // Rate limiting
-    const rateLimitKey = getRateLimitKey(request)
-    if (isRateLimited(rateLimitKey)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      )
-    }
-
-    const body = await request.json()
-
-    // Validate required fields
-    const { firstName, lastName, email, phone, message, service, patientRelation } = body
-
-    if (!firstName || !lastName || !email || !phone || !message) {
-      return NextResponse.json(
-        { error: "Please fill in all required fields." },
-        { status: 400 }
-      )
-    }
-
-    // Validate email format
-    if (!validateEmail(email)) {
-      return NextResponse.json(
-        { error: "Please provide a valid email address." },
-        { status: 400 }
-      )
-    }
-
-    // Validate phone format
-    if (!validatePhone(phone)) {
-      return NextResponse.json(
-        { error: "Please provide a valid phone number." },
-        { status: 400 }
-      )
-    }
-
-    // Sanitize inputs
-    const sanitizedData = {
-      id: crypto.randomUUID(),
-      firstName: sanitizeInput(firstName),
-      lastName: sanitizeInput(lastName),
-      email: sanitizeInput(email),
-      phone: sanitizeInput(phone),
-      service: sanitizeInput(service || ""),
-      message: sanitizeInput(message),
-      patientRelation: sanitizeInput(patientRelation || ""),
-      createdAt: new Date().toISOString(),
-    }
-
-    // Store contact (in production, save to database)
-    contacts.push(sanitizedData)
-
-    // Log for demo purposes
-    console.log("New contact submission:", {
-      name: `${sanitizedData.firstName} ${sanitizedData.lastName}`,
-      email: sanitizedData.email,
-      phone: sanitizedData.phone,
-      service: sanitizedData.service,
-      createdAt: sanitizedData.createdAt,
-    })
-
-    // In production, you would:
-    // 1. Save to MongoDB/database
-    // 2. Send email notification via Nodemailer
-    // 3. Potentially integrate with CRM
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: "Thank you for contacting us. We will get back to you within 24 hours." 
-      },
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error("Contact form error:", error)
-    return NextResponse.json(
-      { error: "An error occurred. Please try again or call us directly." },
-      { status: 500 }
-    )
+  if (isRateLimited(clientIp(request))) {
+    return error("Too many requests. Please try again in a minute.", 429)
   }
-}
 
-// GET endpoint for admin to view contacts (protected in production)
-export async function GET() {
-  // In production, this should be protected with authentication
-  return NextResponse.json({ contacts, total: contacts.length })
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    return error("Request is too large.", 413)
+  }
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return error("Invalid request body.", 400)
+  }
+
+  const parsed = contactSchema.safeParse(body)
+  if (!parsed.success) {
+    // A filled honeypot means a bot; respond as if it succeeded.
+    if (parsed.error.flatten().fieldErrors.company) {
+      return NextResponse.json({ success: true })
+    }
+    return error("Please correct the highlighted fields.", 400, parsed.error.flatten().fieldErrors)
+  }
+
+  if (!isEmailConfigured()) {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[contact] Email delivery is not configured; submission accepted in development only.")
+      return NextResponse.json({ success: true })
+    }
+    console.error("[contact] RESEND_API_KEY and CONTACT_TO_EMAIL must be set to deliver submissions.")
+    return error(`We couldn't send your message right now. Please call us at ${site.phone.display}.`, 503)
+  }
+
+  try {
+    await sendContactEmail(parsed.data)
+  } catch (cause) {
+    console.error("[contact] Failed to deliver submission:", cause)
+    return error(`We couldn't send your message right now. Please call us at ${site.phone.display}.`, 502)
+  }
+
+  return NextResponse.json({ success: true })
 }
