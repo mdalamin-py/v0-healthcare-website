@@ -1,0 +1,121 @@
+import { PGlite } from "@electric-sql/pglite"
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+
+// Runs the clinic migration and seed in an in-memory Postgres (PGlite) and
+// verifies booking rules and row level security. Usage: pnpm test:db
+const root = fileURLToPath(new URL("../", import.meta.url))
+const db = new PGlite()
+
+// Minimal stand-ins for the Supabase environment.
+await db.exec(`
+  create role anon; create role authenticated;
+  create schema auth;
+  create table auth.users (id uuid primary key, email text);
+  create function auth.uid() returns uuid language sql stable as $$
+    select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  grant usage on schema public to anon, authenticated;
+  alter default privileges in schema public grant all on tables to anon, authenticated;
+`)
+
+await db.exec(readFileSync(`${root}migrations/20261010000000_clinic_schema.sql`, "utf8"))
+await db.exec(readFileSync(`${root}seed.sql`, "utf8"))
+
+let failures = 0
+const check = (label, ok, detail = "") => {
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${detail ? "  — " + detail : ""}`)
+  if (!ok) failures++
+}
+const q = async (sql, params) => (await db.query(sql, params)).rows
+const expectError = async (label, sql, params, code) => {
+  try {
+    await db.query(sql, params)
+    check(label, false, "no error raised")
+  } catch (e) {
+    check(label, e.message.includes(code), e.message)
+  }
+}
+
+const counts = await q(`select (select count(*) from doctors)::int d, (select count(*) from doctor_schedules)::int s, (select count(*) from on_call_shifts)::int o`)
+check("seed loaded", counts[0].d === 6 && counts[0].s === 16 && counts[0].o === 28, JSON.stringify(counts[0]))
+
+const onCallNow = await q(`select d.full_name from on_call_shifts o join doctors d on d.id=o.doctor_id where now() between o.starts_at and o.ends_at`)
+check("exactly one doctor is on call now", onCallNow.length === 1, JSON.stringify(onCallNow))
+
+const doctor = (await q(`select id from doctors where slug='daniel-ramirez'`))[0].id
+const avail = await q(`select * from get_availability($1, 30)`, [doctor])
+check("availability returns upcoming sessions", avail.length > 0, `${avail.length} sessions`)
+const allMatchWeekday = (await q(
+  `select bool_and(extract(dow from a.appointment_date) = s.weekday) ok from get_availability($1, 30) a join doctor_schedules s on s.id=a.schedule_id`,
+  [doctor],
+))[0].ok
+check("availability dates match session weekday", allMatchWeekday === true)
+
+// Pick a future session (not today) with small capacity for testing.
+await q(`update doctor_schedules set max_patients = 2 where id = $1`, [avail.find((a) => a.appointment_date > avail[0].appointment_date || avail.length === 1)?.schedule_id ?? avail[0].schedule_id])
+const target = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() order by appointment_date limit 1`, [doctor]))[0]
+const sid = target.schedule_id
+const day = target.appointment_date.toISOString().slice(0, 10)
+
+const b1 = (await q(`select * from book_appointment($1,$2,'Jane Doe','(559) 111-2222','jane@x.com',70,'female','Check-up')`, [sid, day]))[0]
+check("first booking gets serial 1", b1.serial_no === 1, `${b1.reference} serial ${b1.serial_no}`)
+check("reference format", /^DHC-[0-9A-F]{8}$/.test(b1.reference), b1.reference)
+
+await expectError("duplicate phone same session rejected", `select * from book_appointment($1,$2,'Jane Again','559-111-2222')`, [sid, day], "DUPLICATE_BOOKING")
+
+const max = (await q(`select max_patients from doctor_schedules where id=$1`, [sid]))[0].max_patients
+const b2 = (await q(`select * from book_appointment($1,$2,'John Roe','5593334444')`, [sid, day]))[0]
+check("second booking gets serial 2", b2.serial_no === 2)
+if (max === 2) {
+  await expectError("full session rejected", `select * from book_appointment($1,$2,'Third Person','5595556666')`, [sid, day], "SESSION_FULL")
+}
+
+const wrongDay = new Date(target.appointment_date.getTime() + 86400000).toISOString().slice(0, 10)
+await expectError("wrong weekday rejected", `select * from book_appointment($1,$2,'X Person','5597778888')`, [sid, wrongDay], "INVALID_DATE")
+await expectError("past date rejected", `select * from book_appointment($1,'2020-01-06','X Person','5597778888')`, [sid], "INVALID_DATE")
+await expectError("bad phone rejected", `select * from book_appointment($1,$2,'X Person','123')`, [sid, day], "INVALID_PATIENT")
+
+const look = await q(`select * from lookup_appointment($1, '559.111.2222')`, [b1.reference.toLowerCase()])
+check("lookup by reference + phone (normalized)", look.length === 1 && look[0].serial_no === 1, JSON.stringify(look[0]?.status))
+const lookWrong = await q(`select * from lookup_appointment($1, '0000000000')`, [b1.reference])
+check("lookup with wrong phone returns nothing", lookWrong.length === 0)
+
+const cancelled = (await q(`select cancel_appointment($1,'5591112222') ok`, [b1.reference]))[0].ok
+check("patient can cancel", cancelled === true)
+const again = (await q(`select cancel_appointment($1,'5591112222') ok`, [b1.reference]))[0].ok
+check("cancel is not repeatable", again === false)
+
+const b3 = (await q(`select * from book_appointment($1,$2,'New Person','5599990000')`, [sid, day]))[0]
+check("freed slot can be rebooked with next serial (3)", b3.serial_no === 3, `serial ${b3.serial_no}`)
+
+// RLS: anon cannot read appointments or inactive doctors.
+await db.exec(`set role anon`)
+const anonAppts = await q(`select count(*)::int c from appointments`)
+check("anon cannot read appointments", anonAppts[0].c === 0)
+await db.exec(`reset role`)
+await q(`update doctors set is_active=false where slug='aisha-rahman'`)
+await db.exec(`set role anon`)
+const anonDocs = await q(`select count(*)::int c from doctors`)
+check("anon sees only active doctors", anonDocs[0].c === 5)
+await expectError("anon cannot insert appointments directly", `insert into appointments (reference, doctor_id, schedule_id, appointment_date, serial_no, patient_name, patient_phone) values ('X', $1, $2, $3, 99, 'Hack', '5550001111')`, [doctor, sid, day], "row-level security")
+const upd = await q(`update doctors set full_name='Hacked' where true returning id`)
+check("anon update affects zero rows", upd.length === 0)
+await db.exec(`reset role`)
+const hacked = await q(`select count(*)::int c from doctors where full_name='Hacked'`)
+check("doctor rows unchanged by anon", hacked[0].c === 0)
+
+// Admin via auth.uid()
+await q(`insert into auth.users values ('00000000-0000-0000-0000-000000000001','admin@x.com')`)
+await q(`insert into admins values ('00000000-0000-0000-0000-000000000001')`)
+await db.exec(`set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001'`)
+const adminAppts = await q(`select count(*)::int c from appointments`)
+check("admin reads appointments", adminAppts[0].c === 3)
+const adminDocs = await q(`select count(*)::int c from doctors`)
+check("admin sees inactive doctors", adminDocs[0].c === 6)
+await db.exec(`set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002'`)
+const nonAdmin = await q(`select count(*)::int c from appointments`)
+check("non-admin user cannot read appointments", nonAdmin[0].c === 0)
+await db.exec(`reset role`)
+
+console.log(failures ? `\n${failures} FAILED` : "\nALL PASSED")
+process.exit(failures ? 1 : 0)
