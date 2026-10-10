@@ -6,7 +6,8 @@ import { CtaSection } from "@/components/cta-section"
 import { FaqSection } from "@/components/faq-section"
 import { ReviewCard } from "@/components/review-card"
 import { SectionHeading } from "@/components/section-heading"
-import { reviews, services, stats, trustBadges, whyChooseUs } from "@/lib/content"
+import { StatsStrip } from "@/components/stats-strip"
+import { reviews, services, trustBadges, whyChooseUs } from "@/lib/content"
 import { site } from "@/lib/site"
 
 const featuredServices = services.slice(0, 5)
@@ -104,19 +105,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="border-y border-border bg-card/50">
-        <dl className="container-page grid grid-cols-2 divide-border py-10 md:grid-cols-4 md:divide-x">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col-reverse px-4 py-3 text-center">
-              <dt className="text-sm text-muted-foreground">{stat.label}</dt>
-              <dd className="bg-gradient-to-br from-primary to-accent bg-clip-text text-3xl font-extrabold text-transparent md:text-4xl">
-                {stat.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <StatsStrip className="border-t" />
 
       {/* Services */}
       <section className="py-16 lg:py-24">
