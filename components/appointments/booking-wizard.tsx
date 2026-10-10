@@ -88,7 +88,17 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   )
 }
 
-export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDoctor[]; initialSlug?: string }) {
+export type PatientDefaults = Partial<Pick<PatientInput, "name" | "phone" | "email" | "age" | "gender" | "address">>
+
+export function BookingWizard({
+  doctors,
+  initialSlug,
+  patient,
+}: {
+  doctors: BookableDoctor[]
+  initialSlug?: string
+  patient?: PatientDefaults
+}) {
   const initialDoctor = doctors.find((doctor) => doctor.slug === initialSlug) ?? null
   const [step, setStep] = useState(initialDoctor ? 1 : 0)
   const [doctor, setDoctor] = useState<BookableDoctor | null>(initialDoctor)
@@ -123,7 +133,17 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
 
   const form = useForm<PatientInput>({
     resolver: zodResolver(patientSchema),
-    defaultValues: { name: "", phone: "", email: "", age: "", gender: "", reason: "", consent: false },
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      age: "",
+      gender: "",
+      address: "",
+      ...patient,
+      reason: "",
+      consent: false,
+    },
     mode: "onTouched",
   })
   const { errors, isSubmitting } = form.formState
@@ -502,7 +522,7 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
                 Print
               </Button>
               <Button asChild className="rounded-full">
-                <Link href="/appointments/status">Check appointment status</Link>
+                <Link href="/account">View in my account</Link>
               </Button>
             </div>
           </section>

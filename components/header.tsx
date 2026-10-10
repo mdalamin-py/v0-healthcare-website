@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { CalendarPlus, ChevronDown, Clock, MapPin, Menu, Phone, X } from "lucide-react"
+import { CalendarPlus, ChevronDown, Clock, MapPin, Menu, Phone, UserRound, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -148,6 +148,16 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Link
+              href="/account"
+              aria-label="My account"
+              className={cn(
+                "inline-flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground/80 transition-colors hover:text-primary",
+                isActivePath(pathname, "/account") && "border-primary/40 text-primary",
+              )}
+            >
+              <UserRound className="size-[18px]" />
+            </Link>
             <Button asChild className="hidden rounded-full shadow-lg shadow-primary/25 xl:inline-flex">
               <Link href="/appointments/book">
                 <CalendarPlus className="size-4" />

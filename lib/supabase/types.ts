@@ -13,6 +13,30 @@ export type Database = {
         Update: { user_id?: string; created_at?: string }
         Relationships: []
       }
+      patients: {
+        Row: {
+          user_id: string
+          full_name: string
+          phone: string
+          email: string | null
+          date_of_birth: string | null
+          gender: "female" | "male" | "other" | null
+          address: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          full_name: string
+          phone: string
+          email?: string | null
+          date_of_birth?: string | null
+          gender?: "female" | "male" | "other" | null
+          address?: string | null
+        }
+        Update: Partial<Database["public"]["Tables"]["patients"]["Insert"]>
+        Relationships: []
+      }
       doctors: {
         Row: {
           id: string
@@ -115,6 +139,7 @@ export type Database = {
           reason: string | null
           visit_type: VisitType
           patient_address: string | null
+          patient_id: string | null
           status: AppointmentStatus
           created_at: string
           updated_at: string
@@ -193,6 +218,7 @@ export type Database = {
         }[]
       }
       cancel_appointment: { Args: { p_reference: string; p_phone: string }; Returns: boolean }
+      cancel_my_appointment: { Args: { p_appointment_id: string }; Returns: boolean }
     }
     Enums: { appointment_status: AppointmentStatus; visit_type: VisitType }
     CompositeTypes: Record<never, never>
@@ -203,4 +229,5 @@ export type Doctor = Database["public"]["Tables"]["doctors"]["Row"]
 export type DoctorSchedule = Database["public"]["Tables"]["doctor_schedules"]["Row"]
 export type OnCallShift = Database["public"]["Tables"]["on_call_shifts"]["Row"]
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]
+export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

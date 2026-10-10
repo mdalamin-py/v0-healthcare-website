@@ -34,7 +34,7 @@ const expectError = async (label, sql, params, code) => {
     await db.query(sql, params)
     check(label, false, "no error raised")
   } catch (e) {
-    check(label, e.message.includes(code), e.message)
+    check(label, code.split("|").some((c) => e.message.includes(c)), e.message)
   }
 }
 
@@ -43,6 +43,23 @@ check("seed loaded", counts[0].d === 6 && counts[0].s === 16 && counts[0].o === 
 
 const onCallNow = await q(`select d.full_name from on_call_shifts o join doctors d on d.id=o.doctor_id where now() between o.starts_at and o.ends_at`)
 check("exactly one doctor is on call now", onCallNow.length === 1, JSON.stringify(onCallNow))
+
+const PATIENT_1 = "00000000-0000-0000-0000-0000000000a1"
+const PATIENT_2 = "00000000-0000-0000-0000-0000000000a2"
+await q(`insert into auth.users values ($1,'p1@x.com'), ($2,'p2@x.com')`, [PATIENT_1, PATIENT_2])
+const asPatient = (id) => db.exec(`set request.jwt.claim.sub = '${id}'`)
+
+{
+  const guestDoctor = (await q(`select id from doctors where slug='michael-patel'`))[0].id
+  const guestSlot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [guestDoctor]))[0]
+  await expectError(
+    "booking without an account is rejected",
+    `select * from book_appointment($1, $2, 'Guest', '5550001111')`,
+    [guestSlot.schedule_id, guestSlot.appointment_date.toISOString().slice(0, 10)],
+    "AUTH_REQUIRED",
+  )
+}
+await asPatient(PATIENT_1)
 
 const doctor = (await q(`select id from doctors where slug='daniel-ramirez'`))[0].id
 const avail = await q(`select * from get_availability($1, 30)`, [doctor])
@@ -109,6 +126,22 @@ check("address dropped for non-home visits", videoRow.patient_address === null)
 const lookedUp = (await q(`select * from lookup_appointment($1,'5591232222')`, [video.reference]))[0]
 check("lookup returns visit type", lookedUp.visit_type === "video")
 
+// Patient accounts
+const linked = (await q(`select count(*)::int c from appointments where patient_id = $1`, [PATIENT_1]))[0].c
+check("bookings are linked to the signed-in patient", linked >= 3, `${linked} linked`)
+await db.exec(`set role authenticated`)
+const own = await q(`select count(*)::int c from appointments`)
+await asPatient(PATIENT_2)
+const other = await q(`select count(*)::int c from appointments`)
+check("patients see only their own appointments", own[0].c >= 3 && other[0].c === 0, `p1=${own[0].c} p2=${other[0].c}`)
+const victim = (await (async () => { await db.exec(`reset role`); return q(`select id from appointments where patient_id=$1 and status <> 'cancelled' limit 1`, [PATIENT_1]) })())[0].id
+const stolen = (await q(`select cancel_my_appointment($1) ok`, [victim]))[0].ok
+check("patient cannot cancel someone else's appointment", stolen === false)
+await asPatient(PATIENT_1)
+const mine = (await q(`select cancel_my_appointment($1) ok`, [victim]))[0].ok
+check("patient can cancel own appointment", mine === true)
+await db.exec(`set request.jwt.claim.sub = ''`)
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)
@@ -118,7 +151,7 @@ await q(`update doctors set is_active=false where slug='aisha-rahman'`)
 await db.exec(`set role anon`)
 const anonDocs = await q(`select count(*)::int c from doctors`)
 check("anon sees only active doctors", anonDocs[0].c === 5)
-await expectError("anon cannot insert appointments directly", `insert into appointments (reference, doctor_id, schedule_id, appointment_date, serial_no, patient_name, patient_phone) values ('X', $1, $2, $3, 99, 'Hack', '5550001111')`, [doctor, sid, day], "row-level security")
+await expectError("anon cannot insert appointments directly", `insert into appointments (reference, doctor_id, schedule_id, appointment_date, serial_no, patient_name, patient_phone) values ('X', $1, $2, $3, 99, 'Hack', '5550001111')`, [doctor, sid, day], "row-level security|AUTH_REQUIRED")
 const upd = await q(`update doctors set full_name='Hacked' where true returning id`)
 check("anon update affects zero rows", upd.length === 0)
 await db.exec(`reset role`)

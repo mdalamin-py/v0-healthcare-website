@@ -6,6 +6,7 @@ import {
   type LucideIcon,
   Search,
   Star,
+  UserRound,
   Stethoscope,
   Users,
 } from "lucide-react"
@@ -29,7 +30,8 @@ export const navigation: NavEntry[] = [
     label: "Patients",
     items: [
       { href: "/appointments/book", label: "Book Appointment", description: "Pick a doctor and get a serial number", icon: CalendarPlus },
-      { href: "/appointments/status", label: "Check Appointment", description: "View status or cancel a booking", icon: Search },
+      { href: "/account", label: "My Account", description: "Your appointments and profile", icon: UserRound },
+      { href: "/appointments/status", label: "Check Appointment", description: "Look up a booking by reference", icon: Search },
     ],
   },
   {

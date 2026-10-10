@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
+import { createClient } from "@/lib/supabase/server"
 import { clientIpFrom, createRateLimiter } from "@/lib/rate-limit"
 import { bookingSchema, lookupSchema, type BookingInput, type LookupInput } from "@/lib/validations/appointment"
 import type { Database } from "@/lib/supabase/types"
@@ -27,6 +28,7 @@ const bookingErrors: Record<string, string> = {
   SESSION_NOT_FOUND: "This session is no longer offered. Please choose another date.",
   VISIT_TYPE_UNAVAILABLE: "This doctor doesn't offer the selected visit type. Please choose another.",
   ADDRESS_REQUIRED: "Please enter the address for the home visit.",
+  AUTH_REQUIRED: "Please sign in to your account to book an appointment.",
 }
 
 async function ip() {
@@ -55,7 +57,13 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
   if (!parsed.success) return { ok: false, error: "Please check the highlighted details and try again." }
 
   const { scheduleId, date, name, phone, email, age, gender, reason, visitType, address } = parsed.data
-  const { data, error } = await createPublicClient().rpc("book_appointment", {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: bookingErrors.AUTH_REQUIRED }
+
+  const { data, error } = await supabase.rpc("book_appointment", {
     p_schedule_id: scheduleId,
     p_date: date,
     p_name: name,

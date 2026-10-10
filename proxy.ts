@@ -1,14 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
-// Refreshes the Supabase session for admin routes and redirects signed-out
-// visitors to the login page. Admin authorization is enforced again on the
-// server (requireAdmin) and in the database (row level security).
+// Refreshes the Supabase session on authenticated routes and redirects
+// signed-out visitors to the right sign-in page. Authorization is enforced
+// again on the server and in the database (row level security).
 export async function proxy(request: NextRequest) {
-  const isLogin = request.nextUrl.pathname === "/admin/login"
+  const { pathname, search } = request.nextUrl
+  const isAdmin = pathname.startsWith("/admin")
+  const loginPath = isAdmin ? "/admin/login" : "/account/login"
+  const isLogin = pathname === loginPath
+  const isProtected = (isAdmin || pathname.startsWith("/account")) && !isLogin
+
+  const redirectToLogin = () => {
+    const url = new URL(loginPath, request.url)
+    if (!isAdmin) url.searchParams.set("next", `${pathname}${search}`)
+    return NextResponse.redirect(url)
+  }
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return isLogin ? NextResponse.next() : NextResponse.redirect(new URL("/admin/login", request.url))
+    return isProtected ? redirectToLogin() : NextResponse.next()
   }
 
   let response = NextResponse.next({ request })
@@ -30,13 +40,11 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user && !isLogin) {
-    return NextResponse.redirect(new URL("/admin/login", request.url))
-  }
+  if (!user && isProtected) return redirectToLogin()
 
   return response
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/appointments/book"],
 }
