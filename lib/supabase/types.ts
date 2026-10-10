@@ -13,6 +13,12 @@ export type Database = {
         Update: { user_id?: string; created_at?: string }
         Relationships: []
       }
+      queue_state: {
+        Row: { schedule_id: string; queue_date: string; now_serving: number; updated_at: string }
+        Insert: { schedule_id: string; queue_date: string; now_serving?: number }
+        Update: { now_serving?: number }
+        Relationships: []
+      }
       patients: {
         Row: {
           user_id: string
@@ -219,6 +225,23 @@ export type Database = {
       }
       cancel_appointment: { Args: { p_reference: string; p_phone: string }; Returns: boolean }
       cancel_my_appointment: { Args: { p_appointment_id: string }; Returns: boolean }
+      call_next_patient: { Args: { p_schedule_id: string }; Returns: number }
+      get_today_queue: {
+        Args: Record<never, never>
+        Returns: {
+          schedule_id: string
+          doctor_id: string
+          doctor_name: string
+          doctor_slug: string
+          specialty: string
+          start_time: string
+          end_time: string
+          now_serving: number
+          total: number
+          waiting: number
+          updated_at: string | null
+        }[]
+      }
     }
     Enums: { appointment_status: AppointmentStatus; visit_type: VisitType }
     CompositeTypes: Record<never, never>
@@ -230,4 +253,5 @@ export type DoctorSchedule = Database["public"]["Tables"]["doctor_schedules"]["R
 export type OnCallShift = Database["public"]["Tables"]["on_call_shifts"]["Row"]
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]
 export type Patient = Database["public"]["Tables"]["patients"]["Row"]
+export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

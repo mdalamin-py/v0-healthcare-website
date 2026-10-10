@@ -22,7 +22,15 @@ const statusStyles: Record<AppointmentStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 }
 
-function AppointmentRow({ appointment, canCancel }: { appointment: PatientAppointment; canCancel: boolean }) {
+function AppointmentRow({
+  appointment,
+  canCancel,
+  nowServing,
+}: {
+  appointment: PatientAppointment
+  canCancel: boolean
+  nowServing?: number
+}) {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -55,6 +63,22 @@ function AppointmentRow({ appointment, canCancel }: { appointment: PatientAppoin
             <VisitTypeBadge type={appointment.visit_type} />
             <span className="font-mono text-xs text-muted-foreground">{appointment.reference}</span>
           </div>
+          {nowServing !== undefined && (
+            <Link
+              href="/queue"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent"
+            >
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-accent" />
+              </span>
+              {nowServing === 0
+                ? "Queue not started yet"
+                : nowServing >= appointment.serial_no
+                  ? "It's your turn — please proceed"
+                  : `Now serving #${nowServing} · you are #${appointment.serial_no}`}
+            </Link>
+          )}
         </div>
         {canCancel && (
           <div className="flex shrink-0 gap-2">
@@ -94,7 +118,15 @@ function AppointmentRow({ appointment, canCancel }: { appointment: PatientAppoin
   )
 }
 
-export function MyAppointments({ appointments, today }: { appointments: PatientAppointment[]; today: string }) {
+export function MyAppointments({
+  appointments,
+  today,
+  queue = {},
+}: {
+  appointments: PatientAppointment[]
+  today: string
+  queue?: Record<string, number>
+}) {
   const upcoming = appointments
     .filter((item) => item.appointment_date >= today && (item.status === "pending" || item.status === "confirmed"))
     .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.serial_no - b.serial_no)
@@ -115,7 +147,12 @@ export function MyAppointments({ appointments, today }: { appointments: PatientA
         {upcoming.length > 0 ? (
           <ul className="mt-4 space-y-3">
             {upcoming.map((item) => (
-              <AppointmentRow key={item.id} appointment={item} canCancel />
+              <AppointmentRow
+                key={item.id}
+                appointment={item}
+                canCancel
+                nowServing={item.appointment_date === today ? queue[item.schedule_id] : undefined}
+              />
             ))}
           </ul>
         ) : (

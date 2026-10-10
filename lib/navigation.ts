@@ -2,6 +2,7 @@ import {
   Building2,
   CalendarClock,
   CalendarPlus,
+  ListOrdered,
   HeartHandshake,
   type LucideIcon,
   Search,
@@ -38,6 +39,7 @@ export const navigation: NavEntry[] = [
     label: "Patients",
     items: [
       { href: "/appointments/book", label: "Book Appointment", description: "Pick a doctor and get a serial number", icon: CalendarPlus },
+      { href: "/queue", label: "Live Queue", description: "See the serial each doctor is serving now", icon: ListOrdered },
       { href: "/account", label: "My Account", description: "Your appointments and profile", icon: UserRound },
       { href: "/appointments/status", label: "Check Appointment", description: "Look up a booking by reference", icon: Search },
     ],

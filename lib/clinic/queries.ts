@@ -1,6 +1,6 @@
 import "server-only"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
-import type { Doctor, DoctorWithSchedules, OnCallShift } from "@/lib/supabase/types"
+import type { Doctor, DoctorWithSchedules, OnCallShift, QueueSession } from "@/lib/supabase/types"
 
 export type OnCallWithDoctor = OnCallShift & {
   doctor: Pick<Doctor, "full_name" | "slug" | "specialty">
@@ -78,4 +78,14 @@ export async function getOnCallShifts({
     return []
   }
   return data as unknown as OnCallWithDoctor[]
+}
+
+export async function getTodayQueue(): Promise<QueueSession[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient().rpc("get_today_queue")
+  if (error) {
+    logError("queue", error)
+    return []
+  }
+  return data
 }

@@ -5,6 +5,7 @@ import { MyAppointments, type PatientAppointment } from "@/components/account/my
 import { ProfileForm } from "@/components/account/profile-form"
 import { clinicToday } from "@/lib/admin/time"
 import { getPatientSession } from "@/lib/auth/patient"
+import { getTodayQueue } from "@/lib/clinic/queries"
 import { signOutPatient } from "./actions"
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default async function AccountPage({ searchParams }: Props) {
     )
   }
 
+  const queue = Object.fromEntries((await getTodayQueue()).map((session) => [session.schedule_id, session.now_serving]))
   const { data } = await supabase
     .from("appointments")
     .select("*, doctor:doctors(full_name, specialty, slug), schedule:doctor_schedules(start_time, end_time)")
@@ -67,7 +69,7 @@ export default async function AccountPage({ searchParams }: Props) {
 
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <MyAppointments appointments={(data ?? []) as unknown as PatientAppointment[]} today={clinicToday()} />
+            <MyAppointments appointments={(data ?? []) as unknown as PatientAppointment[]} today={clinicToday()} queue={queue} />
           </div>
           <aside className="lg:col-span-5">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8 lg:sticky lg:top-32">

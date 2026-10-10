@@ -170,3 +170,17 @@ export async function deleteOnCallShift(shiftId: string): Promise<ActionState> {
   revalidatePublicPages()
   return { success: "Shift removed." }
 }
+
+// ---------------------------------------------------------------------------
+// Live queue
+// ---------------------------------------------------------------------------
+
+export async function callNextPatient(scheduleId: string): Promise<ActionState & { nowServing?: number }> {
+  const { supabase } = await requireAdmin()
+  const { data, error } = await supabase.rpc("call_next_patient", { p_schedule_id: scheduleId })
+  if (error) return { error: dbError(error, "Could not advance the queue.") }
+
+  revalidatePath("/admin", "layout")
+  revalidatePath("/queue")
+  return { success: `Now serving #${data}`, nowServing: data }
+}

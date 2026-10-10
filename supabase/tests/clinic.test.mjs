@@ -142,6 +142,35 @@ const mine = (await q(`select cancel_my_appointment($1) ok`, [victim]))[0].ok
 check("patient can cancel own appointment", mine === true)
 await db.exec(`set request.jwt.claim.sub = ''`)
 
+// Live queue (uses a session scheduled today, if any)
+{
+  const todaySession = (await q(`select id from doctor_schedules where weekday = extract(dow from clinic_today()) limit 1`))[0]
+  if (todaySession) {
+    await db.exec(`update doctor_schedules set end_time = '23:59' where id = '${todaySession.id}'`)
+    await asPatient(PATIENT_2)
+    const today = (await q(`select clinic_today()::text d`))[0].d
+    const a1 = (await q(`select * from book_appointment($1, $2, 'Queue One', '5552220001')`, [todaySession.id, today]))[0]
+    const a2 = (await q(`select * from book_appointment($1, $2, 'Queue Two', '5552220002')`, [todaySession.id, today]))[0]
+    await expectError("non-admin cannot call next patient", `select call_next_patient($1)`, [todaySession.id], "FORBIDDEN")
+    await db.exec(`set request.jwt.claim.sub = ''`)
+    const before = (await q(`select * from get_today_queue() where schedule_id = $1`, [todaySession.id]))[0]
+    check("queue starts at zero with patients waiting", before.now_serving === 0 && before.waiting === 2, JSON.stringify(before))
+    await q(`insert into admins values ($1) on conflict do nothing`, [PATIENT_1])
+    await asPatient(PATIENT_1)
+    const first = (await q(`select call_next_patient($1) n`, [todaySession.id]))[0].n
+    const second = (await q(`select call_next_patient($1) n`, [todaySession.id]))[0].n
+    check("call next advances through serials", first === a1.serial_no && second === a2.serial_no, `${first},${second}`)
+    const completed = (await q(`select status from appointments where reference=$1`, [a1.reference]))[0].status
+    check("previous patient marked completed", completed === "completed")
+    const after = (await q(`select * from get_today_queue() where schedule_id = $1`, [todaySession.id]))[0]
+    check("waiting count drops as queue advances", after.waiting === 0 && after.now_serving === a2.serial_no, JSON.stringify(after))
+    await q(`delete from admins where user_id = $1`, [PATIENT_1])
+    await db.exec(`set request.jwt.claim.sub = ''`)
+  } else {
+    console.log("SKIP  live queue (no session scheduled today)")
+  }
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)
@@ -163,7 +192,7 @@ await q(`insert into auth.users values ('00000000-0000-0000-0000-000000000001','
 await q(`insert into admins values ('00000000-0000-0000-0000-000000000001')`)
 await db.exec(`set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001'`)
 const adminAppts = await q(`select count(*)::int c from appointments`)
-check("admin reads appointments", adminAppts[0].c === 5)
+check("admin reads appointments", adminAppts[0].c >= 5, `${adminAppts[0].c}`)
 const adminDocs = await q(`select count(*)::int c from doctors`)
 check("admin sees inactive doctors", adminDocs[0].c === 6)
 await db.exec(`set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002'`)
