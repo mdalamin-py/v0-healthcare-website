@@ -1,13 +1,21 @@
 import Link from "next/link"
-import { CalendarPlus, GraduationCap, Languages } from "lucide-react"
+import { CalendarPlus, GraduationCap, Languages, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { VisitTypeBadge } from "@/components/visit-type-badge"
 import { formatFee, weekdays, weekOrder } from "@/lib/clinic/format"
-import type { DoctorWithSchedules } from "@/lib/supabase/types"
+import type { DoctorRating, DoctorWithSchedules } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
-export function DoctorCard({ doctor, today }: { doctor: DoctorWithSchedules; today: number }) {
+export function DoctorCard({
+  doctor,
+  today,
+  rating,
+}: {
+  doctor: DoctorWithSchedules
+  today: number
+  rating?: DoctorRating
+}) {
   const workingDays = new Set(doctor.doctor_schedules.map((schedule) => schedule.weekday))
   const fee = formatFee(doctor.consultation_fee)
 
@@ -22,6 +30,13 @@ export function DoctorCard({ doctor, today }: { doctor: DoctorWithSchedules; tod
             </Link>
           </h3>
           <p className="text-sm font-medium text-primary">{doctor.specialty}</p>
+          {rating && rating.total > 0 && (
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Star className="size-3.5 fill-star text-star" />
+              <span className="font-semibold text-foreground">{rating.average.toFixed(1)}</span>({rating.total}{" "}
+              {rating.total === 1 ? "review" : "reviews"})
+            </p>
+          )}
           {workingDays.has(today) && (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
               <span className="size-1.5 rounded-full bg-accent" />

@@ -7,7 +7,8 @@ import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { clinicWeekday, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
 import { departmentSlug } from "@/lib/clinic/departments"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
-import { getDoctorBySlug, getDoctors, getOnCallShifts } from "@/lib/clinic/queries"
+import { getDoctorBySlug, getDoctorRatings, getDoctorReviews, getDoctors, getOnCallShifts } from "@/lib/clinic/queries"
+import { StarRating } from "@/components/star-rating"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -34,7 +35,12 @@ export default async function DoctorPage({ params }: Props) {
   const doctor = await getDoctorBySlug((await params).slug)
   if (!doctor) notFound()
 
-  const onCall = await getOnCallShifts({ doctorId: doctor.id, days: 14 })
+  const [onCall, ratings, reviews] = await Promise.all([
+    getOnCallShifts({ doctorId: doctor.id, days: 14 }),
+    getDoctorRatings(),
+    getDoctorReviews(doctor.id),
+  ])
+  const rating = ratings[doctor.id]
   const today = clinicWeekday()
   const fee = formatFee(doctor.consultation_fee)
 
@@ -74,6 +80,13 @@ export default async function DoctorPage({ params }: Props) {
                 {doctor.specialty}
               </Link>
               <h1 className="mt-3 text-4xl font-extrabold text-foreground md:text-5xl">{doctor.full_name}</h1>
+              {rating && rating.total > 0 && (
+                <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <StarRating rating={Math.round(rating.average)} />
+                  <span className="font-semibold text-foreground">{rating.average.toFixed(1)}</span>
+                  from {rating.total} verified {rating.total === 1 ? "patient" : "patients"}
+                </p>
+              )}
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
@@ -137,6 +150,26 @@ export default async function DoctorPage({ params }: Props) {
                 )
               })}
             </ul>
+
+            <h2 className="mt-12 text-2xl font-bold text-foreground">Patient reviews</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Written by patients after a completed visit.</p>
+            {reviews.length > 0 ? (
+              <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+                {reviews.map((review) => (
+                  <li key={review.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <StarRating rating={review.rating} />
+                    {review.comment && <p className="mt-3 text-sm leading-relaxed text-foreground/90">&ldquo;{review.comment}&rdquo;</p>}
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {review.author_name} · Verified patient
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-6 rounded-2xl border border-dashed border-border px-6 py-8 text-center text-sm text-muted-foreground">
+                No reviews yet. Patients can rate their visit from their account after an appointment.
+              </p>
+            )}
           </div>
 
           <aside className="space-y-6 lg:col-span-4">

@@ -3,12 +3,20 @@
 import { useMemo, useState } from "react"
 import { Search, X } from "lucide-react"
 import { DoctorCard } from "@/components/doctors/doctor-card"
-import type { DoctorWithSchedules } from "@/lib/supabase/types"
+import type { DoctorRating, DoctorWithSchedules } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
 const ALL = "All specialties"
 
-export function DoctorDirectory({ doctors, today }: { doctors: DoctorWithSchedules[]; today: number }) {
+export function DoctorDirectory({
+  doctors,
+  today,
+  ratings = {},
+}: {
+  doctors: DoctorWithSchedules[]
+  today: number
+  ratings?: Record<string, DoctorRating>
+}) {
   const [query, setQuery] = useState("")
   const [specialty, setSpecialty] = useState(ALL)
   const [todayOnly, setTodayOnly] = useState(false)
@@ -76,7 +84,7 @@ export function DoctorDirectory({ doctors, today }: { doctors: DoctorWithSchedul
       {results.length > 0 ? (
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {results.map((doctor) => (
-            <DoctorCard key={doctor.id} doctor={doctor} today={today} />
+            <DoctorCard key={doctor.id} doctor={doctor} today={today} rating={ratings[doctor.id]} />
           ))}
         </div>
       ) : (

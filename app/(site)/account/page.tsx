@@ -42,6 +42,12 @@ export default async function AccountPage({ searchParams }: Props) {
   }
 
   const queue = Object.fromEntries((await getTodayQueue()).map((session) => [session.schedule_id, session.now_serving]))
+  const { data: myReviews } = await supabase
+    .from("doctor_reviews")
+    .select("appointment_id, rating, status")
+    .eq("patient_id", user.id)
+  const reviews = Object.fromEntries((myReviews ?? []).map((item) => [item.appointment_id, item]))
+
   const { data } = await supabase
     .from("appointments")
     .select("*, doctor:doctors(full_name, specialty, slug), schedule:doctor_schedules(start_time, end_time)")
@@ -69,7 +75,7 @@ export default async function AccountPage({ searchParams }: Props) {
 
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <MyAppointments appointments={(data ?? []) as unknown as PatientAppointment[]} today={clinicToday()} queue={queue} />
+            <MyAppointments appointments={(data ?? []) as unknown as PatientAppointment[]} today={clinicToday()} queue={queue} reviews={reviews} />
           </div>
           <aside className="lg:col-span-5">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8 lg:sticky lg:top-32">

@@ -4,7 +4,7 @@ import { CtaSection } from "@/components/cta-section"
 import { DoctorDirectory } from "@/components/doctors/doctor-directory"
 import { PageHero } from "@/components/page-hero"
 import { clinicWeekday } from "@/lib/clinic/format"
-import { getDoctors } from "@/lib/clinic/queries"
+import { getDoctorRatings, getDoctors } from "@/lib/clinic/queries"
 
 export const revalidate = 300
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 }
 
 export default async function DoctorsPage() {
-  const doctors = await getDoctors()
+  const [doctors, ratings] = await Promise.all([getDoctors(), getDoctorRatings()])
 
   return (
     <>
@@ -33,7 +33,7 @@ export default async function DoctorsPage() {
       <section className="py-12 lg:py-16">
         <div className="container-page">
           {doctors.length > 0 ? (
-            <DoctorDirectory doctors={doctors} today={clinicWeekday()} />
+            <DoctorDirectory doctors={doctors} today={clinicWeekday()} ratings={ratings} />
           ) : (
             <ClinicUnavailable title="Doctor directory coming soon" />
           )}

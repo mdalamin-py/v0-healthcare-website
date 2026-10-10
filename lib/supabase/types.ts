@@ -13,6 +13,30 @@ export type Database = {
         Update: { user_id?: string; created_at?: string }
         Relationships: []
       }
+      doctor_reviews: {
+        Row: {
+          id: string
+          appointment_id: string
+          doctor_id: string
+          patient_id: string
+          author_name: string
+          rating: number
+          comment: string | null
+          status: "pending" | "approved" | "rejected"
+          created_at: string
+        }
+        Insert: never
+        Update: { status?: "pending" | "approved" | "rejected" }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_reviews_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       callback_requests: {
         Row: {
           id: string
@@ -241,6 +265,8 @@ export type Database = {
       cancel_my_appointment: { Args: { p_appointment_id: string }; Returns: boolean }
       call_next_patient: { Args: { p_schedule_id: string }; Returns: number }
       request_callback: { Args: { p_name: string; p_phone: string; p_concern: string }; Returns: string }
+      submit_review: { Args: { p_appointment_id: string; p_rating: number; p_comment?: string | null }; Returns: string }
+      get_doctor_ratings: { Args: Record<never, never>; Returns: { doctor_id: string; average: number; total: number }[] }
       get_today_queue: {
         Args: Record<never, never>
         Returns: {
@@ -269,5 +295,7 @@ export type OnCallShift = Database["public"]["Tables"]["on_call_shifts"]["Row"]
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]
 export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
+export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
+export type DoctorRating = { average: number; total: number }
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

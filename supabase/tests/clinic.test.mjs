@@ -183,6 +183,33 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("anon cannot read callback requests", visible[0].c === 0)
 }
 
+// Doctor reviews
+{
+  await q(`insert into patients (user_id, full_name, phone) values ($1, 'Maria Gonzalez', '5550002222') on conflict do nothing`, [PATIENT_1])
+  const done = (await q(`select id, doctor_id from appointments where patient_id = $1 and status <> 'completed' limit 1`, [PATIENT_1]))[0]
+  await asPatient(PATIENT_1)
+  await expectError("cannot review a visit that is not completed", `select submit_review($1, 5, 'Great')`, [done.id], "NOT_ELIGIBLE")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`update appointments set status = 'completed' where id = $1`, [done.id])
+  await asPatient(PATIENT_2)
+  await expectError("cannot review someone else's visit", `select submit_review($1, 5, 'Great')`, [done.id], "NOT_ELIGIBLE")
+  await asPatient(PATIENT_1)
+  await expectError("rating must be 1-5", `select submit_review($1, 9, 'x')`, [done.id], "INVALID_RATING")
+  const reviewId = (await q(`select submit_review($1, 4, 'Very caring doctor') id`, [done.id]))[0].id
+  check("patient can review a completed visit", Boolean(reviewId))
+  await expectError("only one review per visit", `select submit_review($1, 5, 'Again')`, [done.id], "ALREADY_REVIEWED")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  const author = (await q(`select author_name from doctor_reviews where id = $1`, [reviewId]))[0].author_name
+  check("author name is first name and initial", author === "Maria G.", author)
+  await db.exec(`set role anon`)
+  const pendingVisible = (await q(`select count(*)::int c from doctor_reviews`))[0].c
+  await db.exec(`reset role`)
+  check("pending reviews are hidden from the public", pendingVisible === 0)
+  await q(`update doctor_reviews set status = 'approved' where id = $1`, [reviewId])
+  const ratings = await q(`select * from get_doctor_ratings() where doctor_id = $1`, [done.doctor_id])
+  check("approved review counts toward the rating", ratings[0]?.total === 1 && Number(ratings[0]?.average) === 4, JSON.stringify(ratings[0]))
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

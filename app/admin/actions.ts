@@ -172,6 +172,19 @@ export async function deleteOnCallShift(shiftId: string): Promise<ActionState> {
 }
 
 // ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+export async function moderateReview(id: string, status: "approved" | "rejected"): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from("doctor_reviews").update({ status }).eq("id", id)
+  if (error) return { error: dbError(error, "Could not update the review.") }
+
+  revalidatePath("/", "layout")
+  return { success: status === "approved" ? "Review published." : "Review hidden." }
+}
+
+// ---------------------------------------------------------------------------
 // Callback requests
 // ---------------------------------------------------------------------------
 

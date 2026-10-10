@@ -1,6 +1,6 @@
 import "server-only"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
-import type { Doctor, DoctorWithSchedules, OnCallShift, QueueSession } from "@/lib/supabase/types"
+import type { Doctor, DoctorRating, DoctorReview, DoctorWithSchedules, OnCallShift, QueueSession } from "@/lib/supabase/types"
 
 export type OnCallWithDoctor = OnCallShift & {
   doctor: Pick<Doctor, "full_name" | "slug" | "specialty">
@@ -85,6 +85,32 @@ export async function getTodayQueue(): Promise<QueueSession[]> {
   const { data, error } = await createPublicClient().rpc("get_today_queue")
   if (error) {
     logError("queue", error)
+    return []
+  }
+  return data
+}
+
+export async function getDoctorRatings(): Promise<Record<string, DoctorRating>> {
+  if (!isSupabaseConfigured()) return {}
+  const { data, error } = await createPublicClient().rpc("get_doctor_ratings")
+  if (error) {
+    logError("ratings", error)
+    return {}
+  }
+  return Object.fromEntries(data.map((row) => [row.doctor_id, { average: Number(row.average), total: row.total }]))
+}
+
+export async function getDoctorReviews(doctorId: string, limit = 6): Promise<DoctorReview[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient()
+    .from("doctor_reviews")
+    .select("*")
+    .eq("doctor_id", doctorId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  if (error) {
+    logError("reviews", error)
     return []
   }
   return data

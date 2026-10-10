@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 export function StarRating({ rating, className }: { rating: number; className?: string }) {
   return (
-    <div className={cn("flex gap-0.5", className)} role="img" aria-label={`${rating} out of 5 stars`}>
+    <span className={cn("inline-flex gap-0.5", className)} role="img" aria-label={`${rating} out of 5 stars`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -11,6 +11,6 @@ export function StarRating({ rating, className }: { rating: number; className?: 
           aria-hidden="true"
         />
       ))}
-    </div>
+    </span>
   )
 }

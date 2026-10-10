@@ -110,3 +110,28 @@ export async function signOutPatient() {
   await supabase.auth.signOut()
   redirect("/")
 }
+
+const reviewErrors: Record<string, string> = {
+  NOT_ELIGIBLE: "You can review a visit once it is completed.",
+  ALREADY_REVIEWED: "You've already reviewed this visit.",
+  INVALID_RATING: "Please choose a rating from 1 to 5 stars.",
+}
+
+export async function submitReview(appointmentId: string, rating: number, comment: string): Promise<Result> {
+  const { supabase, user } = await getPatientSession()
+  if (!supabase || !user) return { ok: false, error: "Please sign in again." }
+
+  const { error } = await supabase.rpc("submit_review", {
+    p_appointment_id: appointmentId,
+    p_rating: Math.round(rating),
+    p_comment: comment.trim().slice(0, 1000) || null,
+  })
+  if (error) {
+    const code = Object.keys(reviewErrors).find((key) => error.message.includes(key))
+    if (!code) console.error("[account] review failed:", error.message)
+    return { ok: false, error: code ? reviewErrors[code] : "We couldn't save your review. Please try again." }
+  }
+
+  revalidatePath("/account")
+  return { ok: true, data: null }
+}

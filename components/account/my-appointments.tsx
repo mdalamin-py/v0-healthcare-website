@@ -2,15 +2,19 @@
 
 import Link from "next/link"
 import { useState, useTransition } from "react"
-import { CalendarPlus, Clock, Loader2, XCircle } from "lucide-react"
+import { CalendarPlus, Clock, Loader2, MessageSquareHeart, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VisitTypeBadge } from "@/components/visit-type-badge"
 import { AddToCalendar } from "@/components/appointments/add-to-calendar"
+import { ReviewForm } from "@/components/account/review-form"
+import { StarRating } from "@/components/star-rating"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { cancelMyAppointment } from "@/app/(site)/account/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
 import type { Appointment, AppointmentStatus, Doctor, DoctorSchedule } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
+
+export type MyReview = { rating: number; status: "pending" | "approved" | "rejected" }
 
 export type PatientAppointment = Appointment & {
   doctor: Pick<Doctor, "full_name" | "specialty" | "slug"> | null
@@ -28,11 +32,15 @@ function AppointmentRow({
   appointment,
   canCancel,
   nowServing,
+  review,
 }: {
   appointment: PatientAppointment
   canCancel: boolean
   nowServing?: number
+  review?: MyReview
 }) {
+  const [reviewing, setReviewing] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -131,6 +139,34 @@ function AppointmentRow({
         )}
       </div>
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {appointment.status === "completed" &&
+        (review || submitted ? (
+          <p className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
+            {review && <StarRating rating={review.rating} />}
+            {submitted || review?.status === "pending"
+              ? "Thanks! Your review will appear after a quick check."
+              : review?.status === "approved"
+                ? "Your review is published."
+                : "Your review was not published."}
+          </p>
+        ) : reviewing ? (
+          <ReviewForm
+            appointmentId={appointment.id}
+            onDone={() => {
+              setReviewing(false)
+              setSubmitted(true)
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setReviewing(true)}
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            <MessageSquareHeart className="size-4" />
+            Rate your visit
+          </button>
+        ))}
     </li>
   )
 }
@@ -139,10 +175,12 @@ export function MyAppointments({
   appointments,
   today,
   queue = {},
+  reviews = {},
 }: {
   appointments: PatientAppointment[]
   today: string
   queue?: Record<string, number>
+  reviews?: Record<string, MyReview>
 }) {
   const upcoming = appointments
     .filter((item) => item.appointment_date >= today && (item.status === "pending" || item.status === "confirmed"))
@@ -184,7 +222,7 @@ export function MyAppointments({
           <h2 className="text-xl font-bold text-foreground">Past & cancelled</h2>
           <ul className="mt-4 space-y-3">
             {history.map((item) => (
-              <AppointmentRow key={item.id} appointment={item} canCancel={false} />
+              <AppointmentRow key={item.id} appointment={item} canCancel={false} review={reviews[item.id]} />
             ))}
           </ul>
         </section>
