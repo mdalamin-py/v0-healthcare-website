@@ -142,7 +142,7 @@ export default async function HomePage() {
             />
             <Button variant="outline" asChild className="rounded-full">
               <Link href="/services">
-                {fill(t.home.allServices, { count: services.length })}
+                {fill(t.home.allServices, { count: services.length }, locale)}
                 <ArrowRight className="size-4" />
               </Link>
             </Button>

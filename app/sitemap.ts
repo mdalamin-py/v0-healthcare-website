@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { buildDepartments } from "@/lib/clinic/departments"
 import { getDoctors } from "@/lib/clinic/queries"
+import { en } from "@/lib/i18n/dictionaries/en"
 import { site } from "@/lib/site"
 
 export const revalidate = 3600
@@ -31,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes.map((route) => ({ url: `${site.url}${route.path}`, priority: route.priority })),
-    ...buildDepartments(doctors).map((department) => ({
+    ...buildDepartments(doctors, en).map((department) => ({
       url: `${site.url}/departments/${department.slug}`,
       priority: 0.6,
     })),

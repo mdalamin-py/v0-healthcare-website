@@ -7,9 +7,10 @@ import { AlertCircle, Loader2, Search, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/components/i18n-provider"
+import { translateMessage } from "@/lib/i18n/config"
 import { cancelAppointment, lookupAppointment, type AppointmentLookup } from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
-import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { lookupSchema, type LookupInput } from "@/lib/validations/appointment"
 import type { AppointmentStatus } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
@@ -21,14 +22,10 @@ const statusStyles: Record<AppointmentStatus, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 }
 
-const statusLabels: Record<AppointmentStatus, string> = {
-  pending: "Pending confirmation",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-}
-
 export function StatusLookup() {
+  const { t, locale } = useI18n()
+  const p = t.statusPage
+  const statusLabel = (status: AppointmentStatus) => (status === "pending" ? p.pending : t.clinic.status[status])
   const [result, setResult] = useState<AppointmentLookup | null | undefined>(undefined)
   const [lookedUp, setLookedUp] = useState<LookupInput | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,7 +69,7 @@ export function StatusLookup() {
       <form onSubmit={onSubmit} noValidate className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="reference">Booking reference</Label>
+            <Label htmlFor="reference">{p.reference}</Label>
             <Input
               id="reference"
               placeholder="DHC-1A2B3C4D"
@@ -81,10 +78,10 @@ export function StatusLookup() {
               aria-invalid={errors.reference ? true : undefined}
               {...form.register("reference")}
             />
-            {errors.reference && <p className="text-sm text-destructive">{errors.reference.message}</p>}
+            {errors.reference && <p className="text-sm text-destructive">{translateMessage(t.messages, errors.reference.message)}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone used for booking</Label>
+            <Label htmlFor="phone">{p.phone}</Label>
             <Input
               id="phone"
               type="tel"
@@ -93,25 +90,25 @@ export function StatusLookup() {
               aria-invalid={errors.phone ? true : undefined}
               {...form.register("phone")}
             />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+            {errors.phone && <p className="text-sm text-destructive">{translateMessage(t.messages, errors.phone.message)}</p>}
           </div>
         </div>
         <Button type="submit" size="lg" disabled={isSubmitting} className="mt-6 h-12 w-full rounded-full">
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-          Find my appointment
+          {p.find}
         </Button>
       </form>
 
       {error && (
         <div role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          {error}
+          {translateMessage(t.messages, error)}
         </div>
       )}
 
       {result === null && (
         <p role="status" className="rounded-2xl border border-dashed border-border px-6 py-8 text-center text-muted-foreground">
-          We couldn&apos;t find an appointment with those details. Check your reference and phone number.
+          {p.notFound}
         </p>
       )}
 
@@ -122,48 +119,48 @@ export function StatusLookup() {
               <p className="font-mono text-sm text-muted-foreground">{result.reference}</p>
               <h2 className="text-xl font-bold text-foreground">{result.doctor_name}</h2>
               <p className="text-sm text-primary">
-                {result.specialty} · {visitTypeMeta(result.visit_type).label}
+                {t.clinic.specialties[result.specialty] ?? result.specialty} · {t.clinic.visit[result.visit_type ?? "in_clinic"].label}
               </p>
             </div>
             <span className={cn("rounded-full px-3 py-1 text-sm font-medium", statusStyles[result.status])}>
-              {statusLabels[result.status]}
+              {statusLabel(result.status)}
             </span>
           </div>
           <dl className="grid gap-4 p-6 sm:grid-cols-3">
             <div>
-              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Serial number</dt>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">{p.serial}</dt>
               <dd className="font-display text-3xl font-extrabold text-foreground">{result.serial_no}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Date</dt>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">{p.date}</dt>
               <dd className="mt-1 font-semibold text-foreground">
-                {formatDate(result.appointment_date, { weekday: "long", year: "numeric" })}
+                {formatDate(result.appointment_date, { weekday: "long", year: "numeric" }, locale)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Session</dt>
-              <dd className="mt-1 font-semibold text-foreground">{formatTimeRange(result.start_time, result.end_time)}</dd>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">{p.session}</dt>
+              <dd className="mt-1 font-semibold text-foreground">{formatTimeRange(result.start_time, result.end_time, locale)}</dd>
             </div>
           </dl>
           {canCancel && (
             <div className="border-t border-border bg-muted/40 p-6">
               {confirmCancel ? (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-medium text-foreground">Cancel this appointment? This can&apos;t be undone.</p>
+                  <p className="text-sm font-medium text-foreground">{p.cancelConfirm}</p>
                   <div className="flex gap-2">
                     <Button variant="outline" className="rounded-full" onClick={() => setConfirmCancel(false)}>
-                      Keep it
+                      {p.keep}
                     </Button>
                     <Button variant="destructive" className="rounded-full" disabled={cancelling} onClick={onCancel}>
                       {cancelling && <Loader2 className="size-4 animate-spin" />}
-                      Yes, cancel
+                      {p.yesCancel}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <Button variant="outline" className="rounded-full" onClick={() => setConfirmCancel(true)}>
                   <XCircle className="size-4" />
-                  Cancel appointment
+                  {p.cancel}
                 </Button>
               )}
             </div>

@@ -9,17 +9,14 @@ import { Button } from "@/components/ui/button"
 import { getPatientSession } from "@/lib/auth/patient"
 import { getDoctors } from "@/lib/clinic/queries"
 import { clinicToday } from "@/lib/clinic/time"
+import { getDictionary } from "@/lib/i18n/server"
 
-export const metadata: Metadata = {
-  title: "Book an Appointment",
-  description: "Book a doctor's appointment online in a few steps and get your serial number instantly.",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary()
+  return { title: t.bookPage.metaTitle, description: t.bookPage.metaDescription }
 }
 
-const highlights = [
-  { icon: CalendarClock, title: "Real-time availability", body: "See open sessions for the next 30 days." },
-  { icon: Ticket, title: "Instant serial number", body: "Know your place in the queue right away." },
-  { icon: ShieldCheck, title: "Private & secure", body: "Your details are only visible to our care team." },
-]
+const highlightIcons = [CalendarClock, Ticket, ShieldCheck]
 
 /** Whole years between two YYYY-MM-DD dates. */
 function ageOn(birth: string, today: string) {
@@ -31,7 +28,8 @@ function ageOn(birth: string, today: string) {
 type Props = { searchParams: Promise<{ doctor?: string }> }
 
 export default async function BookAppointmentPage({ searchParams }: Props) {
-  const [{ doctor }, doctors, { user, profile }] = await Promise.all([searchParams, getDoctors(), getPatientSession()])
+  const [{ doctor }, doctors, { user, profile }, t] = await Promise.all([searchParams, getDoctors(), getPatientSession(), getDictionary()])
+  const p = t.bookPage
   const here = doctor ? `/appointments/book?doctor=${encodeURIComponent(doctor)}` : "/appointments/book"
 
   if (user && !profile) redirect(`/account?next=${encodeURIComponent(here)}`)
@@ -41,20 +39,23 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
   return (
     <>
       <PageHero
-        eyebrow="Appointments"
-        title="Book an appointment"
-        description={<p>Choose a doctor, pick a session that suits you, and get your serial number instantly.</p>}
+        eyebrow={p.eyebrow}
+        title={p.title}
+        description={<p>{p.intro}</p>}
       >
         <ul className="grid gap-3 sm:grid-cols-3">
-          {highlights.map((item) => (
+          {p.highlights.map((item, index) => {
+            const Icon = highlightIcons[index]
+            return (
             <li key={item.title} className="flex gap-3 rounded-2xl border border-border bg-card/80 p-4 backdrop-blur">
-              <item.icon className="mt-0.5 size-5 shrink-0 text-primary" />
+              <Icon className="mt-0.5 size-5 shrink-0 text-primary" />
               <span>
                 <span className="block text-sm font-semibold text-foreground">{item.title}</span>
                 <span className="block text-xs text-muted-foreground">{item.body}</span>
               </span>
             </li>
-          ))}
+            )
+          })}
         </ul>
       </PageHero>
 
@@ -65,15 +66,12 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
               <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-lg shadow-primary/25">
                 <UserPlus className="size-7" />
               </span>
-              <h2 className="mt-6 text-2xl font-bold text-foreground">Create an account to book</h2>
-              <p className="mt-2 max-w-md text-muted-foreground">
-                Sign up or sign in with your email or mobile number. It takes less than a minute, and you can manage all
-                your appointments in one place.
-              </p>
+              <h2 className="mt-6 text-2xl font-bold text-foreground">{p.accountTitle}</h2>
+              <p className="mt-2 max-w-md text-muted-foreground">{p.accountText}</p>
               <Button asChild size="lg" className="mt-8 h-12 rounded-full px-8 shadow-lg shadow-primary/25">
                 <Link href={`/account/login?next=${encodeURIComponent(here)}`}>
                   <LogIn className="size-5" />
-                  Sign up or sign in
+                  {p.accountCta}
                 </Link>
               </Button>
             </div>
@@ -104,12 +102,12 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
               initialSlug={doctor}
             />
           ) : (
-            <ClinicUnavailable title="Online booking coming soon" />
+            <ClinicUnavailable title={p.comingSoon} />
           )}
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already booked?{" "}
+            {p.alreadyBooked}{" "}
             <Link href="/account" className="font-medium text-primary hover:underline">
-              Manage your appointments
+              {p.manage}
             </Link>
           </p>
         </div>

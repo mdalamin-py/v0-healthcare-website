@@ -4,10 +4,8 @@ import type { Metadata } from "next"
 import { ArrowLeft, BadgeDollarSign, CalendarOff, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
-import { clinicWeekday, formatDate, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
+import { clinicWeekday, formatDate, formatDateTime, formatFee, formatTimeRange, weekOrder } from "@/lib/clinic/format"
 import { departmentSlug } from "@/lib/clinic/departments"
-import { visitTypeMeta } from "@/lib/clinic/visit-types"
-import { dutyMeta } from "@/lib/clinic/duty"
 import {
   getDoctorBySlug,
   getDoctorRatings,
@@ -17,6 +15,8 @@ import {
   getUpcomingLeaves,
 } from "@/lib/clinic/queries"
 import { StarRating } from "@/components/star-rating"
+import { fill } from "@/lib/i18n/config"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -25,12 +25,12 @@ export const dynamic = "force-dynamic"
 type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const doctor = await getDoctorBySlug((await params).slug)
-  if (!doctor) return { title: "Doctor not found" }
+  const [doctor, t] = await Promise.all([getDoctorBySlug((await params).slug), getDictionary()])
+  if (!doctor) return { title: t.doctorProfile.notFound }
+  const specialty = t.clinic.specialties[doctor.specialty] ?? doctor.specialty
   return {
-    title: `${doctor.full_name}, ${doctor.specialty}`,
-    description:
-      doctor.bio ?? `${doctor.full_name} is a ${doctor.specialty} specialist at ${site.name}. View schedule and book online.`,
+    title: `${doctor.full_name}, ${specialty}`,
+    description: doctor.bio ?? fill(t.doctorProfile.metaDescription, { name: doctor.full_name, specialty, site: site.name }),
   }
 }
 
@@ -38,23 +38,27 @@ export default async function DoctorPage({ params }: Props) {
   const doctor = await getDoctorBySlug((await params).slug)
   if (!doctor) notFound()
 
-  const [onCall, ratings, reviews, leaves] = await Promise.all([
+  const [onCall, ratings, reviews, leaves, t, locale] = await Promise.all([
     getOnCallShifts({ doctorId: doctor.id, days: 14, dutyTypes: ["on_call", "emergency", "ward"] }),
     getDoctorRatings(),
     getDoctorReviews(doctor.id),
     getUpcomingLeaves(doctor.id),
+    getDictionary(),
+    getLocale(),
   ])
+  const p = t.doctorProfile
+  const specialty = t.clinic.specialties[doctor.specialty] ?? doctor.specialty
   const rating = ratings[doctor.id]
   const today = clinicWeekday()
   const fee = formatFee(doctor.consultation_fee)
 
   const facts = [
-    doctor.qualification && { icon: GraduationCap, label: "Qualification", value: doctor.qualification },
-    doctor.experience_years > 0 && { icon: Users, label: "Experience", value: `${doctor.experience_years}+ years` },
-    { icon: Languages, label: "Languages", value: doctor.languages.join(", ") },
-    { icon: Video, label: "Visit types", value: doctor.visit_types.map((type) => visitTypeMeta(type).label).join(", ") },
-    doctor.room && { icon: DoorOpen, label: "Location", value: doctor.room },
-    fee && { icon: BadgeDollarSign, label: "Consultation fee", value: fee },
+    doctor.qualification && { icon: GraduationCap, label: t.clinic.qualification, value: doctor.qualification },
+    doctor.experience_years > 0 && { icon: Users, label: p.experience, value: fill(p.experienceValue, { count: doctor.experience_years }, locale) },
+    { icon: Languages, label: t.clinic.languages, value: doctor.languages.join(", ") },
+    { icon: Video, label: t.clinic.visitTypes, value: doctor.visit_types.map((type) => t.clinic.visit[type].label).join(", ") },
+    doctor.room && { icon: DoorOpen, label: p.location, value: doctor.room },
+    fee && { icon: BadgeDollarSign, label: p.fee, value: fee },
   ].filter(Boolean) as { icon: typeof Users; label: string; value: string }[]
 
   return (
@@ -68,7 +72,7 @@ export default async function DoctorPage({ params }: Props) {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="size-4" />
-            All doctors
+            {p.allDoctors}
           </Link>
           <div className="mt-8 flex flex-col gap-8 md:flex-row md:items-center">
             <DoctorAvatar
@@ -81,14 +85,14 @@ export default async function DoctorPage({ params }: Props) {
                 href={`/departments/${departmentSlug(doctor.specialty)}`}
                 className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary transition-colors hover:bg-primary/20"
               >
-                {doctor.specialty}
+                {specialty}
               </Link>
               <h1 className="mt-3 text-4xl font-extrabold text-foreground md:text-5xl">{doctor.full_name}</h1>
               {rating && rating.total > 0 && (
                 <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                   <StarRating rating={Math.round(rating.average)} />
                   <span className="font-semibold text-foreground">{rating.average.toFixed(1)}</span>
-                  from {rating.total} verified {rating.total === 1 ? "patient" : "patients"}
+                  {rating.total === 1 ? p.ratingFromOne : fill(p.ratingFrom, { count: rating.total }, locale)}
                 </p>
               )}
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
@@ -99,18 +103,18 @@ export default async function DoctorPage({ params }: Props) {
                   href="/interns"
                   className="inline-flex h-12 items-center justify-center rounded-full border border-border px-7 text-sm font-medium text-foreground hover:border-primary/40"
                 >
-                  View intern duty roster
+                  {p.internRoster}
                 </Link>
               ) : doctor.accepting_appointments ? (
                 <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
                   <Link href={`/appointments/book?doctor=${doctor.slug}`}>
                     <CalendarPlus className="size-5" />
-                    Book appointment
+                    {t.common.bookAppointment}
                   </Link>
                 </Button>
               ) : (
                 <span className="inline-flex h-12 items-center justify-center rounded-full border border-dashed border-border px-7 text-sm font-medium text-muted-foreground">
-                  Not accepting new appointments
+                  {p.notAccepting}
                 </span>
               )}
               <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-card/70 px-7">
@@ -127,8 +131,8 @@ export default async function DoctorPage({ params }: Props) {
       <section className="py-12 lg:py-16">
         <div className="container-page grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
-            <h2 className="text-2xl font-bold text-foreground">Weekly schedule</h2>
-            <p className="mt-1 text-sm text-muted-foreground">All times are Pacific Time.</p>
+            <h2 className="text-2xl font-bold text-foreground">{p.weeklySchedule}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t.clinic.pacificTime}</p>
             <ul className="mt-6 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               {weekOrder.map((day) => {
                 const sessions = doctor.doctor_schedules.filter((schedule) => schedule.weekday === day)
@@ -141,10 +145,10 @@ export default async function DoctorPage({ params }: Props) {
                     )}
                   >
                     <span className="flex items-center gap-2 font-semibold text-foreground">
-                      {weekdays[day].long}
+                      {t.clinic.weekdaysLong[day]}
                       {day === today && (
                         <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                          Today
+                          {t.clinic.today}
                         </span>
                       )}
                     </span>
@@ -156,20 +160,20 @@ export default async function DoctorPage({ params }: Props) {
                             className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
                           >
                             <Clock className="size-3.5" />
-                            {formatTimeRange(session.start_time, session.end_time)}
+                            {formatTimeRange(session.start_time, session.end_time, locale)}
                           </span>
                         ))}
                       </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">Not available</span>
+                      <span className="text-sm text-muted-foreground">{t.clinic.notAvailableTitle}</span>
                     )}
                   </li>
                 )
               })}
             </ul>
 
-            <h2 className="mt-12 text-2xl font-bold text-foreground">Patient reviews</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Written by patients after a completed visit.</p>
+            <h2 className="mt-12 text-2xl font-bold text-foreground">{p.reviews}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{p.reviewsNote}</p>
             {reviews.length > 0 ? (
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                 {reviews.map((review) => (
@@ -177,14 +181,14 @@ export default async function DoctorPage({ params }: Props) {
                     <StarRating rating={review.rating} />
                     {review.comment && <p className="mt-3 text-sm leading-relaxed text-foreground/90">&ldquo;{review.comment}&rdquo;</p>}
                     <p className="mt-3 text-xs text-muted-foreground">
-                      {review.author_name} · Verified patient
+                      {review.author_name} · {p.verifiedPatient}
                     </p>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="mt-6 rounded-2xl border border-dashed border-border px-6 py-8 text-center text-sm text-muted-foreground">
-                No reviews yet. Patients can rate their visit from their account after an appointment.
+                {p.noReviews}
               </p>
             )}
           </div>
@@ -207,47 +211,47 @@ export default async function DoctorPage({ params }: Props) {
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h2 className="flex items-center gap-2 font-semibold text-foreground">
                 <CalendarOff className="size-4 text-red-500" />
-                Upcoming days off
+                {p.daysOff}
               </h2>
               {leaves.length > 0 ? (
                 <ul className="mt-4 space-y-2 text-sm">
                   {leaves.map((leave) => (
                     <li key={leave.id} className="flex items-center justify-between gap-3 rounded-xl bg-red-500/5 px-3 py-2">
                       <span className="font-medium text-foreground">
-                        {formatDate(leave.leave_date, { weekday: "short", month: "short", day: "numeric" })}
+                        {formatDate(leave.leave_date, { weekday: "short", month: "short", day: "numeric" }, locale)}
                       </span>
                       {leave.reason && <span className="truncate text-xs text-muted-foreground">{leave.reason}</span>}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No days off scheduled.</p>
+                <p className="mt-3 text-sm text-muted-foreground">{p.noDaysOff}</p>
               )}
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h2 className="flex items-center gap-2 font-semibold text-foreground">
                 <Moon className="size-4 text-primary" />
-                Upcoming duty shifts
+                {p.dutyShifts}
               </h2>
               {onCall.length > 0 ? (
                 <ul className="mt-4 space-y-3 text-sm">
                   {onCall.slice(0, 5).map((shift) => (
                     <li key={shift.id} className="rounded-xl bg-muted/60 px-3 py-2">
-                      <span className="font-medium text-foreground">{formatDateTime(shift.starts_at)}</span>
+                      <span className="font-medium text-foreground">{formatDateTime(shift.starts_at, {}, locale)}</span>
                       <span className="text-muted-foreground">
                         {" "}
-                        → {formatDateTime(shift.ends_at, { weekday: undefined, month: undefined, day: undefined })}
+                        → {formatDateTime(shift.ends_at, { weekday: undefined, month: undefined, day: undefined }, locale)}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {dutyMeta(shift.duty_type).label}
+                        {t.clinic.duty[shift.duty_type ?? "on_call"]?.label}
                         {shift.note && ` · ${shift.note}`}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No duty shifts in the next two weeks.</p>
+                <p className="mt-3 text-sm text-muted-foreground">{p.noDutyShifts}</p>
               )}
             </div>
           </aside>

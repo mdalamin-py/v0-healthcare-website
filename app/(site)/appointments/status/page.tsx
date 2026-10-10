@@ -2,28 +2,30 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { StatusLookup } from "@/components/appointments/status-lookup"
 import { PageHero } from "@/components/page-hero"
+import { getDictionary } from "@/lib/i18n/server"
 
-export const metadata: Metadata = {
-  title: "Check Appointment Status",
-  description: "Check your appointment status and serial number, or cancel a booking online.",
-  robots: { index: false },
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getDictionary()
+  return { title: t.statusPage.metaTitle, description: t.statusPage.metaDescription, robots: { index: false } }
 }
 
-export default function AppointmentStatusPage() {
+export default async function AppointmentStatusPage() {
+  const p = (await getDictionary()).statusPage
+
   return (
     <>
       <PageHero
-        eyebrow="Appointments"
-        title="Check your appointment"
-        description={<p>Enter your booking reference and phone number to see your serial number and status.</p>}
+        eyebrow={p.eyebrow}
+        title={p.title}
+        description={<p>{p.intro}</p>}
       />
       <section className="py-12 lg:py-16">
         <div className="container-page max-w-3xl">
           <StatusLookup />
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Need a new appointment?{" "}
+            {p.needNew}{" "}
             <Link href="/appointments/book" className="font-medium text-primary hover:underline">
-              Book online
+              {p.bookOnline}
             </Link>
           </p>
         </div>

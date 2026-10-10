@@ -1,3 +1,5 @@
+import { intlLocale, type Locale } from "@/lib/i18n/config"
+
 export const CLINIC_TIME_ZONE = "America/Los_Angeles"
 
 export const weekdays = [
@@ -14,21 +16,26 @@ export const weekdays = [
 export const weekOrder = [1, 2, 3, 4, 5, 6, 0] as const
 
 /** "14:30:00" -> "2:30 PM" */
-export function formatTime(time: string) {
+export function formatTime(time: string, locale: Locale = "en") {
   const [hours, minutes] = time.split(":").map(Number)
-  const period = hours >= 12 ? "PM" : "AM"
-  const hour12 = hours % 12 || 12
-  return `${hour12}:${String(minutes).padStart(2, "0")} ${period}`
+  if (locale === "en") {
+    const period = hours >= 12 ? "PM" : "AM"
+    const hour12 = hours % 12 || 12
+    return `${hour12}:${String(minutes).padStart(2, "0")} ${period}`
+  }
+  return new Intl.DateTimeFormat(intlLocale[locale], { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(
+    new Date(Date.UTC(2000, 0, 1, hours, minutes)),
+  )
 }
 
-export function formatTimeRange(start: string, end: string) {
-  return `${formatTime(start)} – ${formatTime(end)}`
+export function formatTimeRange(start: string, end: string, locale: Locale = "en") {
+  return `${formatTime(start, locale)} – ${formatTime(end, locale)}`
 }
 
 /** "2026-10-12" -> "Mon, Oct 12" (date-only values, no time zone shift). */
-export function formatDate(date: string, options: Intl.DateTimeFormatOptions = {}) {
+export function formatDate(date: string, options: Intl.DateTimeFormatOptions = {}, locale: Locale = "en") {
   const [year, month, day] = date.split("-").map(Number)
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale[locale], {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -38,8 +45,8 @@ export function formatDate(date: string, options: Intl.DateTimeFormatOptions = {
 }
 
 /** Format an instant in the clinic's time zone. */
-export function formatDateTime(value: string, options: Intl.DateTimeFormatOptions = {}) {
-  return new Intl.DateTimeFormat("en-US", {
+export function formatDateTime(value: string, options: Intl.DateTimeFormatOptions = {}, locale: Locale = "en") {
+  return new Intl.DateTimeFormat(intlLocale[locale], {
     weekday: "short",
     month: "short",
     day: "numeric",

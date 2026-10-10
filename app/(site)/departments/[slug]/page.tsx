@@ -7,6 +7,8 @@ import { DoctorCard } from "@/components/doctors/doctor-card"
 import { buildDepartments } from "@/lib/clinic/departments"
 import { clinicWeekday } from "@/lib/clinic/format"
 import { getDoctors } from "@/lib/clinic/queries"
+import { fill } from "@/lib/i18n/config"
+import { getDictionary } from "@/lib/i18n/server"
 import { site } from "@/lib/site"
 
 export const dynamic = "force-dynamic"
@@ -14,18 +16,21 @@ export const dynamic = "force-dynamic"
 type Props = { params: Promise<{ slug: string }> }
 
 async function getDepartment(slug: string) {
-  return buildDepartments(await getDoctors()).find((department) => department.slug === slug) ?? null
+  const [doctors, t] = await Promise.all([getDoctors(), getDictionary()])
+  return buildDepartments(doctors, t).find((department) => department.slug === slug) ?? null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const department = await getDepartment((await params).slug)
-  if (!department) return { title: "Department not found" }
+  if (!department) return { title: (await getDictionary()).departmentsPage.notFound }
   return { title: department.name, description: department.summary }
 }
 
 export default async function DepartmentPage({ params }: Props) {
   const department = await getDepartment((await params).slug)
   if (!department) notFound()
+  const t = await getDictionary()
+  const p = t.departmentsPage
 
   const today = clinicWeekday()
   const bookHref =
@@ -43,7 +48,7 @@ export default async function DepartmentPage({ params }: Props) {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="size-4" />
-            All departments
+            {p.allDepartments}
           </Link>
           <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -57,7 +62,7 @@ export default async function DepartmentPage({ params }: Props) {
               <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
                 <Link href={bookHref}>
                   <CalendarPlus className="size-5" />
-                  Book appointment
+                  {t.common.bookAppointment}
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-card/70 px-7">
@@ -75,8 +80,8 @@ export default async function DepartmentPage({ params }: Props) {
         <section className="py-14">
           <div className="container-page grid gap-6 md:grid-cols-2">
             {[
-              { title: "Conditions we treat", items: department.conditions },
-              { title: "Services", items: department.services },
+              { title: p.conditions, items: department.conditions },
+              { title: p.services, items: department.services },
             ]
               .filter((block) => block.items.length > 0)
               .map((block) => (
@@ -98,7 +103,7 @@ export default async function DepartmentPage({ params }: Props) {
 
       <section className="bg-muted/40 py-14 lg:py-20">
         <div className="container-page">
-          <h2 className="text-2xl font-bold text-foreground md:text-3xl">{department.name} doctors</h2>
+          <h2 className="text-2xl font-bold text-foreground md:text-3xl">{fill(p.doctorsHeading, { name: department.name })}</h2>
           {department.doctors.length > 0 ? (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {department.doctors.map((doctor) => (
@@ -107,8 +112,7 @@ export default async function DepartmentPage({ params }: Props) {
             </div>
           ) : (
             <p className="mt-6 rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center text-muted-foreground">
-              Please call {site.phone.display} and our coordinators will arrange a {department.name.toLowerCase()} visit
-              for you.
+              {fill(p.callToArrange, { phone: site.phone.display, name: department.name })}
             </p>
           )}
         </div>

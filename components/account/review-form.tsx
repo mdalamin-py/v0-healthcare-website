@@ -4,11 +4,14 @@ import { useState, useTransition } from "react"
 import { Loader2, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { submitReview } from "@/app/(site)/account/actions"
+import { useI18n } from "@/components/i18n-provider"
+import { fill, translateMessage } from "@/lib/i18n/config"
 import { cn } from "@/lib/utils"
 
-const labels = ["Poor", "Fair", "Good", "Very good", "Excellent"]
-
 export function ReviewForm({ appointmentId, onDone }: { appointmentId: string; onDone?: () => void }) {
+  const { t, locale } = useI18n()
+  const r = t.reviewForm
+  const labels = r.labels
   const [rating, setRating] = useState(0)
   const [hover, setHover] = useState(0)
   const [comment, setComment] = useState("")
@@ -20,7 +23,7 @@ export function ReviewForm({ appointmentId, onDone }: { appointmentId: string; o
     <form
       onSubmit={(event) => {
         event.preventDefault()
-        if (!rating) return setError("Please choose a star rating.")
+        if (!rating) return setError(r.chooseRating)
         setError(null)
         startTransition(async () => {
           const result = await submitReview(appointmentId, rating, comment)
@@ -31,7 +34,7 @@ export function ReviewForm({ appointmentId, onDone }: { appointmentId: string; o
       className="mt-4 rounded-2xl border border-border bg-muted/40 p-4"
     >
       <fieldset>
-        <legend className="text-sm font-semibold text-foreground">How was your visit?</legend>
+        <legend className="text-sm font-semibold text-foreground">{r.question}</legend>
         <div className="mt-2 flex items-center gap-1" onMouseLeave={() => setHover(0)}>
           {labels.map((label, index) => {
             const value = index + 1
@@ -44,7 +47,7 @@ export function ReviewForm({ appointmentId, onDone }: { appointmentId: string; o
                   checked={rating === value}
                   onChange={() => setRating(value)}
                   className="peer sr-only"
-                  aria-label={`${value} star${value > 1 ? "s" : ""} — ${label}`}
+                  aria-label={fill(r.starAria, { value, label }, locale)}
                 />
                 <Star
                   className={cn(
@@ -59,22 +62,22 @@ export function ReviewForm({ appointmentId, onDone }: { appointmentId: string; o
         </div>
       </fieldset>
       <label className="mt-3 block">
-        <span className="sr-only">Comment</span>
+        <span className="sr-only">{r.comment}</span>
         <textarea
           value={comment}
           onChange={(event) => setComment(event.target.value)}
           maxLength={1000}
           rows={3}
-          placeholder="Share a few words about your experience (optional)"
+          placeholder={r.placeholder}
           className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
         />
       </label>
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{translateMessage(t.messages, error)}</p>}
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">Only your first name and initial are shown.</p>
+        <p className="text-xs text-muted-foreground">{r.privacy}</p>
         <Button type="submit" size="sm" disabled={pending} className="rounded-full">
           {pending && <Loader2 className="size-4 animate-spin" />}
-          Submit review
+          {r.submit}
         </Button>
       </div>
     </form>

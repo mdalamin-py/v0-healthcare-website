@@ -8,12 +8,13 @@ import { getDoctorSession } from "@/lib/doctor/session"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
 import { clinicToday } from "@/lib/clinic/time"
 import { site } from "@/lib/site"
+import { fill } from "@/lib/i18n/config"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import type { DoctorAppointment, DoctorLeave } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
-export const metadata: Metadata = {
-  title: "Doctor portal",
-  robots: { index: false },
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).doctorPortal.metaTitle, robots: { index: false } }
 }
 
 const visitIcon = { in_clinic: Stethoscope, video: Video, home_visit: Home } as const
@@ -21,6 +22,8 @@ const visitIcon = { in_clinic: Stethoscope, video: Video, home_visit: Home } as 
 export default async function DoctorPortalPage() {
   const { supabase, user, doctor } = await getDoctorSession()
   if (!supabase || !user) redirect("/account/login?next=/doctor-portal")
+  const [t, locale] = await Promise.all([getDictionary(), getLocale()])
+  const d = t.doctorPortal
 
   if (!doctor) {
     return (
@@ -28,13 +31,10 @@ export default async function DoctorPortalPage() {
         <span className="flex size-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
           <UserX className="size-8" />
         </span>
-        <h1 className="mt-5 text-3xl font-bold text-foreground">No doctor profile linked</h1>
-        <p className="mt-3 max-w-md text-muted-foreground">
-          You are signed in as <strong className="text-foreground">{user.email ?? user.phone}</strong>. Ask the clinic admin to
-          save this email as your doctor email, then sign in again.
-        </p>
+        <h1 className="mt-5 text-3xl font-bold text-foreground">{d.notLinkedTitle}</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">{fill(d.notLinkedText, { who: user.email ?? user.phone ?? "" })}</p>
         <Button asChild variant="outline" className="mt-6 rounded-full">
-          <a href={site.phone.href}>Call the clinic</a>
+          <a href={site.phone.href}>{d.callClinic}</a>
         </Button>
       </section>
     )
@@ -57,15 +57,15 @@ export default async function DoctorPortalPage() {
       <section className="border-b border-border bg-gradient-to-br from-primary/10 via-background to-accent/10">
         <div className="container-page flex flex-col gap-6 py-12 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary">Doctor portal</p>
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary">{d.eyebrow}</p>
             <h1 className="mt-2 text-4xl font-extrabold text-foreground">{doctor.full_name}</h1>
-            <p className="mt-1 text-muted-foreground">{doctor.specialty}</p>
+            <p className="mt-1 text-muted-foreground">{t.clinic.specialties[doctor.specialty] ?? doctor.specialty}</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             {[
-              { label: "Today", value: todays.length },
-              { label: "Next 7 days", value: active.length },
-              { label: "Days off", value: leaves.length },
+              { label: d.statToday, value: todays.length },
+              { label: d.statWeek, value: active.length },
+              { label: d.statDaysOff, value: leaves.length },
             ].map((stat) => (
               <div key={stat.label} className="rounded-2xl border border-border bg-card px-5 py-3 shadow-sm">
                 <p className="font-display text-2xl font-extrabold text-foreground">{stat.value}</p>
@@ -80,14 +80,12 @@ export default async function DoctorPortalPage() {
         <div className="container-page grid gap-8 lg:grid-cols-12">
           <div className="space-y-8 lg:col-span-5">
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-bold text-foreground">Online bookings</h2>
+              <h2 className="mb-4 text-lg font-bold text-foreground">{d.bookingsTitle}</h2>
               <BookingToggle accepting={doctor.accepting_appointments} />
             </div>
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-foreground">Days off</h2>
-              <p className="mb-4 mt-1 text-sm text-muted-foreground">
-                Days you won&apos;t sit. They show on the public schedule and block bookings.
-              </p>
+              <h2 className="text-lg font-bold text-foreground">{d.daysOffTitle}</h2>
+              <p className="mb-4 mt-1 text-sm text-muted-foreground">{d.daysOffText}</p>
               <LeaveManager leaves={leaves} today={today} />
             </div>
           </div>
@@ -97,15 +95,15 @@ export default async function DoctorPortalPage() {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
                   <ListOrdered className="size-5 text-primary" />
-                  Your serial list
+                  {d.serialList}
                 </h2>
                 <Link href="/queue" className="text-sm font-medium text-primary hover:underline">
-                  Live queue
+                  {d.liveQueue}
                 </Link>
               </div>
               {active.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-                  No bookings in the next 7 days.
+                  {d.noBookings}
                 </p>
               ) : (
                 <div className="space-y-6">
@@ -113,7 +111,8 @@ export default async function DoctorPortalPage() {
                     <div key={date}>
                       <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
                         <CalendarDays className="size-4 text-muted-foreground" />
-                        {date === today ? "Today" : formatDate(date)} · {items.length} {items.length === 1 ? "patient" : "patients"}
+                        {date === today ? d.statToday : formatDate(date, {}, locale)} ·{" "}
+                        {items.length === 1 ? d.patientOne : fill(d.patientMany, { count: items.length }, locale)}
                       </h3>
                       <ul className="divide-y divide-border rounded-2xl border border-border">
                         {items.map((item) => {
@@ -129,11 +128,11 @@ export default async function DoctorPortalPage() {
                                   {item.patient_age != null && <span className="text-muted-foreground"> · {item.patient_age}y</span>}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatTimeRange(item.start_time, item.end_time)} · {item.patient_phone}
+                                  {formatTimeRange(item.start_time, item.end_time, locale)} · {item.patient_phone}
                                   {item.reason && ` · ${item.reason}`}
                                 </p>
                                 {item.visit_type === "home_visit" && item.patient_address && (
-                                  <p className="text-xs text-muted-foreground">Home visit: {item.patient_address}</p>
+                                  <p className="text-xs text-muted-foreground">{fill(d.homeVisit, { address: item.patient_address })}</p>
                                 )}
                               </div>
                               <span
@@ -143,7 +142,7 @@ export default async function DoctorPortalPage() {
                                 )}
                               >
                                 <Icon className="size-3" />
-                                {item.status}
+                                {t.clinic.status[item.status]}
                               </span>
                             </li>
                           )
