@@ -46,13 +46,14 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
         <div className="container-page max-w-4xl">
           {doctors.length > 0 ? (
             <BookingWizard
-              doctors={doctors.map(({ id, slug, full_name, specialty, photo_url, room }) => ({
+              doctors={doctors.map(({ id, slug, full_name, specialty, photo_url, room, visit_types }) => ({
                 id,
                 slug,
                 full_name,
                 specialty,
                 photo_url,
                 room,
+                visit_types,
               }))}
               initialSlug={doctor}
             />

@@ -26,13 +26,20 @@ import {
   type Booking,
 } from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
 import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
-import type { Doctor } from "@/lib/supabase/types"
+import type { Doctor, VisitType } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
-export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "specialty" | "photo_url" | "room">
+export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "specialty" | "photo_url" | "room" | "visit_types">
 
 const steps = ["Doctor", "Date & time", "Patient details", "Confirmed"] as const
+
+const visitInstructions: Record<VisitType, string> = {
+  in_clinic: "Please arrive 15 minutes early and bring a photo ID and insurance card.",
+  video: "We will email or text you a secure video link before your session. Please have your ID and insurance card ready.",
+  home_visit: "Our clinician will call before arriving. Please have your ID, insurance card and current medications ready.",
+}
 
 function Stepper({ current }: { current: number }) {
   return (
@@ -87,6 +94,7 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
   const [doctor, setDoctor] = useState<BookableDoctor | null>(initialDoctor)
   const [slots, setSlots] = useState<Availability[] | null>(null)
   const [slot, setSlot] = useState<Availability | null>(null)
+  const [visitType, setVisitType] = useState<VisitType>(initialDoctor?.visit_types[0] ?? "in_clinic")
   const [booking, setBooking] = useState<Booking | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
@@ -123,7 +131,16 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
   const submit = form.handleSubmit(async (values) => {
     if (!slot) return
     setError(null)
-    const result = await bookAppointment({ ...values, scheduleId: slot.schedule_id, date: slot.appointment_date })
+    if (visitType === "home_visit" && (values.address?.trim().length ?? 0) < 5) {
+      form.setError("address", { message: "Please enter the address for the home visit" })
+      return
+    }
+    const result = await bookAppointment({
+      ...values,
+      scheduleId: slot.schedule_id,
+      date: slot.appointment_date,
+      visitType,
+    })
     if (result.ok) {
       setBooking(result.data)
       setStep(3)
@@ -174,6 +191,7 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
                     onClick={() => {
                       setDoctor(item)
                       setSlot(null)
+                      setVisitType(item.visit_types[0] ?? "in_clinic")
                       setStep(1)
                     }}
                     className="flex w-full items-center gap-4 rounded-2xl border border-border bg-background p-4 text-left transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -214,8 +232,50 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
               </div>
             </div>
 
+            <fieldset className="mt-8">
+              <legend className="text-sm font-semibold text-foreground">Visit type</legend>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {doctor.visit_types.map((type) => {
+                  const meta = visitTypes[type]
+                  const selected = visitType === type
+                  return (
+                    <label
+                      key={type}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                        selected ? "border-primary bg-primary/10 shadow-md" : "border-border bg-background hover:border-primary/50",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="visitType"
+                        value={type}
+                        checked={selected}
+                        onChange={() => setVisitType(type)}
+                        className="sr-only"
+                      />
+                      <span
+                        className={cn(
+                          "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                          selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+                        )}
+                      >
+                        <meta.icon className="size-5" />
+                      </span>
+                      <span>
+                        <span className="block text-sm font-semibold text-foreground">{meta.label}</span>
+                        <span className="block text-xs text-muted-foreground">{meta.description}</span>
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            </fieldset>
+
+            <h3 className="mt-8 text-sm font-semibold text-foreground">Choose a session</h3>
+
             {error && (
-              <div className="mt-6">
+              <div className="mt-4">
                 <ErrorBanner message={error} />
               </div>
             )}
@@ -231,7 +291,7 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
               </p>
             ) : (
               slots && (
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {slots.map((item) => {
                     const remaining = Math.max(item.max_patients - item.booked, 0)
                     const full = remaining === 0
@@ -310,8 +370,8 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
               Patient details
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {doctor.full_name} · {formatDate(slot.appointment_date, { weekday: "long" })} ·{" "}
-              {formatTimeRange(slot.start_time, slot.end_time)}
+              {visitTypes[visitType].label} with {doctor.full_name} ·{" "}
+              {formatDate(slot.appointment_date, { weekday: "long" })} · {formatTimeRange(slot.start_time, slot.end_time)}
             </p>
 
             <form onSubmit={submit} noValidate className="mt-6 space-y-5">
@@ -348,6 +408,13 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
                     <option value="other">Other</option>
                   </select>
                 </div>
+                {visitType === "home_visit" && (
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="address">Home visit address *</Label>
+                    <Input autoComplete="street-address" placeholder="Street, city, ZIP" className="h-11" {...fieldProps("address")} />
+                    <FieldError id="address-error" message={errors.address?.message} />
+                  </div>
+                )}
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="reason">Reason for visit (optional)</Label>
                   <Textarea rows={3} className="min-h-24" placeholder="Briefly describe the reason for your visit" {...fieldProps("reason")} />
@@ -400,7 +467,7 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
             <h2 id="step-done" className="mt-5 text-3xl font-bold text-foreground">
               Appointment booked!
             </h2>
-            <p className="mt-2 text-muted-foreground">Please arrive 15 minutes early and bring a photo ID and insurance card.</p>
+            <p className="mt-2 text-muted-foreground">{visitInstructions[booking.visit_type ?? visitType]}</p>
 
             <div className="mx-auto mt-8 max-w-md overflow-hidden rounded-3xl border border-border text-left">
               <div className="bg-gradient-to-br from-primary to-accent p-6 text-center text-white">
@@ -413,7 +480,8 @@ export function BookingWizard({ doctors, initialSlug }: { doctors: BookableDocto
                   ["Doctor", `${booking.doctor_name} · ${booking.specialty}`],
                   ["Date", formatDate(booking.appointment_date, { weekday: "long", year: "numeric" })],
                   ["Session", formatTimeRange(booking.start_time, booking.end_time)],
-                  ...(doctor?.room ? [["Location", doctor.room]] : []),
+                  ["Visit type", visitTypeMeta(booking.visit_type).label],
+                  ...(doctor?.room && booking.visit_type === "in_clinic" ? [["Location", doctor.room]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4 px-5 py-3">
                     <dt className="text-muted-foreground">{label}</dt>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cancelAppointment, lookupAppointment, type AppointmentLookup } from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { lookupSchema, type LookupInput } from "@/lib/validations/appointment"
 import type { AppointmentStatus } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
@@ -120,7 +121,9 @@ export function StatusLookup() {
             <div>
               <p className="font-mono text-sm text-muted-foreground">{result.reference}</p>
               <h2 className="text-xl font-bold text-foreground">{result.doctor_name}</h2>
-              <p className="text-sm text-primary">{result.specialty}</p>
+              <p className="text-sm text-primary">
+                {result.specialty} · {visitTypeMeta(result.visit_type).label}
+              </p>
             </div>
             <span className={cn("rounded-full px-3 py-1 text-sm font-medium", statusStyles[result.status])}>
               {statusLabels[result.status]}

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { visitTypeValues } from "@/lib/clinic/visit-types"
 
 const optionalText = (max: number) =>
   z
@@ -40,6 +41,7 @@ export const doctorSchema = z.object({
     )
     .refine((items) => items.length > 0, "Add at least one language"),
   room: optionalText(50),
+  visit_types: z.array(z.enum(visitTypeValues)).min(1, "Select at least one visit type"),
   is_active: z.boolean(),
 })
 

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { visitTypeValues } from "@/lib/clinic/visit-types"
 
 const phone = z
   .string({ required_error: "Phone number is required" })
@@ -22,13 +23,20 @@ export const patientSchema = z.object({
     .optional(),
   gender: z.enum(["female", "male", "other", ""]).optional(),
   reason: z.string().trim().max(1000, "Please keep this under 1000 characters").optional(),
+  address: z.string().trim().max(300, "Address is too long").optional(),
   consent: z.boolean().refine((value) => value, "Please confirm to continue"),
 })
 
-export const bookingSchema = patientSchema.extend({
-  scheduleId: z.string().uuid(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-})
+export const bookingSchema = patientSchema
+  .extend({
+    scheduleId: z.string().uuid(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    visitType: z.enum(visitTypeValues),
+  })
+  .refine((value) => value.visitType !== "home_visit" || (value.address?.length ?? 0) >= 5, {
+    message: "Please enter the address for the home visit",
+    path: ["address"],
+  })
 
 export const lookupSchema = z.object({
   reference: z

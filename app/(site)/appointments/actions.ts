@@ -25,6 +25,8 @@ const bookingErrors: Record<string, string> = {
   INVALID_DATE: "This date is no longer available. Please choose another date.",
   INVALID_PATIENT: "Please check the patient's name and phone number.",
   SESSION_NOT_FOUND: "This session is no longer offered. Please choose another date.",
+  VISIT_TYPE_UNAVAILABLE: "This doctor doesn't offer the selected visit type. Please choose another.",
+  ADDRESS_REQUIRED: "Please enter the address for the home visit.",
 }
 
 async function ip() {
@@ -52,7 +54,7 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
   const parsed = bookingSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: "Please check the highlighted details and try again." }
 
-  const { scheduleId, date, name, phone, email, age, gender, reason } = parsed.data
+  const { scheduleId, date, name, phone, email, age, gender, reason, visitType, address } = parsed.data
   const { data, error } = await createPublicClient().rpc("book_appointment", {
     p_schedule_id: scheduleId,
     p_date: date,
@@ -62,6 +64,8 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
     p_age: age === "" || age === undefined ? null : age,
     p_gender: gender || null,
     p_reason: reason || null,
+    p_visit_type: visitType,
+    p_address: visitType === "home_visit" ? address || null : null,
   })
 
   if (error) {

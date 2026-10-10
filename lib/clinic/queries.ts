@@ -12,10 +12,13 @@ function logError(resource: string, error: { message: string }) {
   console.error(`[clinic] Failed to load ${resource}: ${error.message}`)
 }
 
-function sortSchedules(doctor: DoctorWithSchedules): DoctorWithSchedules {
+// Normalizes rows so pages keep working if a newer column is not migrated yet.
+function normalizeDoctor(doctor: DoctorWithSchedules): DoctorWithSchedules {
   return {
     ...doctor,
-    doctor_schedules: [...doctor.doctor_schedules].sort(
+    languages: doctor.languages ?? [],
+    visit_types: doctor.visit_types?.length ? doctor.visit_types : ["in_clinic"],
+    doctor_schedules: [...(doctor.doctor_schedules ?? [])].sort(
       (a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7) || a.start_time.localeCompare(b.start_time),
     ),
   }
@@ -33,7 +36,7 @@ export async function getDoctors(): Promise<DoctorWithSchedules[]> {
     logError("doctors", error)
     return []
   }
-  return (data as DoctorWithSchedules[]).map(sortSchedules)
+  return (data as DoctorWithSchedules[]).map(normalizeDoctor)
 }
 
 export async function getDoctorBySlug(slug: string): Promise<DoctorWithSchedules | null> {
@@ -49,7 +52,7 @@ export async function getDoctorBySlug(slug: string): Promise<DoctorWithSchedules
     logError("doctor", error)
     return null
   }
-  return data ? sortSchedules(data as DoctorWithSchedules) : null
+  return data ? normalizeDoctor(data as DoctorWithSchedules) : null
 }
 
 export async function getOnCallShifts({

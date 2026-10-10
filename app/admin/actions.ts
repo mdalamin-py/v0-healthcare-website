@@ -89,6 +89,7 @@ export async function saveDoctor(doctorId: string | null, _: ActionState, formDa
     consultation_fee: formData.get("consultation_fee") ?? "",
     languages: formData.get("languages") ?? "",
     room: formData.get("room") ?? "",
+    visit_types: formData.getAll("visit_types"),
     is_active: formData.get("is_active") === "on",
   })
   if (!parsed.success) {

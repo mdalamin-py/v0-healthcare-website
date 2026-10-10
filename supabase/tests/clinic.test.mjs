@@ -1,5 +1,5 @@
 import { PGlite } from "@electric-sql/pglite"
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 // Runs the clinic migration and seed in an in-memory Postgres (PGlite) and
@@ -18,7 +18,9 @@ await db.exec(`
   alter default privileges in schema public grant all on tables to anon, authenticated;
 `)
 
-await db.exec(readFileSync(`${root}migrations/20261010000000_clinic_schema.sql`, "utf8"))
+for (const file of readdirSync(`${root}migrations`).sort()) {
+  await db.exec(readFileSync(`${root}migrations/${file}`, "utf8"))
+}
 await db.exec(readFileSync(`${root}seed.sql`, "utf8"))
 
 let failures = 0
@@ -88,6 +90,25 @@ check("cancel is not repeatable", again === false)
 const b3 = (await q(`select * from book_appointment($1,$2,'New Person','5599990000')`, [sid, day]))[0]
 check("freed slot can be rebooked with next serial (3)", b3.serial_no === 3, `serial ${b3.serial_no}`)
 
+// Visit types
+const emily = (await q(`select id from doctors where slug='emily-nguyen'`))[0].id
+const emilySlot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [emily]))[0]
+const emilyDay = emilySlot.appointment_date.toISOString().slice(0, 10)
+await expectError("visit type not offered by doctor rejected", `select * from book_appointment($1,$2,'Video Person','5591230000', p_visit_type => 'video')`, [emilySlot.schedule_id, emilyDay], "VISIT_TYPE_UNAVAILABLE")
+const sarah = (await q(`select id from doctors where slug='sarah-johnson'`))[0].id
+const sarahSlot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [sarah]))[0]
+const sarahDay = sarahSlot.appointment_date.toISOString().slice(0, 10)
+await expectError("home visit without address rejected", `select * from book_appointment($1,$2,'Home Person','5591231111', p_visit_type => 'home_visit')`, [sarahSlot.schedule_id, sarahDay], "ADDRESS_REQUIRED")
+const home = (await q(`select * from book_appointment($1,$2,'Home Person','5591231111', p_visit_type => 'home_visit', p_address => '12 Elm St, Fresno')`, [sarahSlot.schedule_id, sarahDay]))[0]
+check("home visit booked with address", home.visit_type === "home_visit")
+const homeRow = (await q(`select patient_address from appointments where reference=$1`, [home.reference]))[0]
+check("address stored", homeRow.patient_address === "12 Elm St, Fresno")
+const video = (await q(`select * from book_appointment($1,$2,'Video Person','5591232222', p_visit_type => 'video', p_address => 'ignored')`, [sarahSlot.schedule_id, sarahDay]))[0]
+const videoRow = (await q(`select patient_address from appointments where reference=$1`, [video.reference]))[0]
+check("address dropped for non-home visits", videoRow.patient_address === null)
+const lookedUp = (await q(`select * from lookup_appointment($1,'5591232222')`, [video.reference]))[0]
+check("lookup returns visit type", lookedUp.visit_type === "video")
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)
@@ -109,7 +130,7 @@ await q(`insert into auth.users values ('00000000-0000-0000-0000-000000000001','
 await q(`insert into admins values ('00000000-0000-0000-0000-000000000001')`)
 await db.exec(`set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001'`)
 const adminAppts = await q(`select count(*)::int c from appointments`)
-check("admin reads appointments", adminAppts[0].c === 3)
+check("admin reads appointments", adminAppts[0].c === 5)
 const adminDocs = await q(`select count(*)::int c from doctors`)
 check("admin sees inactive doctors", adminDocs[0].c === 6)
 await db.exec(`set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002'`)

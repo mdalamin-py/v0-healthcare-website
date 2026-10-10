@@ -2,6 +2,7 @@
 //   npx supabase gen types typescript --project-id <id> --schema public > lib/supabase/types.ts
 
 export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled"
+export type VisitType = "in_clinic" | "video" | "home_visit"
 
 export type Database = {
   public: {
@@ -25,6 +26,7 @@ export type Database = {
           consultation_fee: number | null
           languages: string[]
           room: string | null
+          visit_types: VisitType[]
           is_active: boolean
           created_at: string
           updated_at: string
@@ -41,6 +43,7 @@ export type Database = {
           consultation_fee?: number | null
           languages?: string[]
           room?: string | null
+          visit_types?: VisitType[]
           is_active?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["doctors"]["Insert"]>
@@ -110,6 +113,8 @@ export type Database = {
           patient_age: number | null
           patient_gender: "female" | "male" | "other" | null
           reason: string | null
+          visit_type: VisitType
+          patient_address: string | null
           status: AppointmentStatus
           created_at: string
           updated_at: string
@@ -159,6 +164,8 @@ export type Database = {
           p_age?: number | null
           p_gender?: string | null
           p_reason?: string | null
+          p_visit_type?: VisitType
+          p_address?: string | null
         }
         Returns: {
           reference: string
@@ -168,6 +175,7 @@ export type Database = {
           end_time: string
           doctor_name: string
           specialty: string
+          visit_type: VisitType
         }[]
       }
       lookup_appointment: {
@@ -181,11 +189,12 @@ export type Database = {
           end_time: string
           doctor_name: string
           specialty: string
+          visit_type: VisitType
         }[]
       }
       cancel_appointment: { Args: { p_reference: string; p_phone: string }; Returns: boolean }
     }
-    Enums: { appointment_status: AppointmentStatus }
+    Enums: { appointment_status: AppointmentStatus; visit_type: VisitType }
     CompositeTypes: Record<never, never>
   }
 }

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { CalendarPlus, GraduationCap, Languages } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
+import { VisitTypeBadge } from "@/components/visit-type-badge"
 import { formatFee, weekdays, weekOrder } from "@/lib/clinic/format"
 import type { DoctorWithSchedules } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
@@ -47,6 +48,14 @@ export function DoctorCard({ doctor, today }: { doctor: DoctorWithSchedules; tod
           <dd>{doctor.languages.join(", ")}</dd>
         </div>
       </dl>
+
+      <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Visit types">
+        {doctor.visit_types.map((type) => (
+          <li key={type}>
+            <VisitTypeBadge type={type} />
+          </li>
+        ))}
+      </ul>
 
       <div className="mb-6 mt-5" aria-label="Weekly availability">
         <ul className="flex gap-1">

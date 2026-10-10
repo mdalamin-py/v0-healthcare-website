@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldMessage, FormStatus } from "@/components/admin/form-status"
 import { saveDoctor, type ActionState } from "@/app/admin/actions"
+import { visitTypes, visitTypeValues } from "@/lib/clinic/visit-types"
 import type { Doctor } from "@/lib/supabase/types"
 
 function slugify(value: string) {
@@ -98,6 +99,28 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
           <Textarea id="bio" name="bio" rows={4} defaultValue={doctor?.bio ?? ""} />
         </div>
       </div>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-foreground">Visit types offered *</legend>
+        <div className="mt-2 flex flex-wrap gap-3">
+          {visitTypeValues.map((type) => (
+            <label
+              key={type}
+              className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+            >
+              <input
+                type="checkbox"
+                name="visit_types"
+                value={type}
+                defaultChecked={(doctor?.visit_types ?? ["in_clinic", "video"]).includes(type)}
+                className="size-4 accent-primary"
+              />
+              {visitTypes[type].label}
+            </label>
+          ))}
+        </div>
+        <FieldMessage messages={errors.visit_types} />
+      </fieldset>
 
       <label className="flex items-center gap-3 text-sm font-medium text-foreground">
         <input type="checkbox" name="is_active" defaultChecked={doctor?.is_active ?? true} className="size-4 accent-primary" />

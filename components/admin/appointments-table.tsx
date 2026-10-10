@@ -1,5 +1,6 @@
 import { StatusSelect } from "@/components/admin/status-select"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { VisitTypeBadge } from "@/components/visit-type-badge"
 import type { AdminAppointment } from "@/lib/admin/queries"
 
 export function AppointmentsTable({ appointments, showDate = true }: { appointments: AdminAppointment[]; showDate?: boolean }) {
@@ -20,7 +21,7 @@ export function AppointmentsTable({ appointments, showDate = true }: { appointme
             <th scope="col" className="px-4 py-3 font-semibold">Patient</th>
             <th scope="col" className="px-4 py-3 font-semibold">Doctor</th>
             {showDate && <th scope="col" className="px-4 py-3 font-semibold">Date</th>}
-            <th scope="col" className="px-4 py-3 font-semibold">Session</th>
+            <th scope="col" className="px-4 py-3 font-semibold">Session & visit</th>
             <th scope="col" className="px-4 py-3 font-semibold">Status</th>
           </tr>
         </thead>
@@ -52,8 +53,14 @@ export function AppointmentsTable({ appointments, showDate = true }: { appointme
                 <p className="text-xs text-primary">{appointment.doctor?.specialty}</p>
               </td>
               {showDate && <td className="whitespace-nowrap px-4 py-3 text-foreground">{formatDate(appointment.appointment_date)}</td>}
-              <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                {appointment.schedule && formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time)}
+              <td className="px-4 py-3 text-muted-foreground">
+                <span className="block whitespace-nowrap">
+                  {appointment.schedule && formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time)}
+                </span>
+                <VisitTypeBadge type={appointment.visit_type} className="mt-1" />
+                {appointment.patient_address && (
+                  <span className="mt-1 block max-w-[14rem] text-xs">{appointment.patient_address}</span>
+                )}
               </td>
               <td className="px-4 py-3">
                 <StatusSelect id={appointment.id} status={appointment.status} label={appointment.patient_name} />

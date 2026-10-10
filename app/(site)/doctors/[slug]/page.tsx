@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { ArrowLeft, BadgeDollarSign, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users } from "lucide-react"
+import { ArrowLeft, BadgeDollarSign, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { clinicWeekday, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
 import { departmentSlug } from "@/lib/clinic/departments"
+import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { getDoctorBySlug, getDoctors, getOnCallShifts } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
@@ -41,6 +42,7 @@ export default async function DoctorPage({ params }: Props) {
     doctor.qualification && { icon: GraduationCap, label: "Qualification", value: doctor.qualification },
     doctor.experience_years > 0 && { icon: Users, label: "Experience", value: `${doctor.experience_years}+ years` },
     { icon: Languages, label: "Languages", value: doctor.languages.join(", ") },
+    { icon: Video, label: "Visit types", value: doctor.visit_types.map((type) => visitTypeMeta(type).label).join(", ") },
     doctor.room && { icon: DoorOpen, label: "Location", value: doctor.room },
     fee && { icon: BadgeDollarSign, label: "Consultation fee", value: fee },
   ].filter(Boolean) as { icon: typeof Users; label: string; value: string }[]

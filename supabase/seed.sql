@@ -22,6 +22,13 @@ values
    'Lead physical therapist dedicated to helping patients regain mobility, balance and independence.',
    110, array['English', 'Mandarin'], 'Rehab Suite');
 
+update public.doctors set visit_types = case slug
+  when 'sarah-johnson' then array['in_clinic', 'video', 'home_visit']::public.visit_type[]
+  when 'james-chen' then array['in_clinic', 'home_visit']::public.visit_type[]
+  when 'emily-nguyen' then array['in_clinic']::public.visit_type[]
+  else array['in_clinic', 'video']::public.visit_type[]
+end;
+
 insert into public.doctor_schedules (doctor_id, weekday, start_time, end_time, max_patients)
 select d.id, s.weekday, s.start_time::time, s.end_time::time, s.max_patients
 from (values
