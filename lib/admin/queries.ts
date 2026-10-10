@@ -66,12 +66,12 @@ export async function listUpcomingShifts(days = 14) {
   const until = new Date(now.getTime() + days * 86_400_000)
   const { data, error } = await supabase
     .from("on_call_shifts")
-    .select("*, doctor:doctors(full_name, slug, specialty)")
+    .select("*, doctor:doctors(*)")
     .gt("ends_at", now.toISOString())
     .lt("starts_at", until.toISOString())
     .order("starts_at")
   if (error) throw new Error(`Failed to load shifts: ${error.message}`)
-  return data as unknown as (OnCallShift & { doctor: Pick<Doctor, "full_name" | "slug" | "specialty"> })[]
+  return data as unknown as (OnCallShift & { doctor: Pick<Doctor, "full_name" | "slug" | "specialty" | "kind"> })[]
 }
 
 export async function listRecentPatients(since: string) {

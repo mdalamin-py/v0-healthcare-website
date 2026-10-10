@@ -71,3 +71,35 @@ join lateral (
     1 + ((extract(doy from day)::integer * 2 + shift.idx) % 4)
   ]
 ) as d on true;
+
+-- Intern doctors and their ward / emergency duty (Pacific time).
+insert into public.doctors (slug, full_name, specialty, qualification, kind, accepting_appointments, languages, bio)
+values
+  ('aiden-brooks', 'Dr. Aiden Brooks', 'Internal Medicine', 'MBBS, Intern', 'intern', false, array['English'],
+   'Intern doctor rotating through internal medicine and the emergency department.'),
+  ('fatima-noor', 'Dr. Fatima Noor', 'Family Medicine', 'MBBS, Intern', 'intern', false, array['English', 'Urdu'],
+   'Intern doctor supporting family medicine clinics and ward rounds.'),
+  ('lucas-mendes', 'Dr. Lucas Mendes', 'Geriatric Medicine', 'MD, Intern', 'intern', false, array['English', 'Portuguese'],
+   'Intern doctor on the geriatric care team.');
+
+insert into public.on_call_shifts (doctor_id, starts_at, ends_at, note, duty_type)
+select
+  d.id,
+  (day + shift.start_offset) at time zone 'America/Los_Angeles',
+  (day + shift.start_offset + shift.length) at time zone 'America/Los_Angeles',
+  shift.label,
+  shift.duty
+from generate_series(
+  date_trunc('day', now() at time zone 'America/Los_Angeles'),
+  date_trunc('day', now() at time zone 'America/Los_Angeles') + interval '13 days',
+  interval '1 day'
+) as day
+cross join (values
+  (interval '8 hours', interval '8 hours', 'Morning ward', 'ward', 0),
+  (interval '16 hours', interval '8 hours', 'Evening emergency', 'emergency', 1),
+  (interval '0 hours', interval '8 hours', 'Night emergency', 'emergency', 2)
+) as shift (start_offset, length, label, duty, idx)
+join lateral (
+  select id from public.doctors
+  where slug = (array['aiden-brooks', 'fatima-noor', 'lucas-mendes'])[1 + ((extract(doy from day)::integer + shift.idx) % 3)]
+) as d on true;

@@ -92,6 +92,7 @@ export async function saveDoctor(doctorId: string | null, _: ActionState, formDa
     room: formData.get("room") ?? "",
     visit_types: formData.getAll("visit_types"),
     accepting_appointments: formData.get("accepting_appointments") === "on",
+    kind: formData.get("kind") ?? "consultant",
     is_active: formData.get("is_active") === "on",
   })
   if (!parsed.success) {
@@ -172,6 +173,7 @@ export async function addOnCallShift(_: ActionState, formData: FormData): Promis
 
   const parsed = onCallSchema.safeParse({
     doctor_id: formData.get("doctor_id"),
+    duty_type: formData.get("duty_type") ?? "on_call",
     starts_at: formData.get("starts_at"),
     ends_at: formData.get("ends_at"),
     note: formData.get("note") ?? "",
@@ -182,6 +184,7 @@ export async function addOnCallShift(_: ActionState, formData: FormData): Promis
 
   const { error } = await supabase.from("on_call_shifts").insert({
     doctor_id: parsed.data.doctor_id,
+    duty_type: parsed.data.duty_type,
     starts_at: clinicLocalToIso(parsed.data.starts_at),
     ends_at: clinicLocalToIso(parsed.data.ends_at),
     note: parsed.data.note,

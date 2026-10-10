@@ -55,6 +55,18 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
           <FieldMessage messages={errors.slug} />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="kind">Role *</Label>
+          <select
+            id="kind"
+            name="kind"
+            defaultValue={doctor?.kind ?? "consultant"}
+            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <option value="consultant">Consultant (bookable)</option>
+            <option value="intern">Intern doctor (duty roster only)</option>
+          </select>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="specialty">Specialty *</Label>
           <Input id="specialty" name="specialty" defaultValue={doctor?.specialty} required />
           <FieldMessage messages={errors.specialty} />

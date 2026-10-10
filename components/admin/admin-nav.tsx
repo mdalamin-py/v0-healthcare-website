@@ -12,7 +12,7 @@ const links = [
   { href: "/admin/callbacks", label: "Callbacks", icon: PhoneCall },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },
-  { href: "/admin/on-call", label: "On-call", icon: Moon },
+  { href: "/admin/on-call", label: "Duty roster", icon: Moon },
 ]
 
 export function AdminNav() {

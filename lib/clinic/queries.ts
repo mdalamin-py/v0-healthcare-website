@@ -2,6 +2,8 @@ import "server-only"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
 import type {
   Doctor,
+  DoctorKind,
+  DutyType,
   DoctorLeave,
   DoctorRating,
   DoctorReview,
@@ -12,7 +14,7 @@ import type {
 } from "@/lib/supabase/types"
 
 export type OnCallWithDoctor = OnCallShift & {
-  doctor: Pick<Doctor, "full_name" | "slug" | "specialty">
+  doctor: Pick<Doctor, "full_name" | "slug" | "specialty" | "kind">
 }
 
 // Public pages degrade to a "call us" fallback instead of failing the build or
@@ -28,13 +30,15 @@ function normalizeDoctor(doctor: DoctorWithSchedules): DoctorWithSchedules {
     languages: doctor.languages ?? [],
     visit_types: doctor.visit_types?.length ? doctor.visit_types : ["in_clinic"],
     accepting_appointments: doctor.accepting_appointments ?? true,
+    kind: doctor.kind ?? "consultant",
     doctor_schedules: [...(doctor.doctor_schedules ?? [])].sort(
       (a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7) || a.start_time.localeCompare(b.start_time),
     ),
   }
 }
 
-export async function getDoctors(): Promise<DoctorWithSchedules[]> {
+/** Active doctors of a kind; consultants by default (interns are not bookable). */
+export async function getDoctors(kind: DoctorKind = "consultant"): Promise<DoctorWithSchedules[]> {
   if (!isSupabaseConfigured()) return []
   const { data, error } = await createPublicClient()
     .from("doctors")
@@ -46,7 +50,8 @@ export async function getDoctors(): Promise<DoctorWithSchedules[]> {
     logError("doctors", error)
     return []
   }
-  return (data as DoctorWithSchedules[]).map(normalizeDoctor)
+  // Filtered here so pages keep working before the duty-roster migration adds `kind`.
+  return (data as DoctorWithSchedules[]).map(normalizeDoctor).filter((doctor) => doctor.kind === kind)
 }
 
 export async function getDoctorBySlug(slug: string): Promise<DoctorWithSchedules | null> {
@@ -68,14 +73,15 @@ export async function getDoctorBySlug(slug: string): Promise<DoctorWithSchedules
 export async function getOnCallShifts({
   doctorId,
   days = 7,
-}: { doctorId?: string; days?: number } = {}): Promise<OnCallWithDoctor[]> {
+  dutyTypes = ["on_call"],
+}: { doctorId?: string; days?: number; dutyTypes?: DutyType[] } = {}): Promise<OnCallWithDoctor[]> {
   if (!isSupabaseConfigured()) return []
   const now = new Date()
   const until = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
 
   let query = createPublicClient()
     .from("on_call_shifts")
-    .select("*, doctor:doctors!inner(full_name, slug, specialty)")
+    .select("*, doctor:doctors!inner(*)")
     .gt("ends_at", now.toISOString())
     .lt("starts_at", until.toISOString())
     .order("starts_at")
@@ -87,7 +93,7 @@ export async function getOnCallShifts({
     logError("on-call shifts", error)
     return []
   }
-  return data as unknown as OnCallWithDoctor[]
+  return (data as unknown as OnCallWithDoctor[]).filter((shift) => dutyTypes.includes(shift.duty_type ?? "on_call"))
 }
 
 export async function getTodayQueue(): Promise<QueueSession[]> {

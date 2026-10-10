@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { visitTypeValues } from "@/lib/clinic/visit-types"
+import { dutyTypeValues } from "@/lib/clinic/duty"
 
 const optionalText = (max: number) =>
   z
@@ -43,6 +44,7 @@ export const doctorSchema = z.object({
   room: optionalText(50),
   visit_types: z.array(z.enum(visitTypeValues)).min(1, "Select at least one visit type"),
   accepting_appointments: z.boolean(),
+  kind: z.enum(["consultant", "intern"]),
   is_active: z.boolean(),
 })
 
@@ -68,6 +70,7 @@ export const scheduleSchema = z
 export const onCallSchema = z
   .object({
     doctor_id: z.string().uuid("Choose a doctor"),
+    duty_type: z.enum(dutyTypeValues),
     starts_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose a start time"),
     ends_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose an end time"),
     note: optionalText(200),

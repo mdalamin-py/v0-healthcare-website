@@ -7,6 +7,7 @@ import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { clinicWeekday, formatDate, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
 import { departmentSlug } from "@/lib/clinic/departments"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
+import { dutyMeta } from "@/lib/clinic/duty"
 import {
   getDoctorBySlug,
   getDoctorRatings,
@@ -43,7 +44,7 @@ export default async function DoctorPage({ params }: Props) {
   if (!doctor) notFound()
 
   const [onCall, ratings, reviews, leaves] = await Promise.all([
-    getOnCallShifts({ doctorId: doctor.id, days: 14 }),
+    getOnCallShifts({ doctorId: doctor.id, days: 14, dutyTypes: ["on_call", "emergency", "ward"] }),
     getDoctorRatings(),
     getDoctorReviews(doctor.id),
     getUpcomingLeaves(doctor.id),
@@ -98,7 +99,14 @@ export default async function DoctorPage({ params }: Props) {
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-              {doctor.accepting_appointments ? (
+              {doctor.kind === "intern" ? (
+                <Link
+                  href="/interns"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-border px-7 text-sm font-medium text-foreground hover:border-primary/40"
+                >
+                  View intern duty roster
+                </Link>
+              ) : doctor.accepting_appointments ? (
                 <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
                   <Link href={`/appointments/book?doctor=${doctor.slug}`}>
                     <CalendarPlus className="size-5" />
@@ -225,7 +233,7 @@ export default async function DoctorPage({ params }: Props) {
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h2 className="flex items-center gap-2 font-semibold text-foreground">
                 <Moon className="size-4 text-primary" />
-                Upcoming on-call shifts
+                Upcoming duty shifts
               </h2>
               {onCall.length > 0 ? (
                 <ul className="mt-4 space-y-3 text-sm">
@@ -236,12 +244,15 @@ export default async function DoctorPage({ params }: Props) {
                         {" "}
                         → {formatDateTime(shift.ends_at, { weekday: undefined, month: undefined, day: undefined })}
                       </span>
-                      {shift.note && <span className="block text-xs text-muted-foreground">{shift.note}</span>}
+                      <span className="block text-xs text-muted-foreground">
+                        {dutyMeta(shift.duty_type).label}
+                        {shift.note && ` · ${shift.note}`}
+                      </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No on-call shifts in the next two weeks.</p>
+                <p className="mt-3 text-sm text-muted-foreground">No duty shifts in the next two weeks.</p>
               )}
             </div>
           </aside>

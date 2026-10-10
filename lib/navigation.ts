@@ -1,5 +1,6 @@
 import {
   Building2,
+  GraduationCap,
   CalendarClock,
   CalendarPlus,
   ListOrdered,
@@ -27,6 +28,7 @@ export const navigation: NavEntry[] = [
       { href: "/departments", label: "Departments", description: "Specialties and the doctors in each", icon: Building2 },
       { href: "/services", label: "Services", description: "Nursing, therapy and personal care", icon: HeartHandshake },
       { href: "/schedule", label: "Schedule & On-call", description: "Clinic hours and who is on call now", icon: CalendarClock },
+      { href: "/interns", label: "Intern Doctors", description: "Intern list and ward & emergency duties", icon: GraduationCap },
       { href: "/emergency", label: "Emergency & Urgent Care", description: "When to call 911 and urgent callbacks", icon: Siren },
     ],
     feature: {

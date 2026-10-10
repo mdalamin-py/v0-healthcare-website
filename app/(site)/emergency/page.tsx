@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { AlertTriangle, CheckCircle2, Phone, Siren, Stethoscope } from "lucide-react"
 import { CallbackForm } from "@/components/emergency/callback-form"
+import { DutyNow } from "@/components/emergency/duty-now"
 import { OnCallNow, currentShift } from "@/components/schedule/on-call-now"
 import { getOnCallShifts } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
@@ -29,7 +30,8 @@ const callUs = [
 ]
 
 export default async function EmergencyPage() {
-  const onCall = currentShift(await getOnCallShifts({ days: 1 }))
+  const shifts = await getOnCallShifts({ days: 1, dutyTypes: ["on_call", "emergency", "ward"] })
+  const onCall = currentShift(shifts.filter((shift) => (shift.duty_type ?? "on_call") === "on_call"))
 
   return (
     <>
@@ -103,7 +105,13 @@ export default async function EmergencyPage() {
         </div>
       </section>
 
-      <section className="bg-muted/40 pb-16 pt-4 lg:pb-24">
+      <section className="pb-10">
+        <div className="container-page">
+          <DutyNow shifts={shifts} />
+        </div>
+      </section>
+
+      <section className="bg-muted/40 pb-16 pt-10 lg:pb-24">
         <div className="container-page grid gap-6 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <OnCallNow shift={onCall} />

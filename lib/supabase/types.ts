@@ -3,6 +3,8 @@
 
 export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancelled"
 export type VisitType = "in_clinic" | "video" | "home_visit"
+export type DoctorKind = "consultant" | "intern"
+export type DutyType = "on_call" | "emergency" | "ward"
 
 export type Database = {
   public: {
@@ -102,6 +104,7 @@ export type Database = {
           room: string | null
           visit_types: VisitType[]
           accepting_appointments: boolean
+          kind: DoctorKind
           is_active: boolean
           created_at: string
           updated_at: string
@@ -120,6 +123,7 @@ export type Database = {
           room?: string | null
           visit_types?: VisitType[]
           accepting_appointments?: boolean
+          kind?: DoctorKind
           is_active?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["doctors"]["Insert"]>
@@ -161,9 +165,10 @@ export type Database = {
           starts_at: string
           ends_at: string
           note: string | null
+          duty_type: DutyType
           created_at: string
         }
-        Insert: { id?: string; doctor_id: string; starts_at: string; ends_at: string; note?: string | null }
+        Insert: { id?: string; doctor_id: string; starts_at: string; ends_at: string; note?: string | null; duty_type?: DutyType }
         Update: Partial<Database["public"]["Tables"]["on_call_shifts"]["Insert"]>
         Relationships: [
           {

@@ -39,7 +39,10 @@ export default async function AdminDoctorsPage() {
                   <DoctorAvatar name={doctor.full_name} photoUrl={doctor.photo_url} className="size-12 rounded-xl text-base" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-foreground">{doctor.full_name}</p>
-                    <p className="text-sm text-primary">{doctor.specialty}</p>
+                    <p className="text-sm text-primary">
+                      {doctor.specialty}
+                      {doctor.kind === "intern" && <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">Intern</span>}
+                    </p>
                   </div>
                   <span
                     className={cn(

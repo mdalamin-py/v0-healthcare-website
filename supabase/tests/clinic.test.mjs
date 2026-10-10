@@ -39,9 +39,9 @@ const expectError = async (label, sql, params, code) => {
 }
 
 const counts = await q(`select (select count(*) from doctors)::int d, (select count(*) from doctor_schedules)::int s, (select count(*) from on_call_shifts)::int o`)
-check("seed loaded", counts[0].d === 6 && counts[0].s === 16 && counts[0].o === 28, JSON.stringify(counts[0]))
+check("seed loaded", counts[0].d === 9 && counts[0].s === 16 && counts[0].o === 70, JSON.stringify(counts[0]))
 
-const onCallNow = await q(`select d.full_name from on_call_shifts o join doctors d on d.id=o.doctor_id where now() between o.starts_at and o.ends_at`)
+const onCallNow = await q(`select d.full_name from on_call_shifts o join doctors d on d.id=o.doctor_id where o.duty_type = 'on_call' and now() between o.starts_at and o.ends_at`)
 check("exactly one doctor is on call now", onCallNow.length === 1, JSON.stringify(onCallNow))
 
 const PATIENT_1 = "00000000-0000-0000-0000-0000000000a1"
@@ -237,6 +237,21 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("roster marks non-working days as off", Boolean(offDay))
 }
 
+// Duty roster
+{
+  const interns = await q(`select count(*)::int c from doctors where kind = 'intern'`)
+  check("interns seeded", interns[0].c === 3)
+  const emergencyNow = await q(`select count(*)::int c from on_call_shifts where duty_type = 'emergency' and now() between starts_at and ends_at`)
+  const wardNow = await q(`select count(*)::int c from on_call_shifts where duty_type = 'ward' and now() between starts_at and ends_at`)
+  check("intern duty covers the clock with at most one shift per slot", emergencyNow[0].c + wardNow[0].c === 1, `${emergencyNow[0].c}+${wardNow[0].c}`)
+  const intern = (await q(`select id from doctors where kind = 'intern' limit 1`))[0].id
+  const schedule = (await q(`insert into doctor_schedules (doctor_id, weekday, start_time, end_time) values ($1, extract(dow from clinic_today() + 1)::int, '09:00', '12:00') returning id`, [intern]))[0].id
+  await asPatient(PATIENT_1)
+  await expectError("interns cannot be booked", `select * from book_appointment($1, (clinic_today() + 1)::date, 'Intern Test', '5553339999')`, [schedule], "NOT_ACCEPTING")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`delete from doctor_schedules where id = $1`, [schedule])
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)
@@ -245,7 +260,7 @@ await db.exec(`reset role`)
 await q(`update doctors set is_active=false where slug='aisha-rahman'`)
 await db.exec(`set role anon`)
 const anonDocs = await q(`select count(*)::int c from doctors`)
-check("anon sees only active doctors", anonDocs[0].c === 5)
+check("anon sees only active doctors", anonDocs[0].c === 8)
 await expectError("anon cannot insert appointments directly", `insert into appointments (reference, doctor_id, schedule_id, appointment_date, serial_no, patient_name, patient_phone) values ('X', $1, $2, $3, 99, 'Hack', '5550001111')`, [doctor, sid, day], "row-level security|AUTH_REQUIRED")
 const upd = await q(`update doctors set full_name='Hacked' where true returning id`)
 check("anon update affects zero rows", upd.length === 0)
@@ -260,7 +275,7 @@ await db.exec(`set role authenticated; set request.jwt.claim.sub = '00000000-000
 const adminAppts = await q(`select count(*)::int c from appointments`)
 check("admin reads appointments", adminAppts[0].c >= 5, `${adminAppts[0].c}`)
 const adminDocs = await q(`select count(*)::int c from doctors`)
-check("admin sees inactive doctors", adminDocs[0].c === 6)
+check("admin sees inactive doctors", adminDocs[0].c === 9)
 await db.exec(`set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002'`)
 const nonAdmin = await q(`select count(*)::int c from appointments`)
 check("non-admin user cannot read appointments", nonAdmin[0].c === 0)

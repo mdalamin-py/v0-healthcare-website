@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button"
 import { FormStatus } from "@/components/admin/form-status"
 import { addOnCallShift, deleteOnCallShift, type ActionState } from "@/app/admin/actions"
 import { formatDateTime } from "@/lib/clinic/format"
+import { dutyMeta, dutyTypes } from "@/lib/clinic/duty"
+import type { DutyType } from "@/lib/supabase/types"
 import type { Doctor, OnCallShift } from "@/lib/supabase/types"
 
-type Shift = OnCallShift & { doctor: Pick<Doctor, "full_name" | "specialty"> }
+type Shift = OnCallShift & { doctor: Pick<Doctor, "full_name" | "specialty" | "kind"> }
 
 const control =
   "h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -17,7 +19,7 @@ export function OnCallManager({
   doctors,
   shifts,
 }: {
-  doctors: Pick<Doctor, "id" | "full_name">[]
+  doctors: Pick<Doctor, "id" | "full_name" | "kind">[]
   shifts: Shift[]
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(addOnCallShift, {})
@@ -39,6 +41,17 @@ export function OnCallManager({
             {doctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
                 {doctor.full_name}
+                {doctor.kind === "intern" ? " (intern)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+          Duty type
+          <select name="duty_type" defaultValue="on_call" className={control}>
+            {(Object.keys(dutyTypes) as DutyType[]).map((type) => (
+              <option key={type} value={type}>
+                {dutyTypes[type].label} — {dutyTypes[type].description}
               </option>
             ))}
           </select>
@@ -65,7 +78,7 @@ export function OnCallManager({
       </form>
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm xl:col-span-3">
-        <h2 className="text-lg font-semibold text-foreground">Upcoming shifts · next 14 days</h2>
+        <h2 className="text-lg font-semibold text-foreground">Upcoming duties · next 14 days</h2>
         <FormStatus state={removeState} />
         {shifts.length === 0 ? (
           <p className="mt-4 rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
@@ -81,12 +94,14 @@ export function OnCallManager({
                 ),
               )
               const Icon = hour >= 18 || hour < 6 ? Moon : Sun
+              const meta = dutyMeta(shift.duty_type)
               return (
                 <li key={shift.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                   <Icon className="size-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 font-semibold text-foreground">
                       {shift.doctor.full_name}
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${meta.className}`}>{meta.label}</span>
                       {live && (
                         <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">Live</span>
                       )}

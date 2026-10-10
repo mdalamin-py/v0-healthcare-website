@@ -7,9 +7,12 @@ export default async function AdminOnCallPage() {
 
   return (
     <>
-      <AdminPageHeader title="On-call roster" description="Schedule which doctor is on call. Shown live on the website." />
+      <AdminPageHeader
+        title="Duty roster"
+        description="Schedule on-call, emergency and ward duty for consultants and interns. Shown live on the website."
+      />
       <OnCallManager
-        doctors={doctors.filter((doctor) => doctor.is_active).map(({ id, full_name }) => ({ id, full_name }))}
+        doctors={doctors.filter((doctor) => doctor.is_active).map(({ id, full_name, kind }) => ({ id, full_name, kind }))}
         shifts={shifts}
       />
     </>

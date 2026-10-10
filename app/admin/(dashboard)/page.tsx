@@ -112,7 +112,9 @@ export default async function AdminDashboardPage() {
   const load = doctorLoad([...todays, ...upcoming]).slice(0, 5)
   const rate = completionRate(range, today)
   const now = new Date()
-  const onCall = shifts.find((shift) => new Date(shift.starts_at) <= now && now < new Date(shift.ends_at))
+  const onCall = shifts.find(
+    (shift) => (shift.duty_type ?? "on_call") === "on_call" && new Date(shift.starts_at) <= now && now < new Date(shift.ends_at),
+  )
   const pendingToday = todays.filter((item) => item.status === "pending").length
 
   return (
