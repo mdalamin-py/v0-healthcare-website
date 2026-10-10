@@ -1,257 +1,238 @@
 import Image from "next/image"
 import Link from "next/link"
+import { ArrowRight, ArrowUpRight, CheckCircle, HeartPulse, Phone, ShieldCheck, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { 
-  Phone, 
-  Heart, 
-  Shield, 
-  Users, 
-  Clock, 
-  Award,
-  Star,
-  CheckCircle,
-  ArrowRight,
-  Stethoscope,
-  Activity,
-  HandHeart
-} from "lucide-react"
+import { CtaSection } from "@/components/cta-section"
+import { FaqSection } from "@/components/faq-section"
+import { ReviewCard } from "@/components/review-card"
+import { SectionHeading } from "@/components/section-heading"
+import { reviews, services, stats, trustBadges, whyChooseUs } from "@/lib/content"
+import { site } from "@/lib/site"
 
-const services = [
-  {
-    icon: Stethoscope,
-    title: "Skilled Nursing",
-    description: "Licensed nurses provide medical care including wound care, medication management, and health monitoring.",
-  },
-  {
-    icon: HandHeart,
-    title: "Personal Care",
-    description: "Assistance with daily activities like bathing, dressing, grooming, and mobility support.",
-  },
-  {
-    icon: Activity,
-    title: "Physical Therapy",
-    description: "Rehabilitation services to help restore movement, strength, and function after illness or injury.",
-  },
-  {
-    icon: Users,
-    title: "Companion Care",
-    description: "Friendly companionship, conversation, and emotional support to combat isolation.",
-  },
-]
-
-const trustBadges = [
-  { icon: Shield, label: "Medicare Certified" },
-  { icon: Award, label: "State Licensed" },
-  { icon: CheckCircle, label: "HIPAA Compliant" },
-  { icon: Clock, label: "24/7 On-Call" },
-]
-
-const testimonials = [
-  {
-    name: "Maria G.",
-    text: "Dignity Home Health Care has been a blessing for our family. The nurses are incredibly compassionate and professional. My mother looks forward to their visits every day.",
-    rating: 5,
-  },
-  {
-    name: "Robert T.",
-    text: "After my surgery, the physical therapist from Dignity helped me regain my mobility. Their patience and expertise made all the difference in my recovery.",
-    rating: 5,
-  },
-  {
-    name: "Susan L.",
-    text: "The caregivers treat my father with such dignity and respect. They truly live up to their name. I can finally have peace of mind knowing he's in good hands.",
-    rating: 5,
-  },
-]
+const featuredServices = services.slice(0, 5)
+const featuredReviews = reviews.slice(0, 3)
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
-                <Star className="size-4 fill-current" />
-                <span>4.9 Star Rating on Google</span>
-              </div>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
-                Compassionate Care,<br />
-                <span className="text-primary">Right at Home</span>
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                Dignity Home Health Care provides professional, personalized healthcare services 
-                in the comfort of your own home. Serving Fresno and surrounding communities with 
-                care that preserves your independence and dignity.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild>
-                  <a href="tel:+15593751234">
-                    <Phone className="size-5" />
-                    Call (559) 375-1234
-                  </a>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/services">
-                    Our Services
-                    <ArrowRight className="size-5" />
-                  </Link>
-                </Button>
-              </div>
-              {/* Trust indicators */}
-              <div className="flex flex-wrap gap-4 pt-4">
-                {trustBadges.map((badge) => (
-                  <div key={badge.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <badge.icon className="size-4 text-primary" />
-                    <span>{badge.label}</span>
-                  </div>
-                ))}
-              </div>
+    <>
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
+        <div className="pointer-events-none absolute -left-32 -top-32 size-[480px] rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 top-40 size-[420px] rounded-full bg-accent/20 blur-3xl" />
+
+        <div className="container-page relative grid items-center gap-14 py-16 lg:grid-cols-2 lg:py-24">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Link
+              href="/reviews"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 py-1.5 pl-1.5 pr-4 text-sm shadow-sm backdrop-blur transition-colors hover:border-primary/40"
+            >
+              <span className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+                <Star className="size-3 fill-current" />
+                {site.rating.value}
+              </span>
+              <span className="text-muted-foreground">Rated by {site.rating.count} families on Google</span>
+            </Link>
+
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] text-foreground text-balance sm:text-5xl lg:text-6xl">
+              Compassionate care,{" "}
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                right at home
+              </span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              Professional, personalized home health care for Fresno and the Central Valley — care that
+              preserves your independence and your dignity.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button size="lg" asChild className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
+                <Link href="/contact">
+                  Book a Free Consultation
+                  <ArrowRight className="size-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild className="h-12 rounded-full bg-card/70 px-7">
+                <a href={site.phone.href}>
+                  <Phone className="size-5" />
+                  {site.phone.display}
+                </a>
+              </Button>
             </div>
-            <div className="relative">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
-                <Image
-                  src="/images/hero-care.jpg"
-                  alt="Caring nurse with elderly patient"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-              {/* Floating stats card */}
-              <div className="absolute -bottom-6 -left-6 bg-card rounded-xl shadow-xl p-4 border border-border">
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-full bg-accent flex items-center justify-center">
-                    <Heart className="size-6 text-accent-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">16+</p>
-                    <p className="text-sm text-muted-foreground">Happy Families</p>
-                  </div>
-                </div>
-              </div>
+
+            <ul className="mt-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-x-6">
+              {trustBadges.map((badge) => (
+                <li key={badge.label} className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                  <badge.icon className="size-4 text-primary" />
+                  {badge.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative animate-in fade-in zoom-in-95 duration-700">
+            <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-primary/30 to-accent/30 blur-2xl" />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-white/40 shadow-2xl">
+              <Image
+                src="/images/hero-care.jpg"
+                alt="Caring nurse with an elderly patient at home"
+                fill
+                priority
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+              />
+            </div>
+
+            <div className="absolute -bottom-6 left-4 flex items-center gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur sm:-left-6">
+              <span className="flex size-12 items-center justify-center rounded-xl bg-accent/15 text-accent">
+                <HeartPulse className="size-6" />
+              </span>
+              <span>
+                <span className="block text-2xl font-bold text-foreground">{site.rating.count}</span>
+                <span className="block text-sm text-muted-foreground">Happy families</span>
+              </span>
+            </div>
+
+            <div className="absolute -top-5 right-4 hidden items-center gap-2 rounded-full border border-border bg-card/95 px-4 py-2 shadow-xl backdrop-blur sm:flex lg:-right-4">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
+              </span>
+              <span className="text-sm font-medium text-foreground">{site.hours.onCall}</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Preview */}
-      <section className="py-16 lg:py-24 bg-card">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Our Healthcare Services
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              We offer a comprehensive range of home health services designed to meet your unique needs 
-              while keeping you comfortable in your own home.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((service) => (
-              <Card key={service.title} className="group hover:shadow-lg transition-shadow border-border">
-                <CardContent className="pt-6">
-                  <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <service.icon className="size-6 text-primary group-hover:text-primary-foreground" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">{service.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{service.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <Button variant="outline" asChild>
+      {/* Stats */}
+      <section className="border-y border-border bg-card/50">
+        <dl className="container-page grid grid-cols-2 divide-border py-10 md:grid-cols-4 md:divide-x">
+          {stats.map((stat) => (
+            <div key={stat.label} className="flex flex-col-reverse px-4 py-3 text-center">
+              <dt className="text-sm text-muted-foreground">{stat.label}</dt>
+              <dd className="bg-gradient-to-br from-primary to-accent bg-clip-text text-3xl font-extrabold text-transparent md:text-4xl">
+                {stat.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* Services */}
+      <section className="py-16 lg:py-24">
+        <div className="container-page">
+          <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+            <SectionHeading
+              align="left"
+              eyebrow="Our Services"
+              title="Complete care, delivered to your door"
+              description="A full range of home health services designed around your needs — so you can recover and thrive in the comfort of home."
+            />
+            <Button variant="outline" asChild className="rounded-full">
               <Link href="/services">
-                View All Services
+                All {services.length} services
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredServices.map((service) => (
+              <Link
+                key={service.slug}
+                href={`/services#${service.slug}`}
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+              >
+                <div className="flex items-start justify-between">
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <service.icon className="size-6" />
+                  </span>
+                  <ArrowUpRight className="size-5 text-muted-foreground transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
+                <h3 className="mt-5 text-lg font-semibold text-foreground">{service.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{service.summary}</p>
+              </Link>
+            ))}
+            <Link
+              href="/contact"
+              className="group flex flex-col justify-between rounded-2xl bg-gradient-to-br from-primary to-accent p-6 text-white shadow-lg shadow-primary/20 transition-transform hover:-translate-y-1"
+            >
+              <ShieldCheck className="size-8" />
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold">Not sure what you need?</h3>
+                <p className="mt-2 text-sm text-white/85">
+                  Get a free in-home assessment and a personalized care plan.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">
+                  Request assessment
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-16 lg:py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/team-care.jpg"
-                  alt="Our caring healthcare team"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+      {/* Why choose us */}
+      <section className="bg-muted/50 py-16 lg:py-24">
+        <div className="container-page grid items-center gap-12 lg:grid-cols-2">
+          <div className="relative">
+            <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-xl">
+              <Image
+                src="/images/team-care.jpg"
+                alt="The Dignity Home Health Care team"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+              />
             </div>
-            <div className="space-y-6">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-                Why Families Choose Dignity Home Health Care
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                For years, we have been providing exceptional home healthcare services to the Fresno community. 
-                Our commitment to quality care and patient dignity sets us apart.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  "Experienced, licensed healthcare professionals",
-                  "Personalized care plans tailored to your needs",
-                  "Coordination with your physicians and specialists",
-                  "Flexible scheduling including weekends",
-                  "Bilingual staff (English & Spanish)",
-                  "Medicare, Medicaid, and most insurances accepted",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle className="size-5 text-accent mt-0.5 shrink-0" />
-                    <span className="text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button asChild>
-                <Link href="/about">
-                  Learn More About Us
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+            <div className="absolute -bottom-6 -right-2 rounded-2xl border border-border bg-card p-5 shadow-xl sm:right-6">
+              <p className="text-sm text-muted-foreground">Languages spoken</p>
+              <p className="mt-1 font-semibold text-foreground">English &amp; Spanish</p>
             </div>
+          </div>
+          <div>
+            <SectionHeading
+              align="left"
+              eyebrow="Why Dignity"
+              title="Why families choose Dignity Home Health Care"
+              description="Our commitment to quality care and patient dignity sets us apart in the Fresno community."
+            />
+            <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+              {whyChooseUs.map((item) => (
+                <li key={item} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+                  <CheckCircle className="mt-0.5 size-5 shrink-0 text-accent" />
+                  <span className="text-sm font-medium text-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <Button asChild className="mt-8 rounded-full">
+              <Link href="/about">
+                Learn more about us
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 lg:py-24 bg-primary/5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              What Families Say About Us
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Our patients and their families trust us to provide compassionate, professional care. 
-              Here is what some of them have to say.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.name} className="bg-card border-border">
-                <CardContent className="pt-6">
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star key={i} className="size-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-foreground leading-relaxed mb-4">{`"${testimonial.text}"`}</p>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                </CardContent>
-              </Card>
+      <section className="py-16 lg:py-24">
+        <div className="container-page">
+          <SectionHeading
+            eyebrow="Testimonials"
+            title="What families say about us"
+            description="Our patients and their families trust us to provide compassionate, professional care."
+          />
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {featuredReviews.map((review) => (
+              <ReviewCard key={review.name} review={review} />
             ))}
           </div>
-          <div className="text-center mt-8">
-            <Button variant="outline" asChild>
+          <div className="mt-10 text-center">
+            <Button variant="outline" asChild className="rounded-full">
               <Link href="/reviews">
-                Read More Reviews
+                Read all reviews
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -259,32 +240,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-primary text-primary-foreground">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-            Contact us today for a free consultation. Our care coordinators are available to discuss 
-            your needs and create a personalized care plan for you or your loved one.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <a href="tel:+15593751234">
-                <Phone className="size-5" />
-                Call (559) 375-1234
-              </a>
-            </Button>
-            <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent" asChild>
-              <Link href="/contact">
-                Contact Us Online
-                <ArrowRight className="size-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
+      <FaqSection />
+
+      <CtaSection
+        title="Ready to get started?"
+        description="Contact us today for a free consultation. Our care coordinators will help create a personalized care plan for you or your loved one."
+      />
+    </>
   )
 }

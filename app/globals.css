@@ -90,7 +90,10 @@
     @apply bg-background text-foreground;
   }
   h1, h2, h3, h4 {
-    @apply font-display tracking-tight;
+    @apply font-display;
+  }
+  h1, h2 {
+    @apply tracking-tight;
   }
   ::selection {
     @apply bg-primary/20;
