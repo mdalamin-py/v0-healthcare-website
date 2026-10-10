@@ -25,16 +25,6 @@ export const site = {
   rating: { value: "4.9", count: "16+" },
 } as const
 
-export const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/doctors", label: "Doctors" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/reviews", label: "Reviews" },
-  { href: "/contact", label: "Contact" },
-] as const
-
 export const legalLinks = [
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Service" },
