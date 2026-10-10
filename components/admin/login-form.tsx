@@ -1,17 +1,17 @@
 "use client"
 
-import { useActionState } from "react"
 import { AlertCircle, Loader2, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn, type ActionState } from "@/app/admin/actions"
+import { useFormAction } from "@/components/admin/use-form-action"
+import { signIn } from "@/app/admin/actions"
 
 export function LoginForm({ initialError }: { initialError?: string }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(signIn, { error: initialError })
+  const { state, pending, form } = useFormAction(signIn, { error: initialError })
 
   return (
-    <form action={action} className="space-y-5">
+    <form {...form} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required className="h-11" />

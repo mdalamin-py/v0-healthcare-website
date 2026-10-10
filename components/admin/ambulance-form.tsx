@@ -1,12 +1,12 @@
 "use client"
 
-import { useActionState } from "react"
 import { Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FieldMessage, FormStatus } from "@/components/admin/form-status"
-import { saveAmbulance, type ActionState } from "@/app/admin/actions"
+import { useFormAction } from "@/components/admin/use-form-action"
+import { saveAmbulance } from "@/app/admin/actions"
 import { ambulanceStatuses, ambulanceTypes } from "@/lib/clinic/ambulance"
 import type { Ambulance, AmbulanceStatus, AmbulanceType } from "@/lib/supabase/types"
 
@@ -14,7 +14,7 @@ const select =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 export function AmbulanceForm({ ambulance, onSaved }: { ambulance?: Ambulance; onSaved?: () => void }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(async (prev, formData) => {
+  const { state, pending, form } = useFormAction(async (prev, formData) => {
     const result = await saveAmbulance(ambulance?.id ?? null, prev, formData)
     if (result.success) onSaved?.()
     return result
@@ -22,7 +22,7 @@ export function AmbulanceForm({ ambulance, onSaved }: { ambulance?: Ambulance; o
   const errors = state.fieldErrors ?? {}
 
   return (
-    <form action={action} className="space-y-4">
+    <form {...form} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="code">Code</Label>

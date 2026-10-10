@@ -1,9 +1,10 @@
 "use client"
 
-import { useActionState, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { CalendarOff, Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormStatus } from "@/components/admin/form-status"
+import { useFormAction } from "@/components/admin/use-form-action"
 import { addLeave, removeLeave, type ActionState } from "@/app/admin/actions"
 import { formatDate } from "@/lib/clinic/format"
 import type { DoctorLeave } from "@/lib/supabase/types"
@@ -12,7 +13,7 @@ const control =
   "h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 export function LeaveManager({ doctorId, leaves, today }: { doctorId: string; leaves: DoctorLeave[]; today: string }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(addLeave, {})
+  const { state, pending, form } = useFormAction(addLeave, {})
   const [removeState, setRemoveState] = useState<ActionState>({})
   const [removing, startRemoving] = useTransition()
 
@@ -55,7 +56,7 @@ export function LeaveManager({ doctorId, leaves, today }: { doctorId: string; le
       )}
       <FormStatus state={removeState} />
 
-      <form action={action} className="grid gap-3 border-t border-border pt-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+      <form {...form} className="grid gap-3 border-t border-border pt-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <input type="hidden" name="doctor_id" value={doctorId} />
         <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           Date

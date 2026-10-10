@@ -1,13 +1,14 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useState } from "react"
 import { Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldMessage, FormStatus } from "@/components/admin/form-status"
-import { saveDoctor, type ActionState } from "@/app/admin/actions"
+import { useFormAction } from "@/components/admin/use-form-action"
+import { saveDoctor } from "@/app/admin/actions"
 import { visitTypes, visitTypeValues } from "@/lib/clinic/visit-types"
 import type { Doctor, DoctorContact } from "@/lib/supabase/types"
 
@@ -20,13 +21,13 @@ function slugify(value: string) {
 }
 
 export function DoctorForm({ doctor, contact }: { doctor?: Doctor; contact?: DoctorContact | null }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(saveDoctor.bind(null, doctor?.id ?? null), {})
+  const { state, pending, form } = useFormAction(saveDoctor.bind(null, doctor?.id ?? null), {})
   const [slug, setSlug] = useState(doctor?.slug ?? "")
   const [slugTouched, setSlugTouched] = useState(Boolean(doctor))
   const errors = state.fieldErrors ?? {}
 
   return (
-    <form action={action} className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <form {...form} className="space-y-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="full_name">Full name *</Label>

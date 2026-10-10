@@ -1,9 +1,10 @@
 "use client"
 
-import { useActionState, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { Loader2, Moon, Plus, Sun, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormStatus } from "@/components/admin/form-status"
+import { useFormAction } from "@/components/admin/use-form-action"
 import { addOnCallShift, deleteOnCallShift, type ActionState } from "@/app/admin/actions"
 import { formatDateTime } from "@/lib/clinic/format"
 import { dutyMeta, dutyTypes } from "@/lib/clinic/duty"
@@ -22,7 +23,7 @@ export function OnCallManager({
   doctors: Pick<Doctor, "id" | "full_name" | "kind">[]
   shifts: Shift[]
 }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(addOnCallShift, {})
+  const { state, pending, form } = useFormAction(addOnCallShift, {})
   const [removeState, setRemoveState] = useState<ActionState>({})
   const [removing, startRemoving] = useTransition()
   const [removingId, setRemovingId] = useState<string | null>(null)
@@ -30,7 +31,7 @@ export function OnCallManager({
 
   return (
     <div className="grid gap-6 xl:grid-cols-5">
-      <form action={action} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm xl:col-span-2 xl:self-start">
+      <form {...form} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm xl:col-span-2 xl:self-start">
         <h2 className="text-lg font-semibold text-foreground">Add a shift</h2>
         <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           Doctor

@@ -1,9 +1,10 @@
 "use client"
 
-import { useActionState, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormStatus } from "@/components/admin/form-status"
+import { useFormAction } from "@/components/admin/use-form-action"
 import { addSchedule, deleteSchedule, type ActionState } from "@/app/admin/actions"
 import { formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
 import type { DoctorSchedule } from "@/lib/supabase/types"
@@ -12,7 +13,7 @@ const control =
   "h-10 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 export function ScheduleManager({ doctorId, schedules }: { doctorId: string; schedules: DoctorSchedule[] }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(addSchedule, {})
+  const { state, pending, form } = useFormAction(addSchedule, {})
   const [removeState, setRemoveState] = useState<ActionState>({})
   const [removing, startRemoving] = useTransition()
   const [removingId, setRemovingId] = useState<string | null>(null)
@@ -61,7 +62,7 @@ export function ScheduleManager({ doctorId, schedules }: { doctorId: string; sch
       )}
       <FormStatus state={removeState} />
 
-      <form action={action} className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+      <form {...form} className="grid gap-3 border-t border-border pt-5 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
         <input type="hidden" name="doctor_id" value={doctorId} />
         <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           Day
