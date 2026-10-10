@@ -9,14 +9,14 @@ export default function PrivacyPage() {
   return (
     <div className="py-16 lg:py-24 bg-background">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="font-serif text-4xl font-bold text-foreground mb-8">Privacy Policy</h1>
+        <h1 className="font-display text-4xl font-bold text-foreground mb-8">Privacy Policy</h1>
         <div className="prose prose-lg max-w-none text-foreground">
           <p className="text-muted-foreground text-lg mb-8">
             Last updated: January 2024
           </p>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Introduction</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Introduction</h2>
             <p className="text-muted-foreground leading-relaxed">
               Dignity Home Health Care is committed to protecting your privacy and ensuring the security 
               of your personal and health information. This Privacy Policy explains how we collect, use, 
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Information We Collect</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Information We Collect</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               We may collect the following types of information:
             </p>
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">How We Use Your Information</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">How We Use Your Information</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               We use the information we collect to:
             </p>
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Information Sharing</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Information Sharing</h2>
             <p className="text-muted-foreground leading-relaxed">
               We do not sell your personal information. We may share your information with healthcare 
               providers involved in your care, insurance companies for billing purposes, and as required 
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Data Security</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Data Security</h2>
             <p className="text-muted-foreground leading-relaxed">
               We implement appropriate technical and organizational security measures to protect your 
               personal and health information against unauthorized access, alteration, disclosure, or 
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Your Rights</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Your Rights</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               You have the right to:
             </p>
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Contact Us</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
               If you have questions about this Privacy Policy or our privacy practices, please contact us at:
             </p>

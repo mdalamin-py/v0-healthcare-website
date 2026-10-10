@@ -1,108 +1,134 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { Clock, MapPin, Menu, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Phone, Menu, X, Heart } from "lucide-react"
-
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
-  { href: "/services", label: "Services" },
-  { href: "/reviews", label: "Reviews" },
-  { href: "/contact", label: "Contact" },
-]
+import { Logo } from "@/components/logo"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { navLinks, site } from "@/lib/site"
+import { cn } from "@/lib/utils"
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href))
 
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
-      {/* Top bar with phone */}
-      <div className="bg-primary text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between text-sm">
-          <p className="hidden sm:block">Compassionate Care, Right at Home</p>
-          <a 
-            href="tel:+15593751234" 
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity font-medium"
-          >
-            <Phone className="size-4" />
-            <span>(559) 375-1234</span>
+    <header className="sticky top-0 z-50">
+      <div className="hidden bg-slate-950 text-slate-300 md:block">
+        <div className="container-page flex h-10 items-center justify-between text-xs">
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-3.5 text-primary" />
+              {site.hours.office} · {site.hours.onCall}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MapPin className="size-3.5 text-primary" />
+              {site.address.street}, {site.address.city}, {site.address.region}
+            </span>
+          </div>
+          <a href={site.phone.href} className="flex items-center gap-1.5 font-semibold text-white transition-colors hover:text-primary">
+            <Phone className="size-3.5" />
+            {site.phone.display}
           </a>
         </div>
       </div>
-      
-      {/* Main nav */}
-      <nav className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="size-10 rounded-full bg-primary flex items-center justify-center">
-              <Heart className="size-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-serif font-bold text-lg text-foreground leading-tight">Dignity</h1>
-              <p className="text-xs text-muted-foreground leading-tight">Home Health Care</p>
-            </div>
-          </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6">
+      <div
+        className={cn(
+          "border-b transition-all duration-300",
+          scrolled || menuOpen
+            ? "border-border bg-background/85 shadow-sm backdrop-blur-xl"
+            : "border-transparent bg-background/60 backdrop-blur-md",
+        )}
+      >
+        <nav className="container-page flex h-16 items-center justify-between md:h-20" aria-label="Main">
+          <Logo />
+
+          <ul className="hidden items-center gap-1 rounded-full border border-border bg-card/70 p-1 shadow-sm md:flex">
             {navLinks.map((link) => (
-              <Link 
-                key={link.href}
-                href={link.href}
-                className="text-foreground/80 hover:text-primary transition-colors font-medium"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <Button asChild>
-              <a href="tel:+15593751234">
-                <Phone className="size-4" />
-                Call Now
-              </a>
-            </Button>
-          </div>
-
-          {/* Mobile menu button */}
-          <button 
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-          </button>
-        </div>
-
-        {/* Mobile nav */}
-        {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-border pt-4">
-            <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.href}
+              <li key={link.href}>
+                <Link
                   href={link.href}
-                  className="text-foreground/80 hover:text-primary transition-colors font-medium py-2"
-                  onClick={() => setMobileMenuOpen(false)}
+                  aria-current={isActive(link.href) ? "page" : undefined}
+                  className={cn(
+                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    isActive(link.href)
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                  )}
                 >
                   {link.label}
                 </Link>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild className="hidden rounded-full md:inline-flex">
+              <Link href="/contact">Free Consultation</Link>
+            </Button>
+            <button
+              type="button"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card md:hidden"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
+        </nav>
+
+        {menuOpen && (
+          <div id="mobile-menu" className="animate-in fade-in slide-in-from-top-2 border-t border-border md:hidden">
+            <ul className="container-page flex flex-col gap-1 py-4">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={isActive(link.href) ? "page" : undefined}
+                    className={cn(
+                      "block rounded-lg px-4 py-3 font-medium transition-colors",
+                      isActive(link.href) ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-muted",
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
               ))}
-              <Button asChild className="mt-2">
-                <a href="tel:+15593751234">
-                  <Phone className="size-4" />
-                  Call (559) 375-1234
-                </a>
-              </Button>
-            </div>
+              <li className="mt-2 grid grid-cols-2 gap-2">
+                <Button asChild variant="outline" className="rounded-full">
+                  <a href={site.phone.href}>
+                    <Phone className="size-4" />
+                    Call Us
+                  </a>
+                </Button>
+                <Button asChild className="rounded-full">
+                  <Link href="/contact">Free Consultation</Link>
+                </Button>
+              </li>
+            </ul>
           </div>
         )}
-      </nav>
+      </div>
     </header>
   )
 }

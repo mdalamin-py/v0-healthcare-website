@@ -77,7 +77,7 @@ export default function HomePage() {
                 <Star className="size-4 fill-current" />
                 <span>4.9 Star Rating on Google</span>
               </div>
-              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight text-balance">
                 Compassionate Care,<br />
                 <span className="text-primary">Right at Home</span>
               </h1>
@@ -141,7 +141,7 @@ export default function HomePage() {
       <section className="py-16 lg:py-24 bg-card">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Healthcare Services
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -188,7 +188,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="space-y-6">
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
                 Why Families Choose Dignity Home Health Care
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -225,7 +225,7 @@ export default function HomePage() {
       <section className="py-16 lg:py-24 bg-primary/5">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               What Families Say About Us
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -262,7 +262,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             Ready to Get Started?
           </h2>
           <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">

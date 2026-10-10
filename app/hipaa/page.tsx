@@ -9,7 +9,7 @@ export default function HipaaPage() {
   return (
     <div className="py-16 lg:py-24 bg-background">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="font-serif text-4xl font-bold text-foreground mb-8">
+        <h1 className="font-display text-4xl font-bold text-foreground mb-8">
           Notice of Privacy Practices (HIPAA)
         </h1>
         <div className="prose prose-lg max-w-none text-foreground">
@@ -25,7 +25,7 @@ export default function HipaaPage() {
           </div>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Our Commitment to Your Privacy</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Commitment to Your Privacy</h2>
             <p className="text-muted-foreground leading-relaxed">
               Dignity Home Health Care is committed to protecting the privacy of your health information. 
               We are required by law to maintain the privacy of your protected health information (PHI), 
@@ -35,7 +35,7 @@ export default function HipaaPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">How We May Use and Disclose Your Health Information</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">How We May Use and Disclose Your Health Information</h2>
             
             <h3 className="font-semibold text-lg text-foreground mt-6 mb-2">For Treatment</h3>
             <p className="text-muted-foreground leading-relaxed mb-4">
@@ -57,7 +57,7 @@ export default function HipaaPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Your Rights Regarding Your Health Information</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Your Rights Regarding Your Health Information</h2>
             <ul className="list-disc pl-6 space-y-3 text-muted-foreground">
               <li>
                 <strong className="text-foreground">Right to Inspect and Copy:</strong> You have the right to inspect 
@@ -87,7 +87,7 @@ export default function HipaaPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Our Responsibilities</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Responsibilities</h2>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
               <li>Maintain the privacy of your health information</li>
               <li>Provide you with this notice of our legal duties and privacy practices</li>
@@ -97,7 +97,7 @@ export default function HipaaPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Questions or Complaints</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Questions or Complaints</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               If you have questions about this notice or believe your privacy rights have been violated, 
               you may contact our Privacy Officer:

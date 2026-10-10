@@ -173,7 +173,7 @@ export default function ContactPage() {
       <section className="bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="max-w-3xl">
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight text-balance">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight text-balance">
               Contact Us
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
@@ -224,7 +224,7 @@ export default function ContactPage() {
             <div>
               <Card className="border-border">
                 <CardHeader>
-                  <CardTitle className="font-serif text-2xl">Send Us a Message</CardTitle>
+                  <CardTitle className="font-display text-2xl">Send Us a Message</CardTitle>
                   <CardDescription>
                     Fill out the form below and we will get back to you within 24 hours.
                   </CardDescription>
@@ -436,7 +436,7 @@ export default function ContactPage() {
               {/* Quick Call Card */}
               <Card className="border-border bg-primary text-primary-foreground">
                 <CardContent className="pt-6">
-                  <h3 className="font-serif text-xl font-bold mb-2">
+                  <h3 className="font-display text-xl font-bold mb-2">
                     Prefer to Talk to Someone?
                   </h3>
                   <p className="text-primary-foreground/90 mb-4 text-sm leading-relaxed">

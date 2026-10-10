@@ -122,7 +122,7 @@ export default function ReviewsPage() {
                 <Star key={i} className="size-8 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
               What Our Patients Say
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-6">
@@ -202,7 +202,7 @@ export default function ReviewsPage() {
       {/* Leave a Review CTA */}
       <section className="py-16 lg:py-24 bg-primary/5">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
             Are You a Current or Former Patient?
           </h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
@@ -225,7 +225,7 @@ export default function ReviewsPage() {
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             Experience the Care Everyone is Talking About
           </h2>
           <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">

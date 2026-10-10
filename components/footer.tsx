@@ -1,123 +1,106 @@
 import Link from "next/link"
-import { Heart, Phone, MapPin, Mail, Clock } from "lucide-react"
-
-const quickLinks = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
-  { href: "/services", label: "Services" },
-  { href: "/reviews", label: "Reviews" },
-  { href: "/contact", label: "Contact" },
-]
-
-const services = [
-  "Skilled Nursing",
-  "Personal Care",
-  "Physical Therapy",
-  "Occupational Therapy",
-  "Speech Therapy",
-  "Medical Social Work",
-]
+import { Clock, Mail, MapPin, Phone } from "lucide-react"
+import { Logo } from "@/components/logo"
+import { legalLinks, navLinks, serviceNames, site } from "@/lib/site"
 
 export function Footer() {
   return (
-    <footer className="bg-foreground text-background">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="size-10 rounded-full bg-primary flex items-center justify-center">
-                <Heart className="size-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h3 className="font-serif font-bold text-lg">Dignity</h3>
-                <p className="text-xs text-background/70">Home Health Care</p>
-              </div>
-            </div>
-            <p className="text-background/80 text-sm leading-relaxed">
-              Providing compassionate, professional home health care services to the Fresno community. 
-              Your health and dignity are our priority.
-            </p>
-          </div>
+    <footer className="relative overflow-hidden bg-slate-950 text-slate-400">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      <div className="pointer-events-none absolute -top-40 left-1/2 size-[500px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              {quickLinks.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className="text-background/80 hover:text-primary transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Services */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Our Services</h4>
-            <ul className="space-y-2">
-              {services.map((service) => (
-                <li key={service} className="text-background/80 text-sm">
-                  {service}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Contact Us</h4>
-            <ul className="space-y-3">
-              <li>
-                <a 
-                  href="tel:+15593751234" 
-                  className="flex items-start gap-3 text-background/80 hover:text-primary transition-colors text-sm"
-                >
-                  <Phone className="size-4 mt-0.5 shrink-0" />
-                  <span>(559) 375-1234</span>
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://maps.google.com/?q=1589+W+Shaw+Ave+Ste+10,+Fresno,+CA+93711"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-3 text-background/80 hover:text-primary transition-colors text-sm"
-                >
-                  <MapPin className="size-4 mt-0.5 shrink-0" />
-                  <span>1589 W Shaw Ave Ste 10<br />Fresno, CA 93711</span>
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="mailto:info@dignityhomehealthcare.com"
-                  className="flex items-start gap-3 text-background/80 hover:text-primary transition-colors text-sm"
-                >
-                  <Mail className="size-4 mt-0.5 shrink-0" />
-                  <span>info@dignityhomehealthcare.com</span>
-                </a>
-              </li>
-              <li className="flex items-start gap-3 text-background/80 text-sm">
-                <Clock className="size-4 mt-0.5 shrink-0" />
-                <span>Mon - Fri: 8:00 AM - 5:00 PM<br />24/7 On-Call Available</span>
-              </li>
-            </ul>
-          </div>
+      <div className="container-page relative grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-12">
+        <div className="lg:col-span-4">
+          <Logo inverted />
+          <p className="mt-5 max-w-sm text-sm leading-relaxed">
+            Providing compassionate, professional home health care to the Fresno community. Your health and
+            dignity are our priority.
+          </p>
+          <a
+            href={site.phone.href}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-primary/50 hover:text-primary"
+          >
+            <Phone className="size-4" />
+            {site.phone.display}
+          </a>
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-background/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/60">
-          <p>&copy; {new Date().getFullYear()} Dignity Home Health Care. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link href="/hipaa" className="hover:text-primary transition-colors">HIPAA Notice</Link>
-          </div>
+        <div className="lg:col-span-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Company</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="transition-colors hover:text-primary">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="lg:col-span-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Services</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {serviceNames.slice(0, 6).map((service) => (
+              <li key={service}>
+                <Link href="/services" className="transition-colors hover:text-primary">
+                  {service}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="lg:col-span-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Contact</h2>
+          <ul className="mt-4 space-y-4 text-sm">
+            <li>
+              <a
+                href={site.address.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-3 transition-colors hover:text-primary"
+              >
+                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" />
+                <span>
+                  {site.address.street}
+                  <br />
+                  {site.address.city}, {site.address.region} {site.address.postalCode}
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${site.email}`} className="flex gap-3 break-all transition-colors hover:text-primary">
+                <Mail className="mt-0.5 size-4 shrink-0 text-primary" />
+                {site.email}
+              </a>
+            </li>
+            <li className="flex gap-3">
+              <Clock className="mt-0.5 size-4 shrink-0 text-primary" />
+              <span>
+                {site.hours.office}
+                <br />
+                {site.hours.onCall}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="relative border-t border-white/10">
+        <div className="container-page flex flex-col items-center justify-between gap-4 py-6 text-xs md:flex-row">
+          <p>
+            &copy; {new Date().getFullYear()} {site.name}. All rights reserved.
+          </p>
+          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {legalLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="transition-colors hover:text-primary">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </footer>

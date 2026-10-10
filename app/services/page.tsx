@@ -162,7 +162,7 @@ export default function ServicesPage() {
       <section className="bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="max-w-3xl">
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight text-balance">
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight text-balance">
               Comprehensive Home Health Services
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-8">
@@ -192,7 +192,7 @@ export default function ServicesPage() {
       <section className="py-16 lg:py-24 bg-card">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Healthcare Services
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -232,7 +232,7 @@ export default function ServicesPage() {
       <section className="py-16 lg:py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               How to Get Started
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -283,7 +283,7 @@ export default function ServicesPage() {
                 <Shield className="size-6 text-primary" />
                 <span className="font-semibold text-primary">Insurance Coverage</span>
               </div>
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
                 We Accept Most Major Insurance Plans
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
@@ -317,7 +317,7 @@ export default function ServicesPage() {
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             Ready to Start Receiving Care at Home?
           </h2>
           <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">

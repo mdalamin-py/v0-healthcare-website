@@ -74,7 +74,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground leading-tight text-balance">
+              <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground leading-tight text-balance">
                 About Dignity Home Health Care
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
@@ -114,7 +114,7 @@ export default function AboutPage() {
                 <div className="size-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
                   <Target className="size-7 text-primary" />
                 </div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Our Mission</h2>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Mission</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   To provide exceptional, compassionate home health care services that empower 
                   our patients to live their best lives in the comfort of their own homes. 
@@ -128,7 +128,7 @@ export default function AboutPage() {
                 <div className="size-14 rounded-lg bg-accent/20 flex items-center justify-center mb-6">
                   <Eye className="size-7 text-accent" />
                 </div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-4">Our Vision</h2>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Vision</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   To be the most trusted home health care provider in the Central Valley, 
                   recognized for our unwavering commitment to quality, innovation, and 
@@ -145,7 +145,7 @@ export default function AboutPage() {
       <section className="py-16 lg:py-24 bg-background">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Core Values
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -173,7 +173,7 @@ export default function AboutPage() {
       <section className="py-16 lg:py-24 bg-card">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
               Meet Our Leadership Team
             </h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -203,7 +203,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
                 Why Choose Dignity Home Health Care?
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -229,7 +229,7 @@ export default function AboutPage() {
               </ul>
             </div>
             <div className="bg-primary/5 rounded-2xl p-8">
-              <h3 className="font-serif text-2xl font-bold text-foreground mb-4">
+              <h3 className="font-display text-2xl font-bold text-foreground mb-4">
                 Our Service Area
               </h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
@@ -251,7 +251,7 @@ export default function AboutPage() {
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             Ready to Experience the Dignity Difference?
           </h2>
           <p className="text-primary-foreground/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
