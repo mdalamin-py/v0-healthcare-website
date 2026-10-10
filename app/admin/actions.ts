@@ -172,6 +172,22 @@ export async function deleteOnCallShift(shiftId: string): Promise<ActionState> {
 }
 
 // ---------------------------------------------------------------------------
+// Callback requests
+// ---------------------------------------------------------------------------
+
+export async function resolveCallback(id: string): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase
+    .from("callback_requests")
+    .update({ status: "resolved", resolved_at: new Date().toISOString() })
+    .eq("id", id)
+  if (error) return { error: dbError(error, "Could not update the request.") }
+
+  revalidatePath("/admin", "layout")
+  return { success: "Marked as resolved." }
+}
+
+// ---------------------------------------------------------------------------
 // Live queue
 // ---------------------------------------------------------------------------
 

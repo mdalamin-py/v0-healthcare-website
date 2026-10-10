@@ -13,6 +13,7 @@ const staticRoutes = [
   { path: "/appointments/book", priority: 0.9 },
   { path: "/schedule", priority: 0.8 },
   { path: "/queue", priority: 0.6 },
+  { path: "/emergency", priority: 0.7 },
   { path: "/about", priority: 0.7 },
   { path: "/reviews", priority: 0.7 },
   { path: "/contact", priority: 0.8 },

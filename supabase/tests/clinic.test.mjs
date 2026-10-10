@@ -171,6 +171,18 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   }
 }
 
+// Callback requests
+{
+  const id1 = (await q(`select request_callback('Rita Gomez', '(559) 444-1111', 'Chest tightness since morning') id`))[0].id
+  const id2 = (await q(`select request_callback('Rita G', '559-444-1111', 'Following up on my call') id`))[0].id
+  check("duplicate open callback for same phone is merged", id1 === id2)
+  await expectError("invalid callback rejected", `select request_callback('R', '12', 'x')`, [], "INVALID_REQUEST")
+  await db.exec(`set role anon`)
+  const visible = await q(`select count(*)::int c from callback_requests`)
+  await db.exec(`reset role`)
+  check("anon cannot read callback requests", visible[0].c === 0)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

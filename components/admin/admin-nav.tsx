@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarDays, LayoutDashboard, ListOrdered, Moon, Stethoscope } from "lucide-react"
+import { CalendarDays, LayoutDashboard, ListOrdered, Moon, PhoneCall, Stethoscope } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarDays },
   { href: "/admin/queue", label: "Live queue", icon: ListOrdered },
+  { href: "/admin/callbacks", label: "Callbacks", icon: PhoneCall },
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },
   { href: "/admin/on-call", label: "On-call", icon: Moon },
 ]

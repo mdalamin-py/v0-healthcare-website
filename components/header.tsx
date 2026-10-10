@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { ArrowRight, CalendarPlus, ChevronDown, Menu, Phone, Sparkles, UserRound, X } from "lucide-react"
+import { ArrowRight, CalendarPlus, ChevronDown, Menu, Phone, Siren, Sparkles, UserRound, X } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { isActivePath, isGroup, navigation, type NavGroup } from "@/lib/navigation"
@@ -229,10 +229,16 @@ export function Header() {
             </span>
             {site.hours.onCall} · {site.hours.office}
           </p>
-          <a href={site.phone.href} className="hidden items-center gap-1.5 hover:underline sm:flex">
-            <Phone className="size-3.5" />
-            {site.phone.display}
-          </a>
+          <span className="hidden items-center gap-4 sm:flex">
+            <Link href="/emergency" className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 hover:bg-white/25">
+              <Siren className="size-3.5" />
+              Emergency
+            </Link>
+            <a href={site.phone.href} className="flex items-center gap-1.5 hover:underline">
+              <Phone className="size-3.5" />
+              {site.phone.display}
+            </a>
+          </span>
         </div>
       </div>
 

@@ -98,6 +98,25 @@ export async function sendContactEmail(data: ContactInput) {
   })
 }
 
+export async function sendCallbackAlert(request: { name: string; phone: string; concern: string }) {
+  const html = layout(
+    "Urgent callback requested",
+    `<p style="font-size:14px">A patient asked for an urgent callback from the emergency page.</p>
+    <table cellpadding="6" style="font-size:14px">
+      <tr><td style="color:#64748b">Name</td><td><strong>${escapeHtml(request.name)}</strong></td></tr>
+      <tr><td style="color:#64748b">Phone</td><td><strong>${escapeHtml(request.phone)}</strong></td></tr>
+    </table>
+    <p style="font-size:14px;white-space:pre-wrap">${escapeHtml(request.concern)}</p>
+    <p><a href="${site.url}/admin/callbacks">Open callbacks in the dashboard</a></p>`,
+  )
+  await sendEmail({
+    to: process.env.CONTACT_TO_EMAIL!.split(",").map((address) => address.trim()),
+    subject: `Urgent callback: ${request.name} · ${request.phone}`,
+    html,
+    text: `Urgent callback requested\nName: ${request.name}\nPhone: ${request.phone}\n\n${request.concern}`,
+  })
+}
+
 export async function sendBookingConfirmation(to: string, booking: CalendarAppointment & { instructions: string }) {
   const date = formatDate(booking.appointment_date, { weekday: "long", year: "numeric" })
   const session = formatTimeRange(booking.start_time, booking.end_time)
