@@ -60,14 +60,14 @@ export function Header() {
         <nav className="container-page flex h-16 items-center justify-between md:h-20" aria-label="Main">
           <Logo />
 
-          <ul className="hidden items-center gap-1 rounded-full border border-border bg-card/70 p-1 shadow-sm md:flex">
+          <ul className="hidden items-center gap-1 rounded-full border border-border bg-card/70 p-1 shadow-sm lg:flex">
             {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
                   aria-current={isActive(link.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    "rounded-full px-3.5 py-2 text-sm font-medium transition-colors xl:px-4",
                     isActive(link.href)
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-foreground/70 hover:bg-muted hover:text-foreground",
@@ -81,12 +81,12 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button asChild className="hidden rounded-full md:inline-flex">
+            <Button asChild className="hidden rounded-full lg:inline-flex">
               <Link href="/contact">Free Consultation</Link>
             </Button>
             <button
               type="button"
-              className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card md:hidden"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card lg:hidden"
               onClick={() => setMenuOpen((open) => !open)}
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
@@ -98,7 +98,7 @@ export function Header() {
         </nav>
 
         {menuOpen && (
-          <div id="mobile-menu" className="animate-in fade-in slide-in-from-top-2 border-t border-border md:hidden">
+          <div id="mobile-menu" className="animate-in fade-in slide-in-from-top-2 border-t border-border lg:hidden">
             <ul className="container-page flex flex-col gap-1 py-4">
               {navLinks.map((link) => (
                 <li key={link.href}>
