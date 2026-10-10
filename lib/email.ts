@@ -1,6 +1,8 @@
 import "server-only"
 import { buildAppointmentIcs, type CalendarAppointment } from "@/lib/clinic/ics"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { visitTypeMeta } from "@/lib/clinic/visit-types"
+import type { VisitType } from "@/lib/supabase/types"
 import { patientRelations, type ContactInput } from "@/lib/validations/contact"
 import { site } from "@/lib/site"
 
@@ -96,6 +98,77 @@ export async function sendContactEmail(data: ContactInput) {
     html,
     text,
   })
+}
+
+export type DigestSession = {
+  start_time: string
+  end_time: string
+  patients: {
+    serial: number
+    name: string
+    phone: string
+    age: number | null
+    visitType: VisitType
+    reason: string | null
+    status: string
+  }[]
+}
+
+export async function sendSerialDigest({
+  to,
+  doctor,
+  assistant,
+  date,
+  sessions,
+}: {
+  to: string[]
+  doctor: string
+  assistant: string | null
+  date: string
+  sessions: DigestSession[]
+}) {
+  const total = sessions.reduce((sum, session) => sum + session.patients.length, 0)
+  const day = formatDate(date, { weekday: "long", year: "numeric" })
+  const blocks = sessions
+    .map(
+      (session) => `
+      <h3 style="font-size:15px;margin:20px 0 8px">${session.start_time ? formatTimeRange(session.start_time, session.end_time) : "Session"} · ${session.patients.length} patients</h3>
+      <table cellpadding="6" style="border-collapse:collapse;width:100%;font-size:13px">
+        <tr style="background:#f1f5f9;text-align:left"><th>#</th><th>Patient</th><th>Phone</th><th>Visit</th><th>Reason</th></tr>
+        ${session.patients
+          .map(
+            (patient) => `<tr style="border-bottom:1px solid #e2e8f0">
+              <td><strong>${patient.serial}</strong></td>
+              <td>${escapeHtml(patient.name)}${patient.age != null ? ` (${patient.age})` : ""}</td>
+              <td>${escapeHtml(patient.phone)}</td>
+              <td>${escapeHtml(visitTypeMeta(patient.visitType).label)}</td>
+              <td>${escapeHtml(patient.reason ?? "")}</td>
+            </tr>`,
+          )
+          .join("")}
+      </table>`,
+    )
+    .join("")
+
+  const html = layout(
+    `Today's serial list · ${total} patients`,
+    `<p style="font-size:14px;margin:0">Good morning ${escapeHtml(doctor)}${assistant ? ` and ${escapeHtml(assistant)}` : ""},</p>
+    <p style="font-size:14px">Here is the serial list for <strong>${escapeHtml(day)}</strong>.</p>
+    ${blocks}
+    <p style="margin-top:20px"><a href="${site.url}/admin/queue" style="display:inline-block;background:#0d9488;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px">Open the live queue</a></p>`,
+  )
+  const text = [
+    `Serial list for ${day} (${doctor})`,
+    ...sessions.flatMap((session) => [
+      "",
+      session.start_time ? formatTimeRange(session.start_time, session.end_time) : "Session",
+      ...session.patients.map(
+        (patient) => `#${patient.serial} ${patient.name} · ${patient.phone} · ${visitTypeMeta(patient.visitType).label}${patient.reason ? ` · ${patient.reason}` : ""}`,
+      ),
+    ]),
+  ].join("\n")
+
+  await sendEmail({ to, subject: `Serial list · ${day} · ${total} patients`, html, text })
 }
 
 export async function sendCallbackAlert(request: { name: string; phone: string; concern: string }) {

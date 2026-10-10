@@ -15,6 +15,24 @@ export type Database = {
         Update: { user_id?: string; created_at?: string }
         Relationships: []
       }
+      doctor_contacts: {
+        Row: {
+          doctor_id: string
+          email: string | null
+          assistant_name: string | null
+          assistant_email: string | null
+          updated_at: string
+        }
+        Insert: { doctor_id: string; email?: string | null; assistant_name?: string | null; assistant_email?: string | null }
+        Update: { email?: string | null; assistant_name?: string | null; assistant_email?: string | null }
+        Relationships: []
+      }
+      serial_digest_log: {
+        Row: { doctor_id: string; digest_date: string; recipients: string[]; appointment_count: number; sent_at: string }
+        Insert: { doctor_id: string; digest_date: string; recipients: string[]; appointment_count: number }
+        Update: Record<never, never>
+        Relationships: []
+      }
       doctor_leaves: {
         Row: { id: string; doctor_id: string; leave_date: string; reason: string | null; created_at: string }
         Insert: { doctor_id: string; leave_date: string; reason?: string | null }
@@ -325,6 +343,7 @@ export type CallbackRequest = Database["public"]["Tables"]["callback_requests"][
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
 export type DoctorRating = { average: number; total: number }
 export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
+export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row"]
 export type RosterEntry = Database["public"]["Functions"]["get_doctor_roster"]["Returns"][number]
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

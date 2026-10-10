@@ -48,6 +48,19 @@ export const doctorSchema = z.object({
   is_active: z.boolean(),
 })
 
+const optionalEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .refine((value) => !value || z.string().email().safeParse(value).success, "Enter a valid email")
+  .transform((value) => value || null)
+
+export const contactSchema = z.object({
+  email: optionalEmail,
+  assistant_name: optionalText(100),
+  assistant_email: optionalEmail,
+})
+
 export const leaveSchema = z.object({
   doctor_id: z.string().uuid(),
   leave_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date"),

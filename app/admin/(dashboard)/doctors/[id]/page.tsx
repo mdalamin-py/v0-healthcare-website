@@ -21,6 +21,7 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
 
   const today = clinicToday()
   const { supabase } = await requireAdmin()
+  const { data: contact } = await supabase.from("doctor_contacts").select("*").eq("doctor_id", doctor.id).maybeSingle()
   const { data: leaves } = await supabase
     .from("doctor_leaves")
     .select("*")
@@ -58,7 +59,7 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
       )}
       <div className="grid gap-6 xl:grid-cols-5">
         <div className="xl:col-span-3">
-          <DoctorForm doctor={doctor} />
+          <DoctorForm doctor={doctor} contact={contact} />
         </div>
         <div className="space-y-6 xl:col-span-2">
           <ScheduleManager doctorId={doctor.id} schedules={doctor.doctor_schedules} />

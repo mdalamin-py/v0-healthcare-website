@@ -252,6 +252,15 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   await q(`delete from doctor_schedules where id = $1`, [schedule])
 }
 
+// Doctor contacts are private
+{
+  await db.exec(`set role anon`)
+  const contacts = await q(`select count(*)::int c from doctor_contacts`)
+  await db.exec(`reset role`)
+  const all = await q(`select count(*)::int c from doctor_contacts`)
+  check("doctor contact emails are hidden from the public", contacts[0].c === 0 && all[0].c === 6, `${contacts[0].c}/${all[0].c}`)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

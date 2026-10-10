@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { AppointmentsTable } from "@/components/admin/appointments-table"
+import { SendSerialListsButton } from "@/components/admin/send-serial-lists-button"
 import { BreakdownList } from "@/components/admin/breakdown-list"
 import { DailyBarChart } from "@/components/admin/daily-bar-chart"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
@@ -125,6 +126,7 @@ export default async function AdminDashboardPage() {
           <h1 className="mt-1 text-2xl font-bold text-foreground md:text-3xl">{greeting()}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <SendSerialListsButton />
           <Link
             href={`/admin/appointments/export?from=${from}&to=${addDays(today, 30)}`}
             className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-medium transition-colors hover:border-primary/40"

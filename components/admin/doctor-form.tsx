@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { FieldMessage, FormStatus } from "@/components/admin/form-status"
 import { saveDoctor, type ActionState } from "@/app/admin/actions"
 import { visitTypes, visitTypeValues } from "@/lib/clinic/visit-types"
-import type { Doctor } from "@/lib/supabase/types"
+import type { Doctor, DoctorContact } from "@/lib/supabase/types"
 
 function slugify(value: string) {
   return value
@@ -19,7 +19,7 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "")
 }
 
-export function DoctorForm({ doctor }: { doctor?: Doctor }) {
+export function DoctorForm({ doctor, contact }: { doctor?: Doctor; contact?: DoctorContact | null }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveDoctor.bind(null, doctor?.id ?? null), {})
   const [slug, setSlug] = useState(doctor?.slug ?? "")
   const [slugTouched, setSlugTouched] = useState(Boolean(doctor))
@@ -111,6 +111,29 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
           <Textarea id="bio" name="bio" rows={4} defaultValue={doctor?.bio ?? ""} />
         </div>
       </div>
+
+      <fieldset className="rounded-xl border border-border p-4">
+        <legend className="px-1 text-sm font-medium text-foreground">Daily serial list (private)</legend>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Each morning at 10 AM the day&apos;s serial list is emailed to the doctor and their compounder.
+        </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="contact_email">Doctor email</Label>
+            <Input id="contact_email" name="contact_email" type="email" defaultValue={contact?.email ?? ""} />
+            <FieldMessage messages={errors.email} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="assistant_name">Compounder name</Label>
+            <Input id="assistant_name" name="assistant_name" defaultValue={contact?.assistant_name ?? ""} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="assistant_email">Compounder email</Label>
+            <Input id="assistant_email" name="assistant_email" type="email" defaultValue={contact?.assistant_email ?? ""} />
+            <FieldMessage messages={errors.assistant_email} />
+          </div>
+        </div>
+      </fieldset>
 
       <fieldset>
         <legend className="text-sm font-medium text-foreground">Visit types offered *</legend>

@@ -7,7 +7,9 @@ import { clinicLocalToIso } from "@/lib/clinic/time"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
 import type { AppointmentStatus } from "@/lib/supabase/types"
-import { appointmentStatuses, doctorSchema, leaveSchema, onCallSchema, scheduleSchema } from "@/lib/validations/admin"
+import { appointmentStatuses, contactSchema, doctorSchema, leaveSchema, onCallSchema, scheduleSchema } from "@/lib/validations/admin"
+import { sendDailySerialDigests, type DigestResult } from "@/lib/digest"
+import { isResendConfigured } from "@/lib/email"
 import { clinicToday } from "@/lib/clinic/time"
 
 export type ActionState = {
@@ -95,21 +97,34 @@ export async function saveDoctor(doctorId: string | null, _: ActionState, formDa
     kind: formData.get("kind") ?? "consultant",
     is_active: formData.get("is_active") === "on",
   })
-  if (!parsed.success) {
-    return { error: "Please fix the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors }
+  const contact = contactSchema.safeParse({
+    email: formData.get("contact_email") ?? "",
+    assistant_name: formData.get("assistant_name") ?? "",
+    assistant_email: formData.get("assistant_email") ?? "",
+  })
+  if (!parsed.success || !contact.success) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: { ...parsed.error?.flatten().fieldErrors, ...contact.error?.flatten().fieldErrors },
+    }
   }
 
-  if (doctorId) {
-    const { error } = await supabase.from("doctors").update(parsed.data).eq("id", doctorId)
+  let id = doctorId
+  if (id) {
+    const { error } = await supabase.from("doctors").update(parsed.data).eq("id", id)
     if (error) return { error: dbError(error, "Could not save the doctor.") }
-    revalidatePublicPages()
-    return { success: "Doctor saved." }
+  } else {
+    const { data, error } = await supabase.from("doctors").insert(parsed.data).select("id").single()
+    if (error) return { error: dbError(error, "Could not create the doctor.") }
+    id = data.id
   }
 
-  const { data, error } = await supabase.from("doctors").insert(parsed.data).select("id").single()
-  if (error) return { error: dbError(error, "Could not create the doctor.") }
+  const { error: contactError } = await supabase.from("doctor_contacts").upsert({ doctor_id: id, ...contact.data })
+  if (contactError) return { error: dbError(contactError, "Doctor saved, but contact details could not be saved.") }
+
   revalidatePublicPages()
-  redirect(`/admin/doctors/${data.id}?created=1`)
+  if (!doctorId) redirect(`/admin/doctors/${id}?created=1`)
+  return { success: "Doctor saved." }
 }
 
 export async function addSchedule(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -231,6 +246,19 @@ export async function resolveCallback(id: string): Promise<ActionState> {
 
   revalidatePath("/admin", "layout")
   return { success: "Marked as resolved." }
+}
+
+// ---------------------------------------------------------------------------
+// Daily serial lists
+// ---------------------------------------------------------------------------
+
+export async function sendSerialListsNow(): Promise<ActionState & { results?: DigestResult[] }> {
+  const { supabase } = await requireAdmin()
+  if (!isResendConfigured()) return { error: "Email delivery is not configured (RESEND_API_KEY)." }
+
+  const results = await sendDailySerialDigests(supabase)
+  const sent = results.filter((result) => result.status === "sent").length
+  return { success: `Sent ${sent} of ${results.length} serial lists.`, results }
 }
 
 // ---------------------------------------------------------------------------

@@ -103,3 +103,9 @@ join lateral (
   select id from public.doctors
   where slug = (array['aiden-brooks', 'fatima-noor', 'lucas-mendes'])[1 + ((extract(doy from day)::integer + shift.idx) % 3)]
 ) as d on true;
+
+-- Sample doctor and compounder contacts for the daily serial email.
+insert into public.doctor_contacts (doctor_id, email, assistant_name, assistant_email)
+select id, slug || '@dignityhomehealthcare.com', 'Front desk', 'frontdesk@dignityhomehealthcare.com'
+from public.doctors
+where kind = 'consultant';
