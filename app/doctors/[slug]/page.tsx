@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { ArrowLeft, BadgeDollarSign, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users } from "lucide-react"
+import { ArrowLeft, BadgeDollarSign, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { clinicWeekday, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
@@ -70,12 +70,20 @@ export default async function DoctorPage({ params }: Props) {
               <h1 className="mt-3 text-4xl font-extrabold text-foreground md:text-5xl">{doctor.full_name}</h1>
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
             </div>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-card/70 px-7">
-              <a href={site.phone.href}>
-                <Phone className="size-5" />
-                {site.phone.display}
-              </a>
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
+              <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
+                <Link href={`/appointments/book?doctor=${doctor.slug}`}>
+                  <CalendarPlus className="size-5" />
+                  Book appointment
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-card/70 px-7">
+                <a href={site.phone.href}>
+                  <Phone className="size-5" />
+                  {site.phone.display}
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

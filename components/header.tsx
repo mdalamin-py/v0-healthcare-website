@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Clock, MapPin, Menu, Phone, X } from "lucide-react"
+import { CalendarPlus, Clock, MapPin, Menu, Phone, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -82,7 +82,10 @@ export function Header() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button asChild className="hidden rounded-full xl:inline-flex">
-              <Link href="/contact">Free Consultation</Link>
+              <Link href="/appointments/book">
+                <CalendarPlus className="size-4" />
+                Book Appointment
+              </Link>
             </Button>
             <button
               type="button"
@@ -122,7 +125,7 @@ export function Header() {
                   </a>
                 </Button>
                 <Button asChild className="rounded-full">
-                  <Link href="/contact">Free Consultation</Link>
+                  <Link href="/appointments/book">Book Appointment</Link>
                 </Button>
               </li>
             </ul>

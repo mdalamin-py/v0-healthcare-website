@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { ArrowRight, GraduationCap, Languages } from "lucide-react"
+import { CalendarPlus, GraduationCap, Languages } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { formatFee, weekdays, weekOrder } from "@/lib/clinic/format"
 import type { DoctorWithSchedules } from "@/lib/supabase/types"
@@ -80,10 +81,12 @@ export function DoctorCard({ doctor, today }: { doctor: DoctorWithSchedules; tod
             "Insurance accepted"
           )}
         </span>
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
-          View schedule
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </span>
+        <Button asChild size="sm" className="relative z-10 rounded-full">
+          <Link href={`/appointments/book?doctor=${doctor.slug}`}>
+            <CalendarPlus className="size-4" />
+            Book
+          </Link>
+        </Button>
       </div>
     </article>
   )

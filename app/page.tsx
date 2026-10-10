@@ -54,8 +54,8 @@ export default async function HomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
-                <Link href="/contact">
-                  Book a Free Consultation
+                <Link href="/appointments/book">
+                  Book an Appointment
                   <ArrowRight className="size-5" />
                 </Link>
               </Button>
