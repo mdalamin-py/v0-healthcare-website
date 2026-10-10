@@ -85,7 +85,7 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
                     }
                   : undefined
               }
-              doctors={doctors.map(({ id, slug, full_name, specialty, photo_url, room, visit_types }) => ({
+              doctors={doctors.map(({ id, slug, full_name, specialty, photo_url, room, visit_types, accepting_appointments }) => ({
                 id,
                 slug,
                 full_name,
@@ -93,6 +93,7 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
                 photo_url,
                 room,
                 visit_types,
+                accepting_appointments,
               }))}
               initialSlug={doctor}
             />

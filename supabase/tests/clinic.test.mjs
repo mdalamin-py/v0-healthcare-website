@@ -210,6 +210,33 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("approved review counts toward the rating", ratings[0]?.total === 1 && Number(ratings[0]?.average) === 4, JSON.stringify(ratings[0]))
 }
 
+// Doctor availability: leave days and paused bookings
+{
+  const doc = (await q(`select id from doctors where slug = 'michael-patel'`))[0].id
+  const slot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [doc]))[0]
+  const day = slot.appointment_date.toISOString().slice(0, 10)
+  await q(`insert into doctor_leaves (doctor_id, leave_date, reason) values ($1, $2, 'Conference')`, [doc, day])
+  const after = await q(`select * from get_availability($1, 30) where appointment_date = $2`, [doc, day])
+  check("leave day removed from availability", after.length === 0)
+  await asPatient(PATIENT_1)
+  await expectError("booking on a leave day is rejected", `select * from book_appointment($1, $2, 'Leave Test', '5553330000')`, [slot.schedule_id, day], "DOCTOR_ON_LEAVE")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  const roster = (await q(`select * from get_doctor_roster($1, 1) where doctor_id = $2`, [day, doc]))[0]
+  check("roster shows doctor on leave with reason", roster.status === "leave" && roster.leave_reason === "Conference", JSON.stringify(roster))
+  await q(`delete from doctor_leaves where doctor_id = $1`, [doc])
+  const back = (await q(`select * from get_doctor_roster($1, 1) where doctor_id = $2`, [day, doc]))[0]
+  check("removing leave makes the doctor available again", back.status === "available" && back.sessions.length > 0)
+  await q(`update doctors set accepting_appointments = false where id = $1`, [doc])
+  const paused = await q(`select * from get_availability($1, 30)`, [doc])
+  check("paused doctor has no availability", paused.length === 0)
+  await asPatient(PATIENT_1)
+  await expectError("booking a paused doctor is rejected", `select * from book_appointment($1, $2, 'Pause Test', '5553330001')`, [slot.schedule_id, day], "NOT_ACCEPTING")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`update doctors set accepting_appointments = true where id = $1`, [doc])
+  const offDay = (await q(`select * from get_doctor_roster(clinic_today(), 7) where doctor_id = $1 and status = 'off' limit 1`, [doc]))[0]
+  check("roster marks non-working days as off", Boolean(offDay))
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

@@ -122,6 +122,19 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
         <FieldMessage messages={errors.visit_types} />
       </fieldset>
 
+      <label className="flex items-start gap-3 rounded-xl border border-border p-3 text-sm has-[:checked]:border-primary/40 has-[:checked]:bg-primary/5">
+        <input
+          type="checkbox"
+          name="accepting_appointments"
+          defaultChecked={doctor?.accepting_appointments ?? true}
+          className="mt-0.5 size-4 accent-primary"
+        />
+        <span>
+          <span className="block font-medium text-foreground">Accepting new appointments</span>
+          <span className="block text-xs text-muted-foreground">Turn off to pause online booking. Existing bookings are kept.</span>
+        </span>
+      </label>
+
       <label className="flex items-center gap-3 text-sm font-medium text-foreground">
         <input type="checkbox" name="is_active" defaultChecked={doctor?.is_active ?? true} className="size-4 accent-primary" />
         Show this doctor on the website and allow bookings

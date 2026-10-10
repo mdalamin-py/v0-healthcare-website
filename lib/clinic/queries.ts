@@ -1,6 +1,15 @@
 import "server-only"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
-import type { Doctor, DoctorRating, DoctorReview, DoctorWithSchedules, OnCallShift, QueueSession } from "@/lib/supabase/types"
+import type {
+  Doctor,
+  DoctorLeave,
+  DoctorRating,
+  DoctorReview,
+  DoctorWithSchedules,
+  OnCallShift,
+  QueueSession,
+  RosterEntry,
+} from "@/lib/supabase/types"
 
 export type OnCallWithDoctor = OnCallShift & {
   doctor: Pick<Doctor, "full_name" | "slug" | "specialty">
@@ -18,6 +27,7 @@ function normalizeDoctor(doctor: DoctorWithSchedules): DoctorWithSchedules {
     ...doctor,
     languages: doctor.languages ?? [],
     visit_types: doctor.visit_types?.length ? doctor.visit_types : ["in_clinic"],
+    accepting_appointments: doctor.accepting_appointments ?? true,
     doctor_schedules: [...(doctor.doctor_schedules ?? [])].sort(
       (a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7) || a.start_time.localeCompare(b.start_time),
     ),
@@ -111,6 +121,33 @@ export async function getDoctorReviews(doctorId: string, limit = 6): Promise<Doc
     .limit(limit)
   if (error) {
     logError("reviews", error)
+    return []
+  }
+  return data
+}
+
+export async function getDoctorRoster(days = 14): Promise<RosterEntry[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient().rpc("get_doctor_roster", { p_days: days })
+  if (error) {
+    logError("roster", error)
+    return []
+  }
+  return data
+}
+
+export async function getUpcomingLeaves(doctorId: string): Promise<DoctorLeave[]> {
+  if (!isSupabaseConfigured()) return []
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles" }).format(new Date())
+  const { data, error } = await createPublicClient()
+    .from("doctor_leaves")
+    .select("*")
+    .eq("doctor_id", doctorId)
+    .gte("leave_date", today)
+    .order("leave_date")
+    .limit(10)
+  if (error) {
+    logError("leaves", error)
     return []
   }
   return data

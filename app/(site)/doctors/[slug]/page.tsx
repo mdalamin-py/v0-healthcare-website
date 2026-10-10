@@ -1,13 +1,20 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { ArrowLeft, BadgeDollarSign, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users, Video } from "lucide-react"
+import { ArrowLeft, BadgeDollarSign, CalendarOff, CalendarPlus, Clock, DoorOpen, GraduationCap, Languages, Moon, Phone, Users, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
-import { clinicWeekday, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
+import { clinicWeekday, formatDate, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
 import { departmentSlug } from "@/lib/clinic/departments"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
-import { getDoctorBySlug, getDoctorRatings, getDoctorReviews, getDoctors, getOnCallShifts } from "@/lib/clinic/queries"
+import {
+  getDoctorBySlug,
+  getDoctorRatings,
+  getDoctorReviews,
+  getDoctors,
+  getOnCallShifts,
+  getUpcomingLeaves,
+} from "@/lib/clinic/queries"
 import { StarRating } from "@/components/star-rating"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
@@ -35,10 +42,11 @@ export default async function DoctorPage({ params }: Props) {
   const doctor = await getDoctorBySlug((await params).slug)
   if (!doctor) notFound()
 
-  const [onCall, ratings, reviews] = await Promise.all([
+  const [onCall, ratings, reviews, leaves] = await Promise.all([
     getOnCallShifts({ doctorId: doctor.id, days: 14 }),
     getDoctorRatings(),
     getDoctorReviews(doctor.id),
+    getUpcomingLeaves(doctor.id),
   ])
   const rating = ratings[doctor.id]
   const today = clinicWeekday()
@@ -90,12 +98,18 @@ export default async function DoctorPage({ params }: Props) {
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-              <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
-                <Link href={`/appointments/book?doctor=${doctor.slug}`}>
-                  <CalendarPlus className="size-5" />
-                  Book appointment
-                </Link>
-              </Button>
+              {doctor.accepting_appointments ? (
+                <Button asChild size="lg" className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
+                  <Link href={`/appointments/book?doctor=${doctor.slug}`}>
+                    <CalendarPlus className="size-5" />
+                    Book appointment
+                  </Link>
+                </Button>
+              ) : (
+                <span className="inline-flex h-12 items-center justify-center rounded-full border border-dashed border-border px-7 text-sm font-medium text-muted-foreground">
+                  Not accepting new appointments
+                </span>
+              )}
               <Button asChild size="lg" variant="outline" className="h-12 rounded-full bg-card/70 px-7">
                 <a href={site.phone.href}>
                   <Phone className="size-5" />
@@ -186,6 +200,27 @@ export default async function DoctorPage({ params }: Props) {
                 </div>
               ))}
             </dl>
+
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="flex items-center gap-2 font-semibold text-foreground">
+                <CalendarOff className="size-4 text-red-500" />
+                Upcoming days off
+              </h2>
+              {leaves.length > 0 ? (
+                <ul className="mt-4 space-y-2 text-sm">
+                  {leaves.map((leave) => (
+                    <li key={leave.id} className="flex items-center justify-between gap-3 rounded-xl bg-red-500/5 px-3 py-2">
+                      <span className="font-medium text-foreground">
+                        {formatDate(leave.leave_date, { weekday: "short", month: "short", day: "numeric" })}
+                      </span>
+                      {leave.reason && <span className="truncate text-xs text-muted-foreground">{leave.reason}</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">No days off scheduled.</p>
+              )}
+            </div>
 
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h2 className="flex items-center gap-2 font-semibold text-foreground">

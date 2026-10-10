@@ -32,7 +32,7 @@ import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
 import type { Doctor, VisitType } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
-export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "specialty" | "photo_url" | "room" | "visit_types">
+export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "specialty" | "photo_url" | "room" | "visit_types" | "accepting_appointments">
 
 const steps = ["Doctor", "Date & time", "Patient details", "Confirmed"] as const
 
@@ -204,18 +204,24 @@ export function BookingWizard({
                 <li key={item.id}>
                   <button
                     type="button"
+                    disabled={!item.accepting_appointments}
                     onClick={() => {
                       setDoctor(item)
                       setSlot(null)
                       setVisitType(item.visit_types[0] ?? "in_clinic")
                       setStep(1)
                     }}
-                    className="flex w-full items-center gap-4 rounded-2xl border border-border bg-background p-4 text-left transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="flex w-full items-center gap-4 rounded-2xl border border-border bg-background p-4 text-left transition-all hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:shadow-none"
                   >
                     <DoctorAvatar name={item.full_name} photoUrl={item.photo_url} className="size-12 rounded-xl text-base" />
                     <span className="min-w-0">
                       <span className="block font-semibold text-foreground">{item.full_name}</span>
                       <span className="block text-sm text-primary">{item.specialty}</span>
+                      {!item.accepting_appointments && (
+                        <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          Not accepting new appointments
+                        </span>
+                      )}
                     </span>
                   </button>
                 </li>

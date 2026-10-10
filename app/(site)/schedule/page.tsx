@@ -3,10 +3,11 @@ import type { Metadata } from "next"
 import { Moon, Sun } from "lucide-react"
 import { ClinicUnavailable } from "@/components/clinic-unavailable"
 import { PageHero } from "@/components/page-hero"
-import { DaySchedule } from "@/components/schedule/day-schedule"
+import { RosterBoard } from "@/components/schedule/roster-board"
 import { OnCallNow, currentShift } from "@/components/schedule/on-call-now"
-import { CLINIC_TIME_ZONE, clinicWeekday, formatDateTime } from "@/lib/clinic/format"
-import { getDoctors, getOnCallShifts, type OnCallWithDoctor } from "@/lib/clinic/queries"
+import { CLINIC_TIME_ZONE, formatDateTime } from "@/lib/clinic/format"
+import { clinicToday } from "@/lib/clinic/time"
+import { getDoctorRoster, getOnCallShifts, type OnCallWithDoctor } from "@/lib/clinic/queries"
 
 export const revalidate = 60
 
@@ -41,7 +42,7 @@ function isNightShift(startsAt: string) {
 }
 
 export default async function SchedulePage() {
-  const [doctors, shifts] = await Promise.all([getDoctors(), getOnCallShifts({ days: 7 })])
+  const [roster, shifts] = await Promise.all([getDoctorRoster(14), getOnCallShifts({ days: 7 })])
   const now = currentShift(shifts)
 
   return (
@@ -51,20 +52,23 @@ export default async function SchedulePage() {
         title="Doctor schedule & on-call roster"
         description={
           <p>
-            See which doctors are in clinic each day and who is on call right now. All times are Pacific Time.
+            See which doctors are in clinic each day, who is on leave, and who is on call right now. All times are Pacific Time.
           </p>
         }
       />
 
       <section className="py-12 lg:py-16">
         <div className="container-page">
-          {doctors.length === 0 ? (
+          {roster.length === 0 ? (
             <ClinicUnavailable title="Schedule coming soon" />
           ) : (
             <div className="grid gap-8 lg:grid-cols-12">
               <div className="lg:col-span-8">
-                <h2 className="mb-6 text-2xl font-bold text-foreground">Weekly clinic hours</h2>
-                <DaySchedule doctors={doctors} today={clinicWeekday()} />
+                <h2 className="text-2xl font-bold text-foreground">Doctor roster</h2>
+                <p className="mb-6 mt-1 text-sm text-muted-foreground">
+                  Who is in clinic each day for the next two weeks, including leave. Updated live by our team.
+                </p>
+                <RosterBoard roster={roster} today={clinicToday()} />
               </div>
 
               <aside className="space-y-6 lg:col-span-4">

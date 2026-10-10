@@ -31,6 +31,8 @@ const bookingErrors: Record<string, string> = {
   VISIT_TYPE_UNAVAILABLE: "This doctor doesn't offer the selected visit type. Please choose another.",
   ADDRESS_REQUIRED: "Please enter the address for the home visit.",
   AUTH_REQUIRED: "Please sign in to your account to book an appointment.",
+  NOT_ACCEPTING: "This doctor isn't accepting new appointments right now. Please choose another doctor.",
+  DOCTOR_ON_LEAVE: "The doctor is on leave that day. Please choose another date.",
 }
 
 async function ip() {

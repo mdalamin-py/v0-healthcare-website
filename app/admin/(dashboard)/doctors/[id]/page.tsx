@@ -4,6 +4,10 @@ import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import { DoctorForm } from "@/components/admin/doctor-form"
 import { ScheduleManager } from "@/components/admin/schedule-manager"
+import { LeaveManager } from "@/components/admin/leave-manager"
+import { requireAdmin } from "@/lib/admin/auth"
+import { clinicToday } from "@/lib/clinic/time"
+import type { DoctorLeave } from "@/lib/supabase/types"
 import { getDoctorForAdmin } from "@/lib/admin/queries"
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }
@@ -14,6 +18,15 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
 
   const doctor = await getDoctorForAdmin(id)
   if (!doctor) notFound()
+
+  const today = clinicToday()
+  const { supabase } = await requireAdmin()
+  const { data: leaves } = await supabase
+    .from("doctor_leaves")
+    .select("*")
+    .eq("doctor_id", doctor.id)
+    .gte("leave_date", today)
+    .order("leave_date")
 
   return (
     <>
@@ -47,8 +60,9 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
         <div className="xl:col-span-3">
           <DoctorForm doctor={doctor} />
         </div>
-        <div className="xl:col-span-2">
+        <div className="space-y-6 xl:col-span-2">
           <ScheduleManager doctorId={doctor.id} schedules={doctor.doctor_schedules} />
+          <LeaveManager doctorId={doctor.id} leaves={(leaves ?? []) as DoctorLeave[]} today={today} />
         </div>
       </div>
     </>

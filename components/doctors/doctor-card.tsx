@@ -37,7 +37,11 @@ export function DoctorCard({
               {rating.total === 1 ? "review" : "reviews"})
             </p>
           )}
-          {workingDays.has(today) && (
+          {!doctor.accepting_appointments ? (
+            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              Bookings paused
+            </span>
+          ) : workingDays.has(today) && (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
               <span className="size-1.5 rounded-full bg-accent" />
               Available today
@@ -105,12 +109,16 @@ export function DoctorCard({
             "Insurance accepted"
           )}
         </span>
-        <Button asChild size="sm" className="relative z-10 rounded-full">
-          <Link href={`/appointments/book?doctor=${doctor.slug}`}>
-            <CalendarPlus className="size-4" />
-            Book
-          </Link>
-        </Button>
+        {doctor.accepting_appointments ? (
+          <Button asChild size="sm" className="relative z-10 rounded-full">
+            <Link href={`/appointments/book?doctor=${doctor.slug}`}>
+              <CalendarPlus className="size-4" />
+              Book
+            </Link>
+          </Button>
+        ) : (
+          <span className="text-xs font-medium text-muted-foreground">Bookings paused</span>
+        )}
       </div>
     </article>
   )

@@ -13,6 +13,12 @@ export type Database = {
         Update: { user_id?: string; created_at?: string }
         Relationships: []
       }
+      doctor_leaves: {
+        Row: { id: string; doctor_id: string; leave_date: string; reason: string | null; created_at: string }
+        Insert: { doctor_id: string; leave_date: string; reason?: string | null }
+        Update: { reason?: string | null }
+        Relationships: []
+      }
       doctor_reviews: {
         Row: {
           id: string
@@ -95,6 +101,7 @@ export type Database = {
           languages: string[]
           room: string | null
           visit_types: VisitType[]
+          accepting_appointments: boolean
           is_active: boolean
           created_at: string
           updated_at: string
@@ -112,6 +119,7 @@ export type Database = {
           languages?: string[]
           room?: string | null
           visit_types?: VisitType[]
+          accepting_appointments?: boolean
           is_active?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["doctors"]["Insert"]>
@@ -266,6 +274,20 @@ export type Database = {
       call_next_patient: { Args: { p_schedule_id: string }; Returns: number }
       request_callback: { Args: { p_name: string; p_phone: string; p_concern: string }; Returns: string }
       submit_review: { Args: { p_appointment_id: string; p_rating: number; p_comment?: string | null }; Returns: string }
+      get_doctor_roster: {
+        Args: { p_from?: string; p_days?: number }
+        Returns: {
+          roster_date: string
+          doctor_id: string
+          doctor_name: string
+          doctor_slug: string
+          specialty: string
+          status: "available" | "leave" | "off"
+          sessions: { start_time: string; end_time: string }[]
+          leave_reason: string | null
+          accepting: boolean
+        }[]
+      }
       get_doctor_ratings: { Args: Record<never, never>; Returns: { doctor_id: string; average: number; total: number }[] }
       get_today_queue: {
         Args: Record<never, never>
@@ -297,5 +319,7 @@ export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
 export type DoctorRating = { average: number; total: number }
+export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
+export type RosterEntry = Database["public"]["Functions"]["get_doctor_roster"]["Returns"][number]
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

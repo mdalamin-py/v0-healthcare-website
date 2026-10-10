@@ -7,7 +7,8 @@ import { clinicLocalToIso } from "@/lib/clinic/time"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
 import type { AppointmentStatus } from "@/lib/supabase/types"
-import { appointmentStatuses, doctorSchema, onCallSchema, scheduleSchema } from "@/lib/validations/admin"
+import { appointmentStatuses, doctorSchema, leaveSchema, onCallSchema, scheduleSchema } from "@/lib/validations/admin"
+import { clinicToday } from "@/lib/clinic/time"
 
 export type ActionState = {
   error?: string
@@ -90,6 +91,7 @@ export async function saveDoctor(doctorId: string | null, _: ActionState, formDa
     languages: formData.get("languages") ?? "",
     room: formData.get("room") ?? "",
     visit_types: formData.getAll("visit_types"),
+    accepting_appointments: formData.get("accepting_appointments") === "on",
     is_active: formData.get("is_active") === "on",
   })
   if (!parsed.success) {
@@ -131,6 +133,34 @@ export async function deleteSchedule(scheduleId: string): Promise<ActionState> {
 
   revalidatePublicPages()
   return { success: "Session removed." }
+}
+
+export async function addLeave(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = leaveSchema.safeParse({
+    doctor_id: formData.get("doctor_id"),
+    leave_date: formData.get("leave_date"),
+    reason: formData.get("reason") ?? "",
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid date." }
+  if (parsed.data.leave_date < clinicToday()) return { error: "Choose today or a future date." }
+
+  const { error } = await supabase.from("doctor_leaves").insert(parsed.data)
+  if (error) {
+    return { error: error.code === "23505" ? "That day is already marked as leave." : dbError(error, "Could not add the day off.") }
+  }
+
+  revalidatePublicPages()
+  return { success: "Day off added. Online booking is closed for that date." }
+}
+
+export async function removeLeave(leaveId: string): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from("doctor_leaves").delete().eq("id", leaveId)
+  if (error) return { error: dbError(error, "Could not remove the day off.") }
+
+  revalidatePublicPages()
+  return { success: "Day off removed. Booking is open again." }
 }
 
 // ---------------------------------------------------------------------------
