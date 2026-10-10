@@ -24,7 +24,7 @@ import {
   getAvailability,
   type Availability,
   type Booking,
-} from "@/app/appointments/actions"
+} from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
 import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
 import type { Doctor } from "@/lib/supabase/types"
