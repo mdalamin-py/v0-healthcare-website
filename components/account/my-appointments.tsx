@@ -5,6 +5,8 @@ import { useState, useTransition } from "react"
 import { CalendarPlus, Clock, Loader2, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { VisitTypeBadge } from "@/components/visit-type-badge"
+import { AddToCalendar } from "@/components/appointments/add-to-calendar"
+import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { cancelMyAppointment } from "@/app/(site)/account/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
 import type { Appointment, AppointmentStatus, Doctor, DoctorSchedule } from "@/lib/supabase/types"
@@ -81,7 +83,22 @@ function AppointmentRow({
           )}
         </div>
         {canCancel && (
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {appointment.schedule && appointment.doctor && !confirming && (
+              <AddToCalendar
+                className="px-3 py-1.5 text-xs"
+                appointment={{
+                  reference: appointment.reference,
+                  appointment_date: appointment.appointment_date,
+                  start_time: appointment.schedule.start_time,
+                  end_time: appointment.schedule.end_time,
+                  doctor_name: appointment.doctor.full_name,
+                  specialty: appointment.doctor.specialty,
+                  serial_no: appointment.serial_no,
+                  visitLabel: visitTypeMeta(appointment.visit_type).label,
+                }}
+              />
+            )}
             {confirming ? (
               <>
                 <Button variant="outline" size="sm" className="rounded-full" onClick={() => setConfirming(false)}>

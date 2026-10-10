@@ -7,6 +7,8 @@ import { clientIpFrom, createRateLimiter } from "@/lib/rate-limit"
 import { bookingSchema, lookupSchema, type BookingInput, type LookupInput } from "@/lib/validations/appointment"
 import type { Database } from "@/lib/supabase/types"
 import { site } from "@/lib/site"
+import { isResendConfigured, sendBookingConfirmation } from "@/lib/email"
+import { visitInstructions, visitTypeMeta } from "@/lib/clinic/visit-types"
 
 type Fn = Database["public"]["Functions"]
 export type Availability = Fn["get_availability"]["Returns"][number]
@@ -82,7 +84,22 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
     return { ok: false, error: code ? bookingErrors[code] : "We couldn't complete your booking. Please try again." }
   }
 
-  return { ok: true, data: data[0] }
+  const booking = data[0]
+  const recipient = email || user.email
+  if (recipient && isResendConfigured()) {
+    try {
+      await sendBookingConfirmation(recipient, {
+        ...booking,
+        visitLabel: visitTypeMeta(booking.visit_type).label,
+        instructions: visitInstructions[booking.visit_type ?? visitType],
+      })
+    } catch (cause) {
+      // The booking succeeded; a failed confirmation email must not undo it.
+      console.error("[appointments] confirmation email failed:", cause)
+    }
+  }
+
+  return { ok: true, data: booking }
 }
 
 export async function lookupAppointment(input: LookupInput): Promise<Result<AppointmentLookup | null>> {

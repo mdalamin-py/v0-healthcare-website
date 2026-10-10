@@ -26,7 +26,8 @@ import {
   type Booking,
 } from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
-import { visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
+import { visitInstructions, visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
+import { AddToCalendar } from "@/components/appointments/add-to-calendar"
 import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
 import type { Doctor, VisitType } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
@@ -35,11 +36,6 @@ export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "special
 
 const steps = ["Doctor", "Date & time", "Patient details", "Confirmed"] as const
 
-const visitInstructions: Record<VisitType, string> = {
-  in_clinic: "Please arrive 15 minutes early and bring a photo ID and insurance card.",
-  video: "We will email or text you a secure video link before your session. Please have your ID and insurance card ready.",
-  home_visit: "Our clinician will call before arriving. Please have your ID, insurance card and current medications ready.",
-}
 
 function Stepper({ current }: { current: number }) {
   return (
@@ -517,6 +513,12 @@ export function BookingWizard({
             </p>
 
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row print:hidden">
+              <AddToCalendar
+                appointment={{
+                  ...booking,
+                  visitLabel: visitTypeMeta(booking.visit_type).label,
+                }}
+              />
               <Button variant="outline" className="rounded-full" onClick={() => window.print()}>
                 <Printer className="size-4" />
                 Print

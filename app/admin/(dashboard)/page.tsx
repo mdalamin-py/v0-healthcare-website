@@ -28,7 +28,7 @@ import {
   statusCounts,
   visitTypeCounts,
 } from "@/lib/admin/analytics"
-import { clinicToday } from "@/lib/admin/time"
+import { clinicToday } from "@/lib/clinic/time"
 import { listAppointments, listRecentPatients, listUpcomingShifts } from "@/lib/admin/queries"
 import { formatDate, formatDateTime } from "@/lib/clinic/format"
 import { visitTypes } from "@/lib/clinic/visit-types"

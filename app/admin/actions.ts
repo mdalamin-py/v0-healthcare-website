@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { requireAdmin } from "@/lib/admin/auth"
-import { clinicLocalToIso } from "@/lib/admin/time"
+import { clinicLocalToIso } from "@/lib/clinic/time"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
 import type { AppointmentStatus } from "@/lib/supabase/types"
