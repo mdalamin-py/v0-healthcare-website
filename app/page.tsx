@@ -7,13 +7,19 @@ import { FaqSection } from "@/components/faq-section"
 import { ReviewCard } from "@/components/review-card"
 import { SectionHeading } from "@/components/section-heading"
 import { StatsStrip } from "@/components/stats-strip"
+import { currentShift } from "@/components/schedule/on-call-now"
+import { getOnCallShifts } from "@/lib/clinic/queries"
 import { reviews, services, trustBadges, whyChooseUs } from "@/lib/content"
 import { site } from "@/lib/site"
 
 const featuredServices = services.slice(0, 5)
 const featuredReviews = reviews.slice(0, 3)
 
-export default function HomePage() {
+export const revalidate = 60
+
+export default async function HomePage() {
+  const onCall = currentShift(await getOnCallShifts({ days: 1 }))
+
   return (
     <>
       {/* Hero */}
@@ -99,7 +105,13 @@ export default function HomePage() {
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-75" />
                 <span className="relative inline-flex size-2.5 rounded-full bg-accent" />
               </span>
-              <span className="text-sm font-medium text-foreground">{site.hours.onCall}</span>
+              {onCall ? (
+                <Link href="/schedule" className="text-sm font-medium text-foreground hover:text-primary">
+                  On call now: {onCall.doctor.full_name}
+                </Link>
+              ) : (
+                <span className="text-sm font-medium text-foreground">{site.hours.onCall}</span>
+              )}
             </div>
           </div>
         </div>

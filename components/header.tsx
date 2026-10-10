@@ -81,7 +81,7 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button asChild className="hidden rounded-full lg:inline-flex">
+            <Button asChild className="hidden rounded-full xl:inline-flex">
               <Link href="/contact">Free Consultation</Link>
             </Button>
             <button
