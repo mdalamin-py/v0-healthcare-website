@@ -110,6 +110,7 @@ export type DigestSession = {
     age: number | null
     visitType: VisitType
     reason: string | null
+    address: string | null
     status: string
   }[]
 }
@@ -142,7 +143,7 @@ export async function sendSerialDigest({
               <td>${escapeHtml(patient.name)}${patient.age != null ? ` (${patient.age})` : ""}</td>
               <td>${escapeHtml(patient.phone)}</td>
               <td>${escapeHtml(visitTypeMeta(patient.visitType).label)}</td>
-              <td>${escapeHtml(patient.reason ?? "")}</td>
+              <td>${escapeHtml(patient.reason ?? "")}${patient.address ? `<br><small>Home visit: ${escapeHtml(patient.address)}</small>` : ""}</td>
             </tr>`,
           )
           .join("")}
@@ -163,7 +164,7 @@ export async function sendSerialDigest({
       "",
       session.start_time ? formatTimeRange(session.start_time, session.end_time) : "Session",
       ...session.patients.map(
-        (patient) => `#${patient.serial} ${patient.name} · ${patient.phone} · ${visitTypeMeta(patient.visitType).label}${patient.reason ? ` · ${patient.reason}` : ""}`,
+        (patient) => `#${patient.serial} ${patient.name} · ${patient.phone} · ${visitTypeMeta(patient.visitType).label}${patient.reason ? ` · ${patient.reason}` : ""}${patient.address ? ` · ${patient.address}` : ""}`,
       ),
     ]),
   ].join("\n")

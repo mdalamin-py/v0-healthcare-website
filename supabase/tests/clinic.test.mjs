@@ -334,6 +334,74 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("finishing a case frees the theatre for cleaning", done.ended_at !== null && done.status === "cleaning", done.status)
 }
 
+// Integrity and privacy fixes
+{
+  await db.exec(`reset role; set request.jwt.claim.sub = ''`)
+  // Reviews: the public view never exposes patient or appointment ids.
+  await db.exec(`set role anon`)
+  const rawReviews = await q(`select count(*)::int c from doctor_reviews`)
+  const publicReview = await q(`select * from published_reviews limit 1`)
+  await db.exec(`reset role`)
+  const approved = await q(`select count(*)::int c from doctor_reviews where status = 'approved'`)
+  check("anon cannot read the raw reviews table", rawReviews[0].c === 0)
+  check(
+    "published reviews hide patient ids",
+    approved[0].c === 0 || (publicReview.length === 1 && !("patient_id" in publicReview[0]) && !("appointment_id" in publicReview[0])),
+  )
+
+  // Interns are never bookable, even with sessions and accepting switched on.
+  const intern = (await q(`select id from doctors where slug = 'aiden-brooks'`))[0].id
+  await q(`update doctors set accepting_appointments = true where id = $1`, [intern])
+  await q(`insert into doctor_schedules (doctor_id, weekday, start_time, end_time) select $1, g, '09:00', '12:00' from generate_series(0, 6) g`, [intern])
+  const internSlots = await q(`select * from get_availability($1, 14)`, [intern])
+  check("interns have no bookable sessions", internSlots.length === 0, `${internSlots.length}`)
+
+  // Retired sessions disappear from availability and reject bookings.
+  const ramirez = (await q(`select id from doctors where slug = 'michael-patel'`))[0].id
+  const slot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [ramirez]))[0]
+  await q(`update doctor_schedules set is_active = false where id = $1`, [slot.schedule_id])
+  const stillListed = await q(`select 1 from get_availability($1, 30) where schedule_id = $2`, [ramirez, slot.schedule_id])
+  check("retired session is not offered", stillListed.length === 0)
+  await asPatient(PATIENT_2)
+  await expectError(
+    "booking a retired session is rejected",
+    `select * from book_appointment($1, $2, 'Late Booker', '5550002222')`,
+    [slot.schedule_id, slot.appointment_date.toISOString().slice(0, 10)],
+    "SESSION_NOT_FOUND",
+  )
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`update doctor_schedules set is_active = true where id = $1`, [slot.schedule_id])
+
+  // Doctors on leave today drop out of the live queue.
+  const queueDoctor = (await q(`select doctor_id from get_today_queue() limit 1`))[0]?.doctor_id
+  if (queueDoctor) {
+    await q(`insert into doctor_leaves (doctor_id, leave_date, reason) values ($1, clinic_today(), 'Sick')`, [queueDoctor])
+    const queued = await q(`select 1 from get_today_queue() where doctor_id = $1`, [queueDoctor])
+    check("doctor on leave is hidden from today's queue", queued.length === 0)
+    await q(`delete from doctor_leaves where doctor_id = $1 and leave_date = clinic_today()`, [queueDoctor])
+  }
+
+  // An ambulance on an open trip cannot be released by hand.
+  await expectError(
+    "ambulance on an open trip cannot be marked available",
+    `update ambulances set status = 'available' where code = 'AMB-03'`,
+    [],
+    "AMBULANCE_ON_TRIP",
+  )
+
+  // Service jobs may insert appointments without a patient session.
+  await db.exec(`set request.jwt.claim.role = 'service_role'`)
+  const svcSlot = (await q(`select * from get_availability($1, 30) where appointment_date > clinic_today() limit 1`, [ramirez]))[0]
+  const svc = await q(
+    `insert into appointments (reference, doctor_id, schedule_id, appointment_date, serial_no, patient_name, patient_phone)
+     values ('DHC-5E7C1CE0', $1, $2, $3, 990, 'Staff Booking', '5550003333') returning patient_id`,
+    [ramirez, svcSlot.schedule_id, svcSlot.appointment_date.toISOString().slice(0, 10)],
+  )
+  await db.exec(`set request.jwt.claim.role = ''`)
+  check("service role can insert appointments", svc.length === 1 && svc[0].patient_id === null)
+  await q(`delete from appointments where reference = 'DHC-5E7C1CE0'`)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

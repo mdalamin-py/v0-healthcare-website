@@ -79,6 +79,25 @@ export async function updateAppointmentStatus(id: string, status: AppointmentSta
   const { supabase } = await requireAdmin()
   if (!appointmentStatuses.includes(status)) return { error: "Invalid status." }
 
+  // Reopening a cancelled visit must not overfill its session.
+  if (status !== "cancelled") {
+    const { data: current } = await supabase
+      .from("appointments")
+      .select("status, schedule_id, appointment_date, schedule:doctor_schedules(max_patients)")
+      .eq("id", id)
+      .single()
+    if (current?.status === "cancelled") {
+      const { count } = await supabase
+        .from("appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("schedule_id", current.schedule_id)
+        .eq("appointment_date", current.appointment_date)
+        .neq("status", "cancelled")
+      const capacity = (current.schedule as unknown as { max_patients: number } | null)?.max_patients ?? Infinity
+      if ((count ?? 0) >= capacity) return { error: "This session is already full, so the visit can't be reopened." }
+    }
+  }
+
   const { error } = await supabase.from("appointments").update({ status }).eq("id", id)
   if (error) return { error: dbError(error, "Could not update the appointment.") }
 
@@ -157,6 +176,13 @@ export async function addSchedule(_: ActionState, formData: FormData): Promise<A
 export async function deleteSchedule(scheduleId: string): Promise<ActionState> {
   const { supabase } = await requireAdmin()
   const { error } = await supabase.from("doctor_schedules").delete().eq("id", scheduleId)
+  if (error?.code === "23503") {
+    // Past bookings reference it: stop offering the session but keep the history.
+    const { error: retireError } = await supabase.from("doctor_schedules").update({ is_active: false }).eq("id", scheduleId)
+    if (retireError) return { error: dbError(retireError, "Could not remove the session.") }
+    revalidatePublicPages()
+    return { success: "Session retired. Past bookings are kept." }
+  }
   if (error) return { error: dbError(error, "Could not remove the session.") }
 
   revalidatePublicPages()
@@ -249,6 +275,7 @@ export async function moderateReview(id: string, status: "approved" | "rejected"
 // ---------------------------------------------------------------------------
 
 const ambulanceErrors: Record<string, string> = {
+  AMBULANCE_ON_TRIP: "This ambulance is on an open trip. Complete or cancel the request first.",
   AMBULANCE_UNAVAILABLE: "That ambulance is no longer available.",
   REQUEST_NOT_PENDING: "This request has already been handled.",
   REQUEST_CLOSED: "This request is already closed.",
@@ -269,7 +296,7 @@ export async function saveAmbulance(ambulanceId: string | null, _: ActionState, 
   const { error } = ambulanceId
     ? await supabase.from("ambulances").update(parsed.data).eq("id", ambulanceId)
     : await supabase.from("ambulances").insert(parsed.data)
-  if (error) return { error: dbError(error, "Could not save the ambulance.") }
+  if (error) return { error: ambulanceError(error, "Could not save the ambulance.") }
 
   revalidatePath("/", "layout")
   return { success: ambulanceId ? "Ambulance updated." : "Ambulance added." }
@@ -278,7 +305,7 @@ export async function saveAmbulance(ambulanceId: string | null, _: ActionState, 
 export async function setAmbulanceStatus(ambulanceId: string, status: AmbulanceStatus): Promise<ActionState> {
   const { supabase } = await requireAdmin()
   const { error } = await supabase.from("ambulances").update({ status }).eq("id", ambulanceId)
-  if (error) return { error: dbError(error, "Could not update the status.") }
+  if (error) return { error: ambulanceError(error, "Could not update the status.") }
 
   revalidatePath("/", "layout")
   return { success: "Status updated." }

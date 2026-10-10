@@ -301,6 +301,7 @@ export type Database = {
           start_time: string
           end_time: string
           max_patients: number
+          is_active: boolean
           created_at: string
         }
         Insert: {
@@ -310,6 +311,7 @@ export type Database = {
           start_time: string
           end_time: string
           max_patients?: number
+          is_active?: boolean
         }
         Update: Partial<Database["public"]["Tables"]["doctor_schedules"]["Insert"]>
         Relationships: [
@@ -385,7 +387,19 @@ export type Database = {
         ]
       }
     }
-    Views: Record<never, never>
+    Views: {
+      published_reviews: {
+        Row: {
+          id: string
+          doctor_id: string
+          author_name: string
+          rating: number
+          comment: string | null
+          created_at: string
+        }
+        Relationships: []
+      }
+    }
     Functions: {
       is_admin: { Args: Record<never, never>; Returns: boolean }
       clinic_today: { Args: Record<never, never>; Returns: string }
@@ -507,6 +521,7 @@ export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]
 export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
+export type PublishedReview = Pick<DoctorReview, "id" | "doctor_id" | "author_name" | "rating" | "comment" | "created_at">
 export type DoctorRating = { average: number; total: number }
 export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
 export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row"]

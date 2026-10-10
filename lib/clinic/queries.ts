@@ -7,7 +7,7 @@ import type {
   DutyType,
   DoctorLeave,
   DoctorRating,
-  DoctorReview,
+  PublishedReview,
   DoctorWithSchedules,
   NearbyFacility,
   OperationTheatre,
@@ -35,7 +35,7 @@ function normalizeDoctor(doctor: DoctorWithSchedules): DoctorWithSchedules {
     visit_types: doctor.visit_types?.length ? doctor.visit_types : ["in_clinic"],
     accepting_appointments: doctor.accepting_appointments ?? true,
     kind: doctor.kind ?? "consultant",
-    doctor_schedules: [...(doctor.doctor_schedules ?? [])].sort(
+    doctor_schedules: [...(doctor.doctor_schedules ?? [])].filter((schedule) => schedule.is_active !== false).sort(
       (a, b) => ((a.weekday + 6) % 7) - ((b.weekday + 6) % 7) || a.start_time.localeCompare(b.start_time),
     ),
   }
@@ -120,13 +120,12 @@ export async function getDoctorRatings(): Promise<Record<string, DoctorRating>> 
   return Object.fromEntries(data.map((row) => [row.doctor_id, { average: Number(row.average), total: row.total }]))
 }
 
-export async function getDoctorReviews(doctorId: string, limit = 6): Promise<DoctorReview[]> {
+export async function getDoctorReviews(doctorId: string, limit = 6): Promise<PublishedReview[]> {
   if (!isSupabaseConfigured()) return []
   const { data, error } = await createPublicClient()
-    .from("doctor_reviews")
+    .from("published_reviews")
     .select("*")
     .eq("doctor_id", doctorId)
-    .eq("status", "approved")
     .order("created_at", { ascending: false })
     .limit(limit)
   if (error) {

@@ -67,7 +67,7 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
           <DoctorForm doctor={doctor} contact={contact} />
         </div>
         <div className="space-y-6 xl:col-span-2">
-          <ScheduleManager doctorId={doctor.id} schedules={doctor.doctor_schedules} />
+          <ScheduleManager doctorId={doctor.id} schedules={doctor.doctor_schedules.filter((schedule) => schedule.is_active)} />
           <LeaveManager doctorId={doctor.id} leaves={(leaves ?? []) as DoctorLeave[]} today={today} />
         </div>
       </div>

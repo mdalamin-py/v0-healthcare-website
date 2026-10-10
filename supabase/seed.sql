@@ -106,7 +106,7 @@ join lateral (
 
 -- Sample doctor and compounder contacts for the daily serial email.
 insert into public.doctor_contacts (doctor_id, email, assistant_name, assistant_email)
-select id, slug || '@dignityhomehealthcare.com', 'Front desk', 'frontdesk@dignityhomehealthcare.com'
+select id, slug || '@example.com', 'Front desk', 'frontdesk@example.com'
 from public.doctors
 where kind = 'consultant';
 
@@ -123,6 +123,12 @@ values
    array['Ventilator', 'Infusion pumps', 'Cardiac monitor', 'Defibrillator', 'Suction unit'], 'Fresno main station', 'Priya Nair'),
   ('AMB-05', 'Chevrolet G4500 Type III', '8MNO345', 'neonatal', 'maintenance',
    array['Transport incubator', 'Neonatal ventilator', 'Oxygen'], 'Fresno main station', null);
+
+-- AMB-03 is out on a scheduled transfer.
+insert into public.ambulance_requests (full_name, phone, pickup_address, details, status, ambulance_id, dispatched_at)
+select 'Walter Brooks', '(559) 555-0142', '4410 N Cedar Ave, Fresno, CA 93726', 'Dialysis transfer', 'dispatched', id, now()
+from public.ambulances
+where code = 'AMB-03';
 
 -- Nearby facilities
 insert into public.nearby_facilities
