@@ -20,14 +20,9 @@ import { StarRating } from "@/components/star-rating"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 type Props = { params: Promise<{ slug: string }> }
-
-export async function generateStaticParams() {
-  const doctors = await getDoctors()
-  return doctors.map((doctor) => ({ slug: doctor.slug }))
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const doctor = await getDoctorBySlug((await params).slug)

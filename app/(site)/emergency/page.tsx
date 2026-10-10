@@ -8,7 +8,7 @@ import { OnCallNow, currentShift } from "@/components/schedule/on-call-now"
 import { getAmbulances, getNearbyFacilities, getOnCallShifts } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Emergency & Urgent Care",

@@ -6,7 +6,7 @@ import { PageHero } from "@/components/page-hero"
 import { buildDepartments } from "@/lib/clinic/departments"
 import { getDoctors } from "@/lib/clinic/queries"
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Departments",

@@ -15,7 +15,7 @@ import { site } from "@/lib/site"
 const featuredServices = services.slice(0, 5)
 const featuredReviews = reviews.slice(0, 3)
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
   const onCall = currentShift(await getOnCallShifts({ days: 1 }))

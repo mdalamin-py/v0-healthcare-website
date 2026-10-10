@@ -8,7 +8,7 @@ import { CLINIC_TIME_ZONE, formatDateTime } from "@/lib/clinic/format"
 import { getDoctors, getOnCallShifts, type OnCallWithDoctor } from "@/lib/clinic/queries"
 import { cn } from "@/lib/utils"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Intern Doctors & Duty Roster",

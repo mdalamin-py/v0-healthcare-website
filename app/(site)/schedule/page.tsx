@@ -9,7 +9,7 @@ import { CLINIC_TIME_ZONE, formatDateTime } from "@/lib/clinic/format"
 import { clinicToday } from "@/lib/clinic/time"
 import { getDoctorRoster, getOnCallShifts, type OnCallWithDoctor } from "@/lib/clinic/queries"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Doctor Schedule & On-Call",
@@ -63,7 +63,7 @@ export default async function SchedulePage() {
             <ClinicUnavailable title="Schedule coming soon" />
           ) : (
             <div className="grid gap-8 lg:grid-cols-12">
-              <div className="lg:col-span-8">
+              <div className="min-w-0 lg:col-span-8">
                 <h2 className="text-2xl font-bold text-foreground">Doctor roster</h2>
                 <p className="mb-6 mt-1 text-sm text-muted-foreground">
                   Who is in clinic each day for the next two weeks, including leave. Updated live by our team.

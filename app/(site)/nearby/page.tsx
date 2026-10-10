@@ -5,7 +5,7 @@ import { PageHero } from "@/components/page-hero"
 import { getNearbyFacilities } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Nearby Hospitals & Clinics",

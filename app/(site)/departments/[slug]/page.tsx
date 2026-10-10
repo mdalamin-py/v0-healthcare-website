@@ -9,16 +9,12 @@ import { clinicWeekday } from "@/lib/clinic/format"
 import { getDoctors } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 type Props = { params: Promise<{ slug: string }> }
 
 async function getDepartment(slug: string) {
   return buildDepartments(await getDoctors()).find((department) => department.slug === slug) ?? null
-}
-
-export async function generateStaticParams() {
-  return buildDepartments(await getDoctors()).map((department) => ({ slug: department.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

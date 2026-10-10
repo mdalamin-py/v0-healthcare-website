@@ -6,7 +6,7 @@ import { PageHero } from "@/components/page-hero"
 import { clinicWeekday } from "@/lib/clinic/format"
 import { getDoctorRatings, getDoctors } from "@/lib/clinic/queries"
 
-export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Our Doctors",
