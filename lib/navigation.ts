@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarClock,
   CalendarPlus,
   HeartHandshake,
@@ -19,6 +20,7 @@ export const navigation: NavEntry[] = [
     label: "Find Care",
     items: [
       { href: "/doctors", label: "Our Doctors", description: "Search specialists and view profiles", icon: Stethoscope },
+      { href: "/departments", label: "Departments", description: "Specialties and the doctors in each", icon: Building2 },
       { href: "/services", label: "Services", description: "Nursing, therapy and personal care", icon: HeartHandshake },
       { href: "/schedule", label: "Schedule & On-call", description: "Clinic hours and who is on call now", icon: CalendarClock },
     ],

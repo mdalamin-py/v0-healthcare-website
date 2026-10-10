@@ -5,6 +5,7 @@ import { ArrowLeft, BadgeDollarSign, CalendarPlus, Clock, DoorOpen, GraduationCa
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { clinicWeekday, formatDateTime, formatFee, formatTimeRange, weekdays, weekOrder } from "@/lib/clinic/format"
+import { departmentSlug } from "@/lib/clinic/departments"
 import { getDoctorBySlug, getDoctors, getOnCallShifts } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
@@ -64,9 +65,12 @@ export default async function DoctorPage({ params }: Props) {
               className="size-28 rounded-3xl text-4xl shadow-xl shadow-primary/20 md:size-36"
             />
             <div className="flex-1">
-              <p className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
+              <Link
+                href={`/departments/${departmentSlug(doctor.specialty)}`}
+                className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary transition-colors hover:bg-primary/20"
+              >
                 {doctor.specialty}
-              </p>
+              </Link>
               <h1 className="mt-3 text-4xl font-extrabold text-foreground md:text-5xl">{doctor.full_name}</h1>
               {doctor.bio && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">{doctor.bio}</p>}
             </div>
