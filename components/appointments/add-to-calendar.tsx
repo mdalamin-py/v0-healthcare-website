@@ -1,13 +1,10 @@
 "use client"
 
 import { CalendarPlus } from "lucide-react"
-import { useI18n } from "@/components/i18n-provider"
 import { buildAppointmentIcs, type CalendarAppointment } from "@/lib/clinic/ics"
 import { cn } from "@/lib/utils"
 
 export function AddToCalendar({ appointment, className }: { appointment: CalendarAppointment; className?: string }) {
-  const { t } = useI18n()
-
   function download() {
     const blob = new Blob([buildAppointmentIcs(appointment)], { type: "text/calendar;charset=utf-8" })
     const url = URL.createObjectURL(blob)
@@ -31,7 +28,7 @@ export function AddToCalendar({ appointment, className }: { appointment: Calenda
       )}
     >
       <CalendarPlus className="size-4" />
-      {t.booking.addToCalendar}
+      Add to calendar
     </button>
   )
 }

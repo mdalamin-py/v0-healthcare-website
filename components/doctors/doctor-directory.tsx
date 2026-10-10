@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react"
 import { Search, X } from "lucide-react"
 import { DoctorCard } from "@/components/doctors/doctor-card"
-import { useI18n } from "@/components/i18n-provider"
-import { fill } from "@/lib/i18n/config"
 import type { DoctorRating, DoctorWithSchedules } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
-const ALL = "all"
+const ALL = "All specialties"
 
 export function DoctorDirectory({
   doctors,
@@ -19,8 +17,6 @@ export function DoctorDirectory({
   today: number
   ratings?: Record<string, DoctorRating>
 }) {
-  const { t, locale } = useI18n()
-  const p = t.doctorsPage
   const [query, setQuery] = useState("")
   const [specialty, setSpecialty] = useState(ALL)
   const [todayOnly, setTodayOnly] = useState(false)
@@ -32,12 +28,8 @@ export function DoctorDirectory({
 
   const results = doctors.filter((doctor) => {
     const term = query.trim().toLowerCase()
-    const specialtyName = (t.clinic.specialties[doctor.specialty] ?? doctor.specialty).toLowerCase()
     const matchesQuery =
-      !term ||
-      doctor.full_name.toLowerCase().includes(term) ||
-      doctor.specialty.toLowerCase().includes(term) ||
-      specialtyName.includes(term)
+      !term || doctor.full_name.toLowerCase().includes(term) || doctor.specialty.toLowerCase().includes(term)
     const matchesSpecialty = specialty === ALL || doctor.specialty === specialty
     const matchesToday = !todayOnly || doctor.doctor_schedules.some((schedule) => schedule.weekday === today)
     return matchesQuery && matchesSpecialty && matchesToday
@@ -47,18 +39,18 @@ export function DoctorDirectory({
     <>
       <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-center">
         <label className="relative flex-1">
-          <span className="sr-only">{p.search}</span>
+          <span className="sr-only">Search doctors</span>
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={p.searchPlaceholder}
+            placeholder="Search by name or specialty…"
             className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
         </label>
         <label className="sr-only" htmlFor="specialty-filter">
-          {p.specialty}
+          Specialty
         </label>
         <select
           id="specialty-filter"
@@ -67,9 +59,7 @@ export function DoctorDirectory({
           className="h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:w-56"
         >
           {specialties.map((item) => (
-            <option key={item} value={item}>
-              {item === ALL ? p.allSpecialties : (t.clinic.specialties[item] ?? item)}
-            </option>
+            <option key={item}>{item}</option>
           ))}
         </select>
         <button
@@ -83,12 +73,12 @@ export function DoctorDirectory({
               : "border-input bg-background text-foreground/80 hover:border-primary/40",
           )}
         >
-          {p.availableToday}
+          Available today
         </button>
       </div>
 
       <p className="mt-6 text-sm text-muted-foreground" aria-live="polite">
-        {fill(p.showing, { shown: results.length, total: doctors.length }, locale)}
+        Showing {results.length} of {doctors.length} doctors
       </p>
 
       {results.length > 0 ? (
@@ -99,7 +89,7 @@ export function DoctorDirectory({
         </div>
       ) : (
         <div className="mt-4 flex flex-col items-center rounded-2xl border border-dashed border-border py-16 text-center">
-          <p className="font-medium text-foreground">{p.noMatch}</p>
+          <p className="font-medium text-foreground">No doctors match your filters.</p>
           <button
             type="button"
             onClick={() => {
@@ -110,7 +100,7 @@ export function DoctorDirectory({
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             <X className="size-4" />
-            {p.clearFilters}
+            Clear filters
           </button>
         </div>
       )}

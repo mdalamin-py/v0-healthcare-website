@@ -5,20 +5,16 @@ import { AlertCircle, ArrowLeft, Loader2, Mail, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useI18n } from "@/components/i18n-provider"
-import { translateMessage } from "@/lib/i18n/config"
 import { sendOtp, verifyOtp } from "@/app/(site)/account/actions"
 import type { OtpChannel } from "@/lib/validations/account"
 import { cn } from "@/lib/utils"
 
-const channels: { value: OtpChannel; label: "email" | "mobile"; icon: typeof Mail; placeholder: string; type: string }[] = [
-  { value: "email", label: "email", icon: Mail, placeholder: "you@example.com", type: "email" },
-  { value: "phone", label: "mobile", icon: Smartphone, placeholder: "(559) 123-4567", type: "tel" },
+const channels: { value: OtpChannel; label: string; icon: typeof Mail; placeholder: string; type: string }[] = [
+  { value: "email", label: "Email", icon: Mail, placeholder: "you@example.com", type: "email" },
+  { value: "phone", label: "Mobile", icon: Smartphone, placeholder: "(559) 123-4567", type: "tel" },
 ]
 
 export function OtpLogin({ next, initialError }: { next?: string; initialError?: string }) {
-  const { t } = useI18n()
-  const a = t.account
   const [channel, setChannel] = useState<OtpChannel>("email")
   const [identifier, setIdentifier] = useState("")
   const [sentTo, setSentTo] = useState<string | null>(null)
@@ -56,7 +52,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
     <div>
       {!sentTo ? (
         <form onSubmit={requestCode} className="space-y-5">
-          <div role="group" aria-label={a.signInWith} className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+          <div role="group" aria-label="Sign in with" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             {channels.map((item) => (
               <button
                 key={item.value}
@@ -73,12 +69,12 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
                 )}
               >
                 <item.icon className="size-4" />
-                {a[item.label]}
+                {item.label}
               </button>
             ))}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="identifier">{channel === "email" ? a.emailAddress : a.mobileNumber}</Label>
+            <Label htmlFor="identifier">{channel === "email" ? "Email address" : "Mobile number"}</Label>
             <Input
               id="identifier"
               type={active.type}
@@ -94,10 +90,10 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
           {error && <ErrorMessage message={error} />}
           <Button type="submit" disabled={pending || !identifier} className="h-11 w-full rounded-full">
             {pending && <Loader2 className="size-4 animate-spin" />}
-            {a.sendCode}
+            Send verification code
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            {a.newHere}
+            New here? We&apos;ll create your account automatically after you verify.
           </p>
         </form>
       ) : (
@@ -108,16 +104,14 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
           >
             <ArrowLeft className="size-4" />
-            {channel === "email" ? a.useDifferentEmail : a.useDifferentNumber}
+            Use a different {channel === "email" ? "email" : "number"}
           </button>
           <p className="text-sm text-muted-foreground">
-            {a.sentTo.split("{to}")[0]}
-            <strong className="text-foreground">{sentTo}</strong>
-            {a.sentTo.split("{to}")[1]}
-            {channel === "email" && a.emailLinkHint}
+            We sent a verification code to <strong className="text-foreground">{sentTo}</strong>.
+            {channel === "email" && " Enter the code below, or simply tap the sign-in link in the email."}
           </p>
           <div className="space-y-2">
-            <Label htmlFor="token">{a.code}</Label>
+            <Label htmlFor="token">Verification code</Label>
             <Input
               id="token"
               inputMode="numeric"
@@ -133,7 +127,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
           {error && <ErrorMessage message={error} />}
           <Button type="submit" disabled={pending || token.length < 6} className="h-11 w-full rounded-full">
             {pending && <Loader2 className="size-4 animate-spin" />}
-            {a.verify}
+            Verify & continue
           </Button>
           <button
             type="button"
@@ -141,7 +135,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
             onClick={() => requestCode()}
             className="w-full text-center text-sm font-medium text-primary hover:underline disabled:opacity-50"
           >
-            {a.resend}
+            Resend code
           </button>
         </form>
       )}
@@ -150,11 +144,10 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
 }
 
 function ErrorMessage({ message }: { message: string }) {
-  const { t } = useI18n()
   return (
     <p role="alert" className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
       <AlertCircle className="mt-0.5 size-4 shrink-0" />
-      {translateMessage(t.messages, message)}
+      {message}
     </p>
   )
 }

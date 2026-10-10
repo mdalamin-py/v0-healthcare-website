@@ -19,8 +19,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
-import { useI18n } from "@/components/i18n-provider"
-import { fill, translateMessage } from "@/lib/i18n/config"
 import {
   bookAppointment,
   getAvailability,
@@ -28,7 +26,7 @@ import {
   type Booking,
 } from "@/app/(site)/appointments/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
-import { visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
+import { visitInstructions, visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
 import { AddToCalendar } from "@/components/appointments/add-to-calendar"
 import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
 import type { Doctor, VisitType } from "@/lib/supabase/types"
@@ -36,13 +34,13 @@ import { cn } from "@/lib/utils"
 
 export type BookableDoctor = Pick<Doctor, "id" | "slug" | "full_name" | "specialty" | "photo_url" | "room" | "visit_types" | "accepting_appointments">
 
+const steps = ["Doctor", "Date & time", "Patient details", "Confirmed"] as const
 
 
 function Stepper({ current }: { current: number }) {
-  const { t } = useI18n()
   return (
-    <ol className="grid grid-cols-4 gap-2" aria-label={t.booking.progress}>
-      {t.booking.steps.map((label, index) => (
+    <ol className="grid grid-cols-4 gap-2" aria-label="Booking progress">
+      {steps.map((label, index) => (
         <li key={label} className="flex flex-col gap-2" aria-current={index === current ? "step" : undefined}>
           <span
             className={cn(
@@ -67,7 +65,6 @@ function Stepper({ current }: { current: number }) {
 const staleSlotErrors = ["SESSION_FULL", "INVALID_DATE", "DOCTOR_ON_LEAVE", "SESSION_NOT_FOUND"]
 
 function ErrorBanner({ message, children }: { message: string; children?: React.ReactNode }) {
-  const { t } = useI18n()
   return (
     <div
       role="alert"
@@ -75,19 +72,18 @@ function ErrorBanner({ message, children }: { message: string; children?: React.
     >
       <AlertCircle className="mt-0.5 size-4 shrink-0" />
       <span>
-        {translateMessage(t.messages, message)} {children}
+        {message} {children}
       </span>
     </div>
   )
 }
 
 function FieldError({ id, message }: { id: string; message?: string }) {
-  const { t } = useI18n()
   if (!message) return null
   return (
     <p id={id} className="flex items-center gap-1.5 text-sm text-destructive">
       <AlertCircle className="size-3.5 shrink-0" />
-      {translateMessage(t.messages, message)}
+      {message}
     </p>
   )
 }
@@ -103,8 +99,6 @@ export function BookingWizard({
   initialSlug?: string
   patient?: PatientDefaults
 }) {
-  const { t, locale } = useI18n()
-  const b = t.booking
   const initialDoctor = doctors.find((doctor) => doctor.slug === initialSlug && doctor.accepting_appointments) ?? null
   const [step, setStep] = useState(initialDoctor ? 1 : 0)
   const [doctor, setDoctor] = useState<BookableDoctor | null>(initialDoctor)
@@ -173,7 +167,7 @@ export function BookingWizard({
       scheduleId: slot.schedule_id,
       date: slot.appointment_date,
       visitType,
-    }).catch(() => ({ ok: false as const, error: b.networkError, code: undefined }))
+    }).catch(() => ({ ok: false as const, error: "We couldn't reach the server. Please check your connection and try again.", code: undefined }))
     if (result.ok) {
       setBooking(result.data)
       setStep(3)
@@ -194,13 +188,7 @@ export function BookingWizard({
 
   const filteredDoctors = doctors.filter((item) => {
     const term = query.trim().toLowerCase()
-    const specialty = (t.clinic.specialties[item.specialty] ?? item.specialty).toLowerCase()
-    return (
-      !term ||
-      item.full_name.toLowerCase().includes(term) ||
-      item.specialty.toLowerCase().includes(term) ||
-      specialty.includes(term)
-    )
+    return !term || item.full_name.toLowerCase().includes(term) || item.specialty.toLowerCase().includes(term)
   })
 
   const fieldProps = (name: keyof PatientInput) => ({
@@ -219,7 +207,7 @@ export function BookingWizard({
         {step === 0 && (
           <section aria-labelledby="step-doctor">
             <h2 id="step-doctor" className="text-2xl font-bold text-foreground">
-              {b.chooseDoctor}
+              Choose a doctor
             </h2>
             {error && (
               <div className="mt-4">
@@ -227,13 +215,13 @@ export function BookingWizard({
               </div>
             )}
             <label className="relative mt-5 block">
-              <span className="sr-only">{b.searchDoctors}</span>
+              <span className="sr-only">Search doctors</span>
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder={b.searchPlaceholder}
+                placeholder="Search by name or specialty…"
                 className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
               />
             </label>
@@ -256,10 +244,10 @@ export function BookingWizard({
                     <DoctorAvatar name={item.full_name} photoUrl={item.photo_url} className="size-12 rounded-xl text-base" />
                     <span className="min-w-0">
                       <span className="block font-semibold text-foreground">{item.full_name}</span>
-                      <span className="block text-sm text-primary">{t.clinic.specialties[item.specialty] ?? item.specialty}</span>
+                      <span className="block text-sm text-primary">{item.specialty}</span>
                       {!item.accepting_appointments && (
                         <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {b.notAccepting}
+                          Not accepting new appointments
                         </span>
                       )}
                     </span>
@@ -268,7 +256,7 @@ export function BookingWizard({
               ))}
             </ul>
             {filteredDoctors.length === 0 && (
-              <p className="mt-6 text-center text-sm text-muted-foreground">{b.noDoctorMatch}</p>
+              <p className="mt-6 text-center text-sm text-muted-foreground">No doctors match your search.</p>
             )}
           </section>
         )}
@@ -282,20 +270,20 @@ export function BookingWizard({
               className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               <ArrowLeft className="size-4" />
-              {b.changeDoctor}
+              Change doctor
             </button>
             <div className="mt-4 flex items-center gap-4">
               <DoctorAvatar name={doctor.full_name} photoUrl={doctor.photo_url} className="size-14 rounded-2xl text-lg" />
               <div>
                 <h2 id="step-date" className="text-2xl font-bold text-foreground">
-                  {fill(b.pickDate, { name: doctor.full_name })}
+                  Pick a date with {doctor.full_name}
                 </h2>
-                <p className="text-sm text-primary">{t.clinic.specialties[doctor.specialty] ?? doctor.specialty}</p>
+                <p className="text-sm text-primary">{doctor.specialty}</p>
               </div>
             </div>
 
             <fieldset className="mt-8">
-              <legend className="text-sm font-semibold text-foreground">{b.visitType}</legend>
+              <legend className="text-sm font-semibold text-foreground">Visit type</legend>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {doctor.visit_types.map((type) => {
                   const meta = visitTypes[type]
@@ -325,8 +313,8 @@ export function BookingWizard({
                         <meta.icon className="size-5" />
                       </span>
                       <span>
-                        <span className="block text-sm font-semibold text-foreground">{t.clinic.visit[type].label}</span>
-                        <span className="block text-xs text-muted-foreground">{t.clinic.visit[type].description}</span>
+                        <span className="block text-sm font-semibold text-foreground">{meta.label}</span>
+                        <span className="block text-xs text-muted-foreground">{meta.description}</span>
                       </span>
                     </label>
                   )
@@ -334,7 +322,7 @@ export function BookingWizard({
               </div>
             </fieldset>
 
-            <h3 className="mt-8 text-sm font-semibold text-foreground">{b.chooseSession}</h3>
+            <h3 className="mt-8 text-sm font-semibold text-foreground">Choose a session</h3>
 
             {slotError && (
               <div className="mt-4">
@@ -345,11 +333,11 @@ export function BookingWizard({
             {loadingSlots || (!slots && !slotError) ? (
               <div className="mt-8 flex items-center justify-center gap-2 py-12 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
-                {b.loadingDates}
+                Loading available dates…
               </div>
             ) : slots && slots.length === 0 ? (
               <p className="mt-8 rounded-2xl border border-dashed border-border px-6 py-10 text-center text-muted-foreground">
-                {b.noSessions}
+                No upcoming sessions in the next 30 days. Please choose another doctor or call us.
               </p>
             ) : (
               slots && (
@@ -375,11 +363,11 @@ export function BookingWizard({
                           )}
                         >
                           <span className="block font-semibold text-foreground">
-                            {formatDate(item.appointment_date, {}, locale)}
+                            {formatDate(item.appointment_date)}
                           </span>
                           <span className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                             <Clock className="size-3.5" />
-                            {formatTimeRange(item.start_time, item.end_time, locale)}
+                            {formatTimeRange(item.start_time, item.end_time)}
                           </span>
                           <span
                             className={cn(
@@ -391,7 +379,7 @@ export function BookingWizard({
                                   : "bg-accent/15 text-accent",
                             )}
                           >
-                            {full ? b.fullyBooked : fill(b.spotsLeft, { remaining, total: item.max_patients }, locale)}
+                            {full ? "Fully booked" : `${remaining} of ${item.max_patients} spots left`}
                           </span>
                         </button>
                       </li>
@@ -411,7 +399,7 @@ export function BookingWizard({
                   setStep(2)
                 }}
               >
-                {b.continue}
+                Continue
               </Button>
             </div>
           </section>
@@ -426,60 +414,60 @@ export function BookingWizard({
               className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               <ArrowLeft className="size-4" />
-              {b.changeDate}
+              Change date
             </button>
             <h2 id="step-patient" className="mt-4 text-2xl font-bold text-foreground">
-              {b.patientDetails}
+              Patient details
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {fill(b.summary, { visit: t.clinic.visit[visitType].label, doctor: doctor.full_name })} ·{" "}
-              {formatDate(slot.appointment_date, { weekday: "long" }, locale)} · {formatTimeRange(slot.start_time, slot.end_time, locale)}
+              {visitTypes[visitType].label} with {doctor.full_name} ·{" "}
+              {formatDate(slot.appointment_date, { weekday: "long" })} · {formatTimeRange(slot.start_time, slot.end_time)}
             </p>
 
             <form onSubmit={submit} noValidate className="mt-6 space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="name">{b.name}</Label>
+                  <Label htmlFor="name">Patient full name *</Label>
                   <Input autoComplete="name" className="h-11" {...fieldProps("name")} />
                   <FieldError id="name-error" message={errors.name?.message} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{b.phone}</Label>
+                  <Label htmlFor="phone">Phone *</Label>
                   <Input type="tel" autoComplete="tel" placeholder="(559) 123-4567" className="h-11" {...fieldProps("phone")} />
                   <FieldError id="phone-error" message={errors.phone?.message} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">{b.email}</Label>
+                  <Label htmlFor="email">Email (optional)</Label>
                   <Input type="email" autoComplete="email" className="h-11" {...fieldProps("email")} />
                   <FieldError id="email-error" message={errors.email?.message} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="age">{b.age}</Label>
+                  <Label htmlFor="age">Age (optional)</Label>
                   <Input type="number" inputMode="numeric" min={0} max={130} className="h-11" {...fieldProps("age")} />
                   <FieldError id="age-error" message={errors.age?.message} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">{b.gender}</Label>
+                  <Label htmlFor="gender">Gender (optional)</Label>
                   <select
                     className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     {...fieldProps("gender")}
                   >
-                    <option value="">{b.genderNone}</option>
-                    <option value="female">{b.female}</option>
-                    <option value="male">{b.male}</option>
-                    <option value="other">{b.other}</option>
+                    <option value="">Prefer not to say</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 {visitType === "home_visit" && (
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="address">{b.address}</Label>
-                    <Input autoComplete="street-address" placeholder={b.addressPlaceholder} className="h-11" {...fieldProps("address")} />
+                    <Label htmlFor="address">Home visit address *</Label>
+                    <Input autoComplete="street-address" placeholder="Street, city, ZIP" className="h-11" {...fieldProps("address")} />
                     <FieldError id="address-error" message={errors.address?.message} />
                   </div>
                 )}
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="reason">{b.reason}</Label>
-                  <Textarea rows={3} className="min-h-24" placeholder={b.reasonPlaceholder} {...fieldProps("reason")} />
+                  <Label htmlFor="reason">Reason for visit (optional)</Label>
+                  <Textarea rows={3} className="min-h-24" placeholder="Briefly describe the reason for your visit" {...fieldProps("reason")} />
                   <FieldError id="reason-error" message={errors.reason?.message} />
                 </div>
               </div>
@@ -492,9 +480,9 @@ export function BookingWizard({
                   {...form.register("consent")}
                 />
                 <span>
-                  {b.consentLead}{" "}
+                  I agree to be contacted about this appointment and accept the{" "}
                   <Link href="/privacy" className="font-medium text-primary hover:underline">
-                    {b.privacyPolicy}
+                    Privacy Policy
                   </Link>
                   .
                 </span>
@@ -505,7 +493,7 @@ export function BookingWizard({
                 <ErrorBanner message={error.message}>
                   {error.code === "AUTH_REQUIRED" && (
                     <Link href={`/account/login?next=${encodeURIComponent(`/appointments/book?doctor=${doctor.slug}`)}`} className="font-semibold underline">
-                      {b.signInAgain}
+                      Sign in again
                     </Link>
                   )}
                 </ErrorBanner>
@@ -515,12 +503,12 @@ export function BookingWizard({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    {b.booking}
+                    Booking…
                   </>
                 ) : (
                   <>
                     <CalendarCheck className="size-4" />
-                    {b.confirm}
+                    Confirm booking
                   </>
                 )}
               </Button>
@@ -535,23 +523,23 @@ export function BookingWizard({
               <CheckCircle2 className="size-8" />
             </span>
             <h2 id="step-done" className="mt-5 text-3xl font-bold text-foreground">
-              {b.booked}
+              Appointment booked!
             </h2>
-            <p className="mt-2 text-muted-foreground">{t.clinic.visit[booking.visit_type ?? visitType].instructions}</p>
+            <p className="mt-2 text-muted-foreground">{visitInstructions[booking.visit_type ?? visitType]}</p>
 
             <div className="mx-auto mt-8 max-w-md overflow-hidden rounded-3xl border border-border text-left">
               <div className="bg-gradient-to-br from-primary to-accent p-6 text-center text-white">
-                <p className="text-sm uppercase tracking-wider text-white/80">{b.yourSerial}</p>
+                <p className="text-sm uppercase tracking-wider text-white/80">Your serial number</p>
                 <p className="font-display text-6xl font-extrabold">{booking.serial_no}</p>
               </div>
               <dl className="divide-y divide-border bg-background text-sm">
                 {[
-                  [b.reference, booking.reference],
-                  [b.doctor, `${booking.doctor_name} · ${t.clinic.specialties[booking.specialty] ?? booking.specialty}`],
-                  [b.date, formatDate(booking.appointment_date, { weekday: "long", year: "numeric" }, locale)],
-                  [b.session, formatTimeRange(booking.start_time, booking.end_time, locale)],
-                  [b.visitType, t.clinic.visit[booking.visit_type ?? visitType].label],
-                  ...(doctor?.room && booking.visit_type === "in_clinic" ? [[b.location, doctor.room]] : []),
+                  ["Reference", booking.reference],
+                  ["Doctor", `${booking.doctor_name} · ${booking.specialty}`],
+                  ["Date", formatDate(booking.appointment_date, { weekday: "long", year: "numeric" })],
+                  ["Session", formatTimeRange(booking.start_time, booking.end_time)],
+                  ["Visit type", visitTypeMeta(booking.visit_type).label],
+                  ...(doctor?.room && booking.visit_type === "in_clinic" ? [["Location", doctor.room]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4 px-5 py-3">
                     <dt className="text-muted-foreground">{label}</dt>
@@ -562,7 +550,8 @@ export function BookingWizard({
             </div>
 
             <p className="mt-4 text-sm text-muted-foreground">
-              {fill(b.saveReference, { reference: booking.reference })}
+              Save your reference <strong className="text-foreground">{booking.reference}</strong> to check or cancel
+              your booking.
             </p>
 
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row print:hidden">
@@ -574,10 +563,10 @@ export function BookingWizard({
               />
               <Button variant="outline" className="rounded-full" onClick={() => window.print()}>
                 <Printer className="size-4" />
-                {b.print}
+                Print
               </Button>
               <Button asChild className="rounded-full">
-                <Link href="/account">{b.viewAccount}</Link>
+                <Link href="/account">View in my account</Link>
               </Button>
             </div>
           </section>

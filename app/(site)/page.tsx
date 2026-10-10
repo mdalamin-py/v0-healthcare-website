@@ -10,27 +10,17 @@ import { StatsStrip } from "@/components/stats-strip"
 import { currentShift } from "@/components/schedule/on-call-now"
 import { getOnCallShifts, getPublishedReviews } from "@/lib/clinic/queries"
 import { toReview } from "@/lib/clinic/reviews"
-import { getServices, getTrustBadges } from "@/lib/content"
-import { fill } from "@/lib/i18n/config"
-import { getDictionary, getLocale } from "@/lib/i18n/server"
+import { services, trustBadges, whyChooseUs } from "@/lib/content"
 import { site } from "@/lib/site"
+
+const featuredServices = services.slice(0, 5)
 
 export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
-  const [shifts, reviews, t, locale] = await Promise.all([
-    getOnCallShifts({ days: 1 }),
-    getPublishedReviews(12),
-    getDictionary(),
-    getLocale(),
-  ])
+  const [shifts, reviews] = await Promise.all([getOnCallShifts({ days: 1 }), getPublishedReviews(12)])
   const onCall = currentShift(shifts)
-  const services = getServices(t)
-  const featuredServices = services.slice(0, 5)
-  const featuredReviews = reviews
-    .filter((review) => review.comment)
-    .slice(0, 3)
-    .map((review) => toReview(review, locale))
+  const featuredReviews = reviews.filter((review) => review.comment).slice(0, 3).map(toReview)
 
   return (
     <>
@@ -50,23 +40,24 @@ export default async function HomePage() {
                 <Star className="size-3 fill-current" />
                 {site.rating.value}
               </span>
-              <span className="text-muted-foreground">{fill(t.home.ratedBy, { count: site.rating.count })}</span>
+              <span className="text-muted-foreground">Rated by {site.rating.count} families on Google</span>
             </Link>
 
             <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] text-foreground text-balance sm:text-5xl lg:text-6xl">
-              {t.home.titleLead}{" "}
+              Compassionate care,{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {t.home.titleHighlight}
+                right at home
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              {t.home.intro}
+              Professional, personalized home health care for Fresno and the Central Valley — care that
+              preserves your independence and your dignity.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild className="h-12 rounded-full px-7 shadow-lg shadow-primary/25">
                 <Link href="/appointments/book">
-                  {t.home.bookCta}
+                  Book an Appointment
                   <ArrowRight className="size-5" />
                 </Link>
               </Button>
@@ -79,7 +70,7 @@ export default async function HomePage() {
             </div>
 
             <ul className="mt-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-x-6">
-              {getTrustBadges(t).map((badge) => (
+              {trustBadges.map((badge) => (
                 <li key={badge.label} className="flex items-center gap-2 text-sm font-medium text-foreground/80">
                   <badge.icon className="size-4 text-primary" />
                   {badge.label}
@@ -93,7 +84,7 @@ export default async function HomePage() {
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-white/40 shadow-2xl">
               <Image
                 src="/images/hero-care.jpg"
-                alt={t.home.heroAlt}
+                alt="Caring nurse with an elderly patient at home"
                 fill
                 priority
                 sizes="(min-width: 1024px) 50vw, 100vw"
@@ -107,7 +98,7 @@ export default async function HomePage() {
               </span>
               <span>
                 <span className="block text-2xl font-bold text-foreground">{site.rating.count}</span>
-                <span className="block text-sm text-muted-foreground">{t.home.happyFamilies}</span>
+                <span className="block text-sm text-muted-foreground">Happy families</span>
               </span>
             </div>
 
@@ -118,10 +109,10 @@ export default async function HomePage() {
               </span>
               {onCall ? (
                 <Link href="/schedule" className="text-sm font-medium text-foreground hover:text-primary">
-                  {fill(t.home.onCallNow, { name: onCall.doctor.full_name })}
+                  On call now: {onCall.doctor.full_name}
                 </Link>
               ) : (
-                <span className="text-sm font-medium text-foreground">{t.common.onCall}</span>
+                <span className="text-sm font-medium text-foreground">{site.hours.onCall}</span>
               )}
             </div>
           </div>
@@ -136,13 +127,13 @@ export default async function HomePage() {
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
             <SectionHeading
               align="left"
-              eyebrow={t.home.servicesEyebrow}
-              title={t.home.servicesTitle}
-              description={t.home.servicesDescription}
+              eyebrow="Our Services"
+              title="Complete care, delivered to your door"
+              description="A full range of home health services designed around your needs — so you can recover and thrive in the comfort of home."
             />
             <Button variant="outline" asChild className="rounded-full">
               <Link href="/services">
-                {fill(t.home.allServices, { count: services.length }, locale)}
+                All {services.length} services
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -171,10 +162,12 @@ export default async function HomePage() {
             >
               <ShieldCheck className="size-8" />
               <div className="mt-8">
-                <h3 className="text-lg font-semibold">{t.home.assessmentTitle}</h3>
-                <p className="mt-2 text-sm text-white/85">{t.home.assessmentText}</p>
+                <h3 className="text-lg font-semibold">Not sure what you need?</h3>
+                <p className="mt-2 text-sm text-white/85">
+                  Get a free in-home assessment and a personalized care plan.
+                </p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">
-                  {t.home.assessmentCta}
+                  Request assessment
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </div>
@@ -190,26 +183,26 @@ export default async function HomePage() {
             <div className="relative aspect-square overflow-hidden rounded-[2rem] shadow-xl">
               <Image
                 src="/images/team-care.jpg"
-                alt={t.home.teamAlt}
+                alt="The Dignity Home Health Care team"
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover"
               />
             </div>
             <div className="absolute -bottom-6 -right-2 rounded-2xl border border-border bg-card p-5 shadow-xl sm:right-6">
-              <p className="text-sm text-muted-foreground">{t.home.languagesSpoken}</p>
-              <p className="mt-1 font-semibold text-foreground">{t.home.languages}</p>
+              <p className="text-sm text-muted-foreground">Languages spoken</p>
+              <p className="mt-1 font-semibold text-foreground">English &amp; Spanish</p>
             </div>
           </div>
           <div>
             <SectionHeading
               align="left"
-              eyebrow={t.home.whyEyebrow}
-              title={t.home.whyTitle}
-              description={t.home.whyDescription}
+              eyebrow="Why Dignity"
+              title="Why families choose Dignity Home Health Care"
+              description="Our commitment to quality care and patient dignity sets us apart in the Fresno community."
             />
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-              {t.content.whyChooseUs.map((item) => (
+              {whyChooseUs.map((item) => (
                 <li key={item} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
                   <CheckCircle className="mt-0.5 size-5 shrink-0 text-accent" />
                   <span className="text-sm font-medium text-foreground">{item}</span>
@@ -218,7 +211,7 @@ export default async function HomePage() {
             </ul>
             <Button asChild className="mt-8 rounded-full">
               <Link href="/about">
-                {t.home.learnMoreAbout}
+                Learn more about us
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -231,9 +224,9 @@ export default async function HomePage() {
         <section className="py-16 lg:py-24">
           <div className="container-page">
             <SectionHeading
-              eyebrow={t.home.reviewsEyebrow}
-              title={t.home.reviewsTitle}
-              description={t.home.reviewsDescription}
+              eyebrow="Testimonials"
+              title="What families say about us"
+              description="Verified reviews from patients after a completed visit with our doctors."
             />
             <div className="mt-12 grid gap-6 md:grid-cols-3">
               {featuredReviews.map((review, index) => (
@@ -243,7 +236,7 @@ export default async function HomePage() {
             <div className="mt-10 text-center">
               <Button variant="outline" asChild className="rounded-full">
                 <Link href="/reviews">
-                  {t.home.readAllReviews}
+                  Read all reviews
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
@@ -254,7 +247,10 @@ export default async function HomePage() {
 
       <FaqSection />
 
-      <CtaSection title={t.home.ctaTitle} description={t.home.ctaDescription} />
+      <CtaSection
+        title="Ready to get started?"
+        description="Contact us today for a free consultation. Our care coordinators will help create a personalized care plan for you or your loved one."
+      />
     </>
   )
 }

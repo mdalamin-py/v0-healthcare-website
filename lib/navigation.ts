@@ -16,66 +16,67 @@ import {
   UserRound,
   Users,
 } from "lucide-react"
-import type { Dictionary } from "@/lib/i18n/dictionaries"
 
 export type NavItem = { href: string; label: string; description: string; icon: LucideIcon }
 export type NavFeature = { eyebrow: string; title: string; description: string; href: string; cta: string }
-export type NavGroup = { id: GroupId; label: string; items: NavItem[]; feature: NavFeature }
+export type NavGroup = { label: string; items: NavItem[]; feature: NavFeature }
 export type NavEntry = { href: string; label: string } | NavGroup
 
-type GroupId = keyof Dictionary["nav"]["groups"]
-
-// Structure only; labels come from the active dictionary.
-const structure: ({ href: string; text: "home" | "contact" } | { id: GroupId; feature: string; items: [string, LucideIcon][] })[] = [
-  { href: "/", text: "home" },
+export const navigation: NavEntry[] = [
+  { href: "/", label: "Home" },
   {
-    id: "care",
-    feature: "/schedule",
+    label: "Find Care",
     items: [
-      ["/doctors", Stethoscope],
-      ["/departments", Building2],
-      ["/services", HeartHandshake],
-      ["/schedule", CalendarClock],
-      ["/interns", GraduationCap],
-      ["/ambulance", Ambulance],
-      ["/nearby", Hospital],
-      ["/emergency", Siren],
+      { href: "/doctors", label: "Our Doctors", description: "Search specialists and view profiles", icon: Stethoscope },
+      { href: "/departments", label: "Departments", description: "Specialties and the doctors in each", icon: Building2 },
+      { href: "/services", label: "Services", description: "Nursing, therapy and personal care", icon: HeartHandshake },
+      { href: "/schedule", label: "Schedule & On-call", description: "Clinic hours and who is on call now", icon: CalendarClock },
+      { href: "/interns", label: "Intern Doctors", description: "Intern list and ward & emergency duties", icon: GraduationCap },
+      { href: "/ambulance", label: "Ambulance Service", description: "Live fleet status and transport requests", icon: Ambulance },
+      { href: "/nearby", label: "Nearby Hospitals", description: "Hospitals, ERs and clinics near you", icon: Hospital },
+      { href: "/emergency", label: "Emergency & Urgent Care", description: "When to call 911 and urgent callbacks", icon: Siren },
     ],
+    feature: {
+      eyebrow: "24/7 support",
+      title: "A doctor is always on call",
+      description: "See who is on call right now and the clinic timetable for the week.",
+      href: "/schedule",
+      cta: "View on-call roster",
+    },
   },
   {
-    id: "patients",
-    feature: "/appointments/book",
+    label: "Patients",
     items: [
-      ["/appointments/book", CalendarPlus],
-      ["/queue", ListOrdered],
-      ["/ot", Activity],
-      ["/account", UserRound],
-      ["/appointments/status", Search],
+      { href: "/appointments/book", label: "Book Appointment", description: "Pick a doctor and get a serial number", icon: CalendarPlus },
+      { href: "/queue", label: "Live Queue", description: "See the serial each doctor is serving now", icon: ListOrdered },
+      { href: "/ot", label: "OT Live Board", description: "Track an operation with your case code", icon: Activity },
+      { href: "/account", label: "My Account", description: "Your appointments and profile", icon: UserRound },
+      { href: "/appointments/status", label: "Check Appointment", description: "Look up a booking by reference", icon: Search },
     ],
+    feature: {
+      eyebrow: "Online booking",
+      title: "Book in under a minute",
+      description: "Choose a doctor and visit type, then get your serial number instantly.",
+      href: "/appointments/book",
+      cta: "Book an appointment",
+    },
   },
   {
-    id: "about",
-    feature: "/reviews",
+    label: "About",
     items: [
-      ["/about", Users],
-      ["/reviews", Star],
+      { href: "/about", label: "About Us", description: "Our mission, values and leadership", icon: Users },
+      { href: "/reviews", label: "Patient Reviews", description: "What families say about our care", icon: Star },
     ],
+    feature: {
+      eyebrow: "Rated 4.9 on Google",
+      title: "Trusted by Fresno families",
+      description: "Compassionate, professional care that preserves independence and dignity.",
+      href: "/reviews",
+      cta: "Read patient reviews",
+    },
   },
-  { href: "/contact", text: "contact" },
+  { href: "/contact", label: "Contact" },
 ]
-
-export function getNavigation(t: Dictionary): NavEntry[] {
-  return structure.map((entry) => {
-    if ("href" in entry) return { href: entry.href, label: t.nav[entry.text] }
-    const group = t.nav.groups[entry.id]
-    return {
-      id: entry.id,
-      label: group.label,
-      items: entry.items.map(([href, icon]) => ({ href, icon, ...t.nav.items[href] })),
-      feature: { eyebrow: group.eyebrow, title: group.title, description: group.description, cta: group.cta, href: entry.feature },
-    }
-  })
-}
 
 export function isGroup(entry: NavEntry): entry is NavGroup {
   return "items" in entry

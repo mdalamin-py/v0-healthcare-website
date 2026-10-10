@@ -1,12 +1,8 @@
-"use client"
-
-import { useI18n } from "@/components/i18n-provider"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import type { VisitType } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
 export function VisitTypeBadge({ type, className }: { type: VisitType; className?: string }) {
-  const { t } = useI18n()
   const meta = visitTypeMeta(type)
   return (
     <span
@@ -16,7 +12,7 @@ export function VisitTypeBadge({ type, className }: { type: VisitType; className
       )}
     >
       <meta.icon className="size-3.5 text-primary" />
-      {t.clinic.visit[type ?? "in_clinic"]?.label ?? meta.label}
+      {meta.label}
     </span>
   )
 }

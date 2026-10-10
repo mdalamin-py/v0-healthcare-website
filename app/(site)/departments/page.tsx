@@ -5,27 +5,28 @@ import { CtaSection } from "@/components/cta-section"
 import { PageHero } from "@/components/page-hero"
 import { buildDepartments } from "@/lib/clinic/departments"
 import { getDoctors } from "@/lib/clinic/queries"
-import { fill } from "@/lib/i18n/config"
-import { getDictionary, getLocale } from "@/lib/i18n/server"
 
 export const dynamic = "force-dynamic"
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getDictionary()
-  return { title: t.departmentsPage.metaTitle, description: t.departmentsPage.metaDescription }
+export const metadata: Metadata = {
+  title: "Departments",
+  description: "Explore our medical departments and specialties, and find the right doctor for your care.",
 }
 
 export default async function DepartmentsPage() {
-  const [doctors, t, locale] = await Promise.all([getDoctors(), getDictionary(), getLocale()])
-  const p = t.departmentsPage
-  const departments = buildDepartments(doctors, t)
+  const departments = buildDepartments(await getDoctors())
 
   return (
     <>
       <PageHero
-        eyebrow={p.eyebrow}
-        title={p.title}
-        description={<p>{p.intro}</p>}
+        eyebrow="Departments"
+        title="Specialist care under one roof"
+        description={
+          <p>
+            From everyday family medicine to cardiology and rehabilitation, our departments work together so you get
+            coordinated care — in clinic or at home.
+          </p>
+        }
       />
 
       <section className="py-16 lg:py-20">
@@ -48,15 +49,18 @@ export default async function DepartmentsPage() {
               <p className="relative mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary">
                 <Stethoscope className="size-4" />
                 {department.doctors.length > 0
-                  ? fill(department.doctors.length === 1 ? p.doctorOne : p.doctorMany, { count: department.doctors.length }, locale)
-                  : p.callToSchedule}
+                  ? `${department.doctors.length} ${department.doctors.length === 1 ? "doctor" : "doctors"}`
+                  : "Call to schedule"}
               </p>
             </Link>
           ))}
         </div>
       </section>
 
-      <CtaSection title={p.ctaTitle} description={p.ctaDescription} />
+      <CtaSection
+        title="Not sure which department you need?"
+        description="Our care coordinators will listen to your concerns and connect you with the right specialist."
+      />
     </>
   )
 }

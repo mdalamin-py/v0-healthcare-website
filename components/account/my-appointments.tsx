@@ -8,8 +8,6 @@ import { VisitTypeBadge } from "@/components/visit-type-badge"
 import { AddToCalendar } from "@/components/appointments/add-to-calendar"
 import { ReviewForm } from "@/components/account/review-form"
 import { StarRating } from "@/components/star-rating"
-import { useI18n } from "@/components/i18n-provider"
-import { fill, translateMessage } from "@/lib/i18n/config"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { cancelMyAppointment } from "@/app/(site)/account/actions"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
@@ -41,8 +39,6 @@ function AppointmentRow({
   nowServing?: number
   review?: MyReview
 }) {
-  const { t, locale } = useI18n()
-  const m = t.myAppointments
   const [reviewing, setReviewing] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -53,25 +49,23 @@ function AppointmentRow({
     <li className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/80">{m.serial}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/80">Serial</span>
           <span className="font-display text-2xl font-extrabold leading-none">{appointment.serial_no}</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold text-foreground">{appointment.doctor?.full_name ?? m.doctor}</p>
+            <p className="font-semibold text-foreground">{appointment.doctor?.full_name ?? "Doctor"}</p>
             <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium capitalize", statusStyles[appointment.status])}>
-              {t.clinic.status[appointment.status]}
+              {appointment.status}
             </span>
           </div>
-          <p className="text-sm text-primary">
-            {appointment.doctor && (t.clinic.specialties[appointment.doctor.specialty] ?? appointment.doctor.specialty)}
-          </p>
+          <p className="text-sm text-primary">{appointment.doctor?.specialty}</p>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <span>{formatDate(appointment.appointment_date, { weekday: "long", year: "numeric" }, locale)}</span>
+            <span>{formatDate(appointment.appointment_date, { weekday: "long", year: "numeric" })}</span>
             {appointment.schedule && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="size-3.5" />
-                {formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time, locale)}
+                {formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time)}
               </span>
             )}
           </p>
@@ -89,10 +83,10 @@ function AppointmentRow({
                 <span className="relative inline-flex size-2 rounded-full bg-accent" />
               </span>
               {nowServing === 0
-                ? m.queueNotStarted
+                ? "Queue not started yet"
                 : nowServing >= appointment.serial_no
-                  ? m.yourTurn
-                  : fill(m.nowServing, { now: nowServing, serial: appointment.serial_no }, locale)}
+                  ? "It's your turn — please proceed"
+                  : `Now serving #${nowServing} · you are #${appointment.serial_no}`}
             </Link>
           )}
         </div>
@@ -116,7 +110,7 @@ function AppointmentRow({
             {confirming ? (
               <>
                 <Button variant="outline" size="sm" className="rounded-full" onClick={() => setConfirming(false)}>
-                  {m.keep}
+                  Keep
                 </Button>
                 <Button
                   variant="destructive"
@@ -132,28 +126,28 @@ function AppointmentRow({
                   }
                 >
                   {pending && <Loader2 className="size-4 animate-spin" />}
-                  {m.cancelVisit}
+                  Cancel visit
                 </Button>
               </>
             ) : (
               <Button variant="outline" size="sm" className="rounded-full" onClick={() => setConfirming(true)}>
                 <XCircle className="size-4" />
-                {m.cancel}
+                Cancel
               </Button>
             )}
           </div>
         )}
       </div>
-      {error && <p className="mt-3 text-sm text-destructive">{translateMessage(t.messages, error)}</p>}
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {appointment.status === "completed" &&
         (review || submitted ? (
           <p className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-sm text-muted-foreground">
             {review && <StarRating rating={review.rating} />}
             {submitted || review?.status === "pending"
-              ? m.reviewPending
+              ? "Thanks! Your review will appear after a quick check."
               : review?.status === "approved"
-                ? m.reviewPublished
-                : m.reviewHidden}
+                ? "Your review is published."
+                : "Your review was not published."}
           </p>
         ) : reviewing ? (
           <ReviewForm
@@ -170,7 +164,7 @@ function AppointmentRow({
             className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             <MessageSquareHeart className="size-4" />
-            {m.rate}
+            Rate your visit
           </button>
         ))}
     </li>
@@ -188,8 +182,6 @@ export function MyAppointments({
   queue?: Record<string, number>
   reviews?: Record<string, MyReview>
 }) {
-  const { t } = useI18n()
-  const m = t.myAppointments
   const upcoming = appointments
     .filter((item) => item.appointment_date >= today && (item.status === "pending" || item.status === "confirmed"))
     .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.serial_no - b.serial_no)
@@ -199,11 +191,11 @@ export function MyAppointments({
     <div className="space-y-10">
       <section>
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-foreground">{m.upcoming}</h2>
+          <h2 className="text-xl font-bold text-foreground">Upcoming appointments</h2>
           <Button asChild size="sm" className="rounded-full">
             <Link href="/appointments/book">
               <CalendarPlus className="size-4" />
-              {m.bookNew}
+              Book new
             </Link>
           </Button>
         </div>
@@ -220,14 +212,14 @@ export function MyAppointments({
           </ul>
         ) : (
           <p className="mt-4 rounded-2xl border border-dashed border-border bg-card px-6 py-10 text-center text-muted-foreground">
-            {m.noUpcoming}
+            You have no upcoming appointments.
           </p>
         )}
       </section>
 
       {history.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold text-foreground">{m.history}</h2>
+          <h2 className="text-xl font-bold text-foreground">Past & cancelled</h2>
           <ul className="mt-4 space-y-3">
             {history.map((item) => (
               <AppointmentRow key={item.id} appointment={item} canCancel={false} review={reviews[item.id]} />

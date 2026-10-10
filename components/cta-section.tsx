@@ -1,8 +1,6 @@
 import Link from "next/link"
 import { ArrowRight, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { fill } from "@/lib/i18n/config"
-import { getDictionary } from "@/lib/i18n/server"
 import { site } from "@/lib/site"
 
 type CtaSectionProps = {
@@ -11,9 +9,7 @@ type CtaSectionProps = {
   linkLabel?: string
 }
 
-export async function CtaSection({ title, description, linkLabel }: CtaSectionProps) {
-  const t = await getDictionary()
-
+export function CtaSection({ title, description, linkLabel = "Contact Us Online" }: CtaSectionProps) {
   return (
     <section className="py-16 lg:py-24">
       <div className="container-page">
@@ -29,7 +25,7 @@ export async function CtaSection({ title, description, linkLabel }: CtaSectionPr
               <Button size="lg" asChild className="rounded-full bg-white text-slate-900 hover:bg-white/90">
                 <a href={site.phone.href}>
                   <Phone className="size-5" />
-                  {fill(t.common.callNumber, { phone: site.phone.display })}
+                  Call {site.phone.display}
                 </a>
               </Button>
               <Button
@@ -39,7 +35,7 @@ export async function CtaSection({ title, description, linkLabel }: CtaSectionPr
                 className="rounded-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
                 <Link href="/contact">
-                  {linkLabel ?? t.common.contactOnline}
+                  {linkLabel}
                   <ArrowRight className="size-5" />
                 </Link>
               </Button>

@@ -1,13 +1,9 @@
-"use client"
-
 import Link from "next/link"
 import { CalendarPlus, GraduationCap, Languages, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
-import { useI18n } from "@/components/i18n-provider"
 import { VisitTypeBadge } from "@/components/visit-type-badge"
-import { formatFee, weekOrder } from "@/lib/clinic/format"
-import { fill } from "@/lib/i18n/config"
+import { formatFee, weekdays, weekOrder } from "@/lib/clinic/format"
 import type { DoctorRating, DoctorWithSchedules } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
@@ -20,7 +16,6 @@ export function DoctorCard({
   today: number
   rating?: DoctorRating
 }) {
-  const { t, locale } = useI18n()
   const workingDays = new Set(doctor.doctor_schedules.map((schedule) => schedule.weekday))
   const fee = formatFee(doctor.consultation_fee)
 
@@ -34,22 +29,22 @@ export function DoctorCard({
               {doctor.full_name}
             </Link>
           </h3>
-          <p className="text-sm font-medium text-primary">{t.clinic.specialties[doctor.specialty] ?? doctor.specialty}</p>
+          <p className="text-sm font-medium text-primary">{doctor.specialty}</p>
           {rating && rating.total > 0 && (
             <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="size-3.5 fill-star text-star" />
-              <span className="font-semibold text-foreground">{rating.average.toFixed(1)}</span>(
-              {fill(rating.total === 1 ? t.clinic.reviewOne : t.clinic.reviewMany, { count: rating.total }, locale)})
+              <span className="font-semibold text-foreground">{rating.average.toFixed(1)}</span>({rating.total}{" "}
+              {rating.total === 1 ? "review" : "reviews"})
             </p>
           )}
           {!doctor.accepting_appointments ? (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {t.clinic.bookingsPaused}
+              Bookings paused
             </span>
           ) : workingDays.has(today) && (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
               <span className="size-1.5 rounded-full bg-accent" />
-              {t.clinic.availableToday}
+              Available today
             </span>
           )}
         </div>
@@ -58,22 +53,22 @@ export function DoctorCard({
       <dl className="mt-5 space-y-2 text-sm text-muted-foreground">
         {doctor.qualification && (
           <div className="flex items-start gap-2">
-            <dt className="sr-only">{t.clinic.qualification}</dt>
+            <dt className="sr-only">Qualification</dt>
             <GraduationCap className="mt-0.5 size-4 shrink-0 text-primary" />
             <dd>
               {doctor.qualification}
-              {doctor.experience_years > 0 && ` · ${fill(t.clinic.years, { count: doctor.experience_years }, locale)}`}
+              {doctor.experience_years > 0 && ` · ${doctor.experience_years}+ yrs`}
             </dd>
           </div>
         )}
         <div className="flex items-start gap-2">
-          <dt className="sr-only">{t.clinic.languages}</dt>
+          <dt className="sr-only">Languages</dt>
           <Languages className="mt-0.5 size-4 shrink-0 text-primary" />
           <dd>{doctor.languages.join(", ")}</dd>
         </div>
       </dl>
 
-      <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={t.clinic.visitTypes}>
+      <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Visit types">
         {doctor.visit_types.map((type) => (
           <li key={type}>
             <VisitTypeBadge type={type} />
@@ -81,12 +76,12 @@ export function DoctorCard({
         ))}
       </ul>
 
-      <div className="mb-6 mt-5" aria-label={t.clinic.weeklyAvailability}>
+      <div className="mb-6 mt-5" aria-label="Weekly availability">
         <ul className="flex gap-1">
           {weekOrder.map((day) => (
             <li
               key={day}
-              title={t.clinic.weekdaysLong[day]}
+              title={weekdays[day].long}
               className={cn(
                 "flex h-8 flex-1 items-center justify-center rounded-md text-xs font-medium",
                 workingDays.has(day)
@@ -96,9 +91,9 @@ export function DoctorCard({
               )}
             >
               <span className="sr-only">
-                {t.clinic.weekdaysLong[day]}: {workingDays.has(day) ? t.clinic.available : t.clinic.notAvailable}
+                {weekdays[day].long}: {workingDays.has(day) ? "available" : "not available"}
               </span>
-              <span aria-hidden="true">{t.clinic.weekdaysShort[day].slice(0, 2)}</span>
+              <span aria-hidden="true">{weekdays[day].short.slice(0, 2)}</span>
             </li>
           ))}
         </ul>
@@ -108,21 +103,21 @@ export function DoctorCard({
         <span className="text-sm text-muted-foreground">
           {fee ? (
             <>
-              <span className="font-semibold text-foreground">{fee}</span> {t.clinic.perVisit}
+              <span className="font-semibold text-foreground">{fee}</span> / visit
             </>
           ) : (
-            t.clinic.insuranceAccepted
+            "Insurance accepted"
           )}
         </span>
         {doctor.accepting_appointments ? (
           <Button asChild size="sm" className="relative z-10 rounded-full">
             <Link href={`/appointments/book?doctor=${doctor.slug}`}>
               <CalendarPlus className="size-4" />
-              {t.clinic.book}
+              Book
             </Link>
           </Button>
         ) : (
-          <span className="text-xs font-medium text-muted-foreground">{t.clinic.bookingsPaused}</span>
+          <span className="text-xs font-medium text-muted-foreground">Bookings paused</span>
         )}
       </div>
     </article>

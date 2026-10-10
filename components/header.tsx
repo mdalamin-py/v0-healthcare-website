@@ -4,11 +4,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ArrowRight, CalendarPlus, ChevronDown, Menu, Phone, Siren, Sparkles, UserRound, X } from "lucide-react"
-import { useI18n } from "@/components/i18n-provider"
-import { LanguageSwitcher } from "@/components/language-switcher"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { getNavigation, isActivePath, isGroup, type NavEntry, type NavGroup } from "@/lib/navigation"
+import { isActivePath, isGroup, navigation, type NavGroup } from "@/lib/navigation"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
@@ -68,9 +66,7 @@ function MegaPanel({ group, pathname, onNavigate }: { group: NavGroup; pathname:
   )
 }
 
-function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navigation: NavEntry[]; onClose: () => void }) {
-  const { t } = useI18n()
-
+function MobileMenu({ pathname, onClose }: { pathname: string; onClose: () => void }) {
   useEffect(() => {
     const previous = document.body.style.overflow
     document.body.style.overflow = "hidden"
@@ -83,10 +79,10 @@ function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navig
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label={t.header.menu}>
+    <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
       <button
         type="button"
-        aria-label={t.header.closeMenu}
+        aria-label="Close menu"
         onClick={onClose}
         className="animate-in fade-in absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
       />
@@ -96,17 +92,17 @@ function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navig
           <button
             type="button"
             onClick={onClose}
-            aria-label={t.header.closeMenu}
+            aria-label="Close menu"
             className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-card"
           >
             <X className="size-5" />
           </button>
         </div>
-        <nav aria-label={t.header.mobileNav} className="flex-1 overflow-y-auto px-5 py-6">
+        <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-5 py-6">
           <ul className="space-y-7">
             {navigation.map((entry) =>
               isGroup(entry) ? (
-                <li key={entry.id}>
+                <li key={entry.label}>
                   <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {entry.label}
                   </p>
@@ -152,16 +148,13 @@ function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navig
             )}
           </ul>
         </nav>
-        <div className="flex justify-center border-t border-border pt-3">
-          <LanguageSwitcher />
-        </div>
-        <div className="grid grid-cols-2 gap-2 p-4 pt-2">
+        <div className="grid grid-cols-2 gap-2 border-t border-border p-4">
           <a
             href={site.phone.href}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card font-medium"
           >
             <Phone className="size-4" />
-            {t.common.callUs}
+            Call us
           </a>
           <Link
             href="/appointments/book"
@@ -169,7 +162,7 @@ function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navig
             className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent font-semibold text-white shadow-lg shadow-primary/25"
           >
             <CalendarPlus className="size-4" />
-            {t.common.bookNow}
+            Book now
           </Link>
         </div>
       </div>
@@ -178,8 +171,6 @@ function MobileMenu({ pathname, navigation, onClose }: { pathname: string; navig
 }
 
 export function Header() {
-  const { t } = useI18n()
-  const navigation = getNavigation(t)
   const pathname = usePathname()
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -220,7 +211,7 @@ export function Header() {
     closeTimer.current = setTimeout(() => setOpenGroup(null), 150)
   }
 
-  const activeGroup = navigation.find((entry) => isGroup(entry) && entry.id === openGroup) as NavGroup | undefined
+  const activeGroup = navigation.find((entry) => isGroup(entry) && entry.label === openGroup) as NavGroup | undefined
 
   return (
     <header className="sticky top-0 z-50">
@@ -236,12 +227,12 @@ export function Header() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/70" />
               <span className="relative inline-flex size-2 rounded-full bg-white" />
             </span>
-            {t.common.onCall} · {t.common.officeHours}
+            {site.hours.onCall} · {site.hours.office}
           </p>
           <span className="hidden items-center gap-4 sm:flex">
             <Link href="/emergency" className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 hover:bg-white/25">
               <Siren className="size-3.5" />
-              {t.common.emergency}
+              Emergency
             </Link>
             <a href={site.phone.href} className="flex items-center gap-1.5 hover:underline">
               <Phone className="size-3.5" />
@@ -262,20 +253,20 @@ export function Header() {
           )}
           onMouseLeave={closeWithDelay}
         >
-          <nav className="flex h-16 items-center justify-between gap-4 px-3 sm:px-4" aria-label={t.header.mainNav}>
+          <nav className="flex h-16 items-center justify-between gap-4 px-3 sm:px-4" aria-label="Main">
             <Logo />
 
             <ul className="hidden items-center gap-0.5 lg:flex">
               {navigation.map((entry) => {
                 if (isGroup(entry)) {
                   const active = entry.items.some((item) => isActivePath(pathname, item.href))
-                  const open = openGroup === entry.id
+                  const open = openGroup === entry.label
                   return (
-                    <li key={entry.id} onMouseEnter={() => openWithHover(entry.id)}>
+                    <li key={entry.label} onMouseEnter={() => openWithHover(entry.label)}>
                       <button
                         type="button"
                         aria-expanded={open}
-                        onClick={() => setOpenGroup(open ? null : entry.id)}
+                        onClick={() => setOpenGroup(open ? null : entry.label)}
                         className={cn(
                           "relative flex items-center gap-1 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors",
                           open ? "bg-muted text-foreground" : active ? "text-primary" : "text-foreground/70 hover:text-foreground",
@@ -312,11 +303,10 @@ export function Header() {
             </ul>
 
             <div className="flex items-center gap-1.5">
-              <LanguageSwitcher className="hidden sm:inline-flex" />
               <ThemeToggle className="size-9 border-transparent bg-transparent hover:bg-muted" />
               <Link
                 href="/account"
-                aria-label={t.header.myAccount}
+                aria-label="My account"
                 className={cn(
                   "inline-flex size-9 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-primary",
                   isActivePath(pathname, "/account") && "bg-primary/10 text-primary",
@@ -329,7 +319,7 @@ export function Header() {
                 className="group ml-1 hidden h-10 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30 sm:inline-flex"
               >
                 <CalendarPlus className="size-4" />
-                {t.common.bookAppointment}
+                Book appointment
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <button
@@ -337,7 +327,7 @@ export function Header() {
                 className="inline-flex size-10 items-center justify-center rounded-xl border border-border bg-card lg:hidden"
                 onClick={() => setMobileOpen(true)}
                 aria-expanded={mobileOpen}
-                aria-label={t.header.openMenu}
+                aria-label="Open menu"
               >
                 <Menu className="size-5" />
               </button>
@@ -345,14 +335,14 @@ export function Header() {
           </nav>
 
           {activeGroup && (
-            <div onMouseEnter={() => openWithHover(activeGroup.id)}>
+            <div onMouseEnter={() => openWithHover(activeGroup.label)}>
               <MegaPanel group={activeGroup} pathname={pathname} onNavigate={() => setOpenGroup(null)} />
             </div>
           )}
         </div>
       </div>
 
-      {mobileOpen && <MobileMenu pathname={pathname} navigation={navigation} onClose={closeMobile} />}
+      {mobileOpen && <MobileMenu pathname={pathname} onClose={closeMobile} />}
     </header>
   )
 }

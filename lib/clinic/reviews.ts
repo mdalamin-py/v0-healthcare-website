@@ -1,5 +1,4 @@
 import type { Review } from "@/lib/content"
-import { intlLocale, type Locale } from "@/lib/i18n/config"
 import type { PublishedReview } from "@/lib/supabase/types"
 
 const units: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -10,19 +9,19 @@ const units: [Intl.RelativeTimeFormatUnit, number][] = [
 ]
 
 /** "3 weeks ago" style label for a timestamp. */
-export function timeAgo(value: string, locale: Locale = "en", now = Date.now()) {
+export function timeAgo(value: string, now = Date.now()) {
   const elapsed = now - new Date(value).getTime()
-  const format = new Intl.RelativeTimeFormat(intlLocale[locale], { numeric: "auto" })
+  const format = new Intl.RelativeTimeFormat("en", { numeric: "auto" })
   for (const [unit, size] of units) {
     if (elapsed >= size) return format.format(-Math.floor(elapsed / size), unit)
   }
-  return format.format(0, "day")
+  return "today"
 }
 
-export function toReview(review: PublishedReview, locale: Locale = "en"): Review {
+export function toReview(review: PublishedReview): Review {
   return {
     name: review.author_name,
-    date: timeAgo(review.created_at, locale),
+    date: timeAgo(review.created_at),
     rating: review.rating,
     text: review.comment ?? "",
     service: review.doctor_specialty,
