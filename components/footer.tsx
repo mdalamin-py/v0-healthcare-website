@@ -87,6 +87,11 @@ export function Footer() {
               </li>
             ))}
             <li>
+              <Link href="/doctor-portal" className="transition-colors hover:text-primary">
+                Doctor portal
+              </Link>
+            </li>
+            <li>
               <Link href="/admin" className="transition-colors hover:text-primary">
                 Staff login
               </Link>

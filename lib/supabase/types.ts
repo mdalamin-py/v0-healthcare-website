@@ -403,6 +403,27 @@ export type Database = {
       }
     }
     Functions: {
+      current_doctor_id: { Args: Record<never, never>; Returns: string | null }
+      doctor_set_accepting: { Args: { p_accepting: boolean }; Returns: undefined }
+      doctor_add_leave: { Args: { p_date: string; p_reason?: string | null }; Returns: string }
+      doctor_remove_leave: { Args: { p_leave_id: string }; Returns: boolean }
+      doctor_appointments: {
+        Args: { p_from?: string; p_days?: number }
+        Returns: {
+          id: string
+          appointment_date: string
+          start_time: string
+          end_time: string
+          serial_no: number
+          status: AppointmentStatus
+          visit_type: VisitType
+          patient_name: string
+          patient_phone: string
+          patient_age: number | null
+          patient_address: string | null
+          reason: string | null
+        }[]
+      }
       get_public_stats: {
         Args: Record<never, never>
         Returns: {
@@ -535,6 +556,7 @@ export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
 export type PublishedReview = Database["public"]["Views"]["published_reviews"]["Row"]
+export type DoctorAppointment = Database["public"]["Functions"]["doctor_appointments"]["Returns"][number]
 export type PublicStats = Database["public"]["Functions"]["get_public_stats"]["Returns"][number]
 export type DoctorRating = { average: number; total: number }
 export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]

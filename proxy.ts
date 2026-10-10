@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
   const isAdmin = pathname.startsWith("/admin")
   const loginPath = isAdmin ? "/admin/login" : "/account/login"
   const isLogin = pathname === loginPath
-  const isProtected = (isAdmin || pathname.startsWith("/account")) && !isLogin
+  const isProtected = (isAdmin || pathname.startsWith("/account") || pathname.startsWith("/doctor-portal")) && !isLogin
 
   const redirectToLogin = () => {
     const url = new URL(loginPath, request.url)
@@ -46,5 +46,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/appointments/book"],
+  matcher: ["/admin/:path*", "/account/:path*", "/doctor-portal/:path*", "/appointments/book"],
 }

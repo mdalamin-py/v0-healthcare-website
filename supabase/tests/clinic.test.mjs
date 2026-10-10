@@ -414,6 +414,41 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("published reviews include the doctor", view.length === 0 || Boolean(view[0].doctor_name))
 }
 
+// Doctor portal: a doctor manages only their own bookings and leave
+{
+  await db.exec(`reset role; set request.jwt.claim.sub = ''`)
+  const DOC_USER = "00000000-0000-0000-0000-0000000000d1"
+  await q(`insert into auth.users values ($1, 'Emily-Nguyen@example.com')`, [DOC_USER])
+  const emily = (await q(`select id from doctors where slug = 'emily-nguyen'`))[0].id
+
+  await asPatient(PATIENT_2)
+  await expectError("a patient is not a doctor", `select doctor_set_accepting(false)`, [], "NOT_A_DOCTOR")
+
+  await asPatient(DOC_USER)
+  const me = (await q(`select current_doctor_id() id`))[0].id
+  check("doctor is matched by contact email (case-insensitive)", me === emily)
+  await q(`select doctor_set_accepting(false)`)
+  const paused = (await q(`select accepting_appointments a from doctors where id = $1`, [emily]))[0].a
+  check("doctor can pause their own bookings", paused === false)
+  await q(`select doctor_set_accepting(true)`)
+
+  const leaveId = (await q(`select doctor_add_leave(clinic_today() + 3, 'Conference') id`))[0].id
+  const leaves = await q(`select doctor_id from doctor_leaves where id = $1`, [leaveId])
+  check("doctor can add their own leave", leaves[0]?.doctor_id === emily)
+  await expectError("doctor cannot add leave in the past", `select doctor_add_leave(clinic_today() - 1)`, [], "INVALID_DATE")
+  const other = (await q(`select id from doctor_leaves where doctor_id <> $1 limit 1`, [emily]))[0]
+  if (other) {
+    const removed = (await q(`select doctor_remove_leave($1) ok`, [other.id]))[0].ok
+    check("doctor cannot remove another doctor's leave", removed === false)
+  }
+  check("doctor can remove their own leave", (await q(`select doctor_remove_leave($1) ok`, [leaveId]))[0].ok === true)
+
+  const own = await q(`select count(*)::int c from doctor_appointments(clinic_today(), 31)`)
+  const actual = await q(`select count(*)::int c from appointments where doctor_id = $1 and appointment_date between clinic_today() and clinic_today() + 30`, [emily])
+  check("doctor sees only their own appointments", own[0].c === actual[0].c, `${own[0].c}/${actual[0].c}`)
+  await db.exec(`set request.jwt.claim.sub = ''`)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

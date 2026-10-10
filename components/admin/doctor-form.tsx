@@ -122,6 +122,7 @@ export function DoctorForm({ doctor, contact }: { doctor?: Doctor; contact?: Doc
           <div className="space-y-2">
             <Label htmlFor="contact_email">Doctor email</Label>
             <Input id="contact_email" name="contact_email" type="email" defaultValue={contact?.email ?? ""} />
+            <p className="text-xs text-muted-foreground">Used for the daily serial list and to sign in to the doctor portal.</p>
             <FieldMessage messages={errors.email} />
           </div>
           <div className="space-y-2">
