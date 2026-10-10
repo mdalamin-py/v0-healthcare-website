@@ -449,6 +449,42 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   await db.exec(`set request.jwt.claim.sub = ''`)
 }
 
+// Doctor registration: apply, then an admin approves into a portal-linked profile
+{
+  await db.exec(`reset role; set request.jwt.claim.sub = ''`)
+  const APPLICANT = "00000000-0000-0000-0000-0000000000e1"
+  const PHONE_ONLY = "00000000-0000-0000-0000-0000000000e2"
+  await q(`insert into auth.users values ($1, 'Nadia.Karim@example.com'), ($2, null)`, [APPLICANT, PHONE_ONLY])
+  const apply = `select submit_doctor_application('Nadia Karim', '(559) 555-0199', 'Pediatrics', 'MBBS, FCPS', 'ca-12345', 8, array['English','Bangla'], 'Child health specialist.') id`
+
+  await expectError("registration requires sign-in", apply, [], "AUTH_REQUIRED")
+  await asPatient(PHONE_ONLY)
+  await expectError("registration requires an email account", apply, [], "EMAIL_REQUIRED")
+  await asPatient(APPLICANT)
+  const appId = (await q(apply))[0].id
+  check("applicant can submit a registration", Boolean(appId))
+  await expectError("only one pending application per account", apply, [], "APPLICATION_PENDING")
+  const own = await q(`select license_number, email from doctor_applications`)
+  check("applicant sees only their own application", own.length === 1 && own[0].license_number === "CA-12345" && own[0].email === "nadia.karim@example.com")
+  await expectError("applicant cannot approve themselves", `select review_doctor_application($1, true)`, [appId], "FORBIDDEN")
+
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`insert into admins values ($1) on conflict do nothing`, [PATIENT_1])
+  await asPatient(PATIENT_1)
+  const doctorId = (await q(`select review_doctor_application($1, true, 'Welcome') id`, [appId]))[0].id
+  await expectError("an approved application cannot be reviewed again", `select review_doctor_application($1, false)`, [appId], "APPLICATION_CLOSED")
+  await q(`delete from admins where user_id = $1`, [PATIENT_1])
+  const doc = (await q(`select slug, full_name, kind from doctors where id = $1`, [doctorId]))[0]
+  check("approval creates a consultant profile", doc.slug === "nadia-karim" && doc.full_name === "Dr. Nadia Karim" && doc.kind === "consultant", JSON.stringify(doc))
+
+  await asPatient(APPLICANT)
+  const linked = (await q(`select current_doctor_id() id`))[0].id
+  check("approved doctor is linked to the portal", linked === doctorId)
+  await expectError("an approved doctor cannot apply again", apply, [], "ALREADY_DOCTOR")
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await q(`delete from doctors where id = $1`, [doctorId])
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

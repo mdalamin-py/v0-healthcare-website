@@ -1,14 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { CalendarDays, Home, ListOrdered, Stethoscope, UserX, Video } from "lucide-react"
+import { BadgeCheck, CalendarDays, Clock, Home, ListOrdered, Stethoscope, UserX, Video, XCircle } from "lucide-react"
 import { BookingToggle, LeaveManager } from "@/components/doctor/portal-controls"
+import { RegistrationForm } from "@/components/doctor/registration-form"
 import { Button } from "@/components/ui/button"
 import { getDoctorSession } from "@/lib/doctor/session"
 import { formatDate, formatTimeRange } from "@/lib/clinic/format"
 import { clinicToday } from "@/lib/clinic/time"
 import { site } from "@/lib/site"
-import type { DoctorAppointment, DoctorLeave } from "@/lib/supabase/types"
+import type { DoctorApplication, DoctorAppointment, DoctorLeave } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -18,26 +19,103 @@ export const metadata: Metadata = {
 
 const visitIcon = { in_clinic: Stethoscope, video: Video, home_visit: Home } as const
 
+/** Shown to signed-in users who are not linked to a doctor profile yet. */
+function Registration({ application, email }: { application: DoctorApplication | null; email: string | null }) {
+  const pending = application?.status === "pending"
+  const rejected = application?.status === "rejected"
+
+  return (
+    <section className="py-12 lg:py-16">
+      <div className="container-page grid gap-10 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">For doctors</p>
+          <h1 className="mt-2 text-4xl font-extrabold text-foreground">Join our medical team</h1>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Register once. After the clinic verifies your license, your profile goes live and patients can book you online.
+          </p>
+          <ol className="mt-8 space-y-4">
+            {["Submit your details and license number", "The clinic verifies and approves you", "Manage bookings and days off from this portal"].map(
+              (step, index) => (
+                <li key={step} className="flex items-center gap-3 text-foreground">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  {step}
+                </li>
+              ),
+            )}
+          </ol>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8 lg:col-span-7">
+          {!email ? (
+            <div className="flex flex-col items-center py-8 text-center">
+              <UserX className="size-10 text-muted-foreground" />
+              <h2 className="mt-4 text-xl font-bold text-foreground">Sign in with email to register</h2>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                Doctor accounts use your email address. Sign out, then sign in again with your email.
+              </p>
+            </div>
+          ) : pending ? (
+            <div role="status" className="flex flex-col items-center py-8 text-center">
+              <span className="flex size-14 items-center justify-center rounded-full bg-star/15 text-foreground">
+                <Clock className="size-7" />
+              </span>
+              <h2 className="mt-4 text-xl font-bold text-foreground">Registration under review</h2>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                Thanks, {application.full_name}. The clinic is verifying license {application.license_number}. This page
+                becomes your portal as soon as you are approved.
+              </p>
+            </div>
+          ) : (
+            <>
+              {rejected && (
+                <p role="alert" className="mb-6 flex items-start gap-2 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <XCircle className="mt-0.5 size-4 shrink-0" />
+                  Your previous registration was not approved{application.review_note ? `: ${application.review_note}` : "."} You can update your details and apply again.
+                </p>
+              )}
+              <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
+                <BadgeCheck className="size-5 text-primary" />
+                Doctor registration
+              </h2>
+              <p className="mb-6 mt-1 text-sm text-muted-foreground">Signed in as {email}</p>
+              <RegistrationForm
+                defaults={
+                  rejected && application
+                    ? {
+                        full_name: application.full_name,
+                        phone: application.phone,
+                        specialty: application.specialty,
+                        qualification: application.qualification,
+                        license_number: application.license_number,
+                        experience_years: application.experience_years,
+                        languages: application.languages.join(", "),
+                        bio: application.bio ?? "",
+                      }
+                    : {}
+                }
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function DoctorPortalPage() {
   const { supabase, user, doctor } = await getDoctorSession()
   if (!supabase || !user) redirect("/account/login?next=/doctor-portal")
 
   if (!doctor) {
-    return (
-      <section className="container-page flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
-        <span className="flex size-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-          <UserX className="size-8" />
-        </span>
-        <h1 className="mt-5 text-3xl font-bold text-foreground">No doctor profile linked</h1>
-        <p className="mt-3 max-w-md text-muted-foreground">
-          You are signed in as <strong className="text-foreground">{user.email ?? user.phone}</strong>. Ask the clinic admin to
-          save this email as your doctor email, then sign in again.
-        </p>
-        <Button asChild variant="outline" className="mt-6 rounded-full">
-          <a href={site.phone.href}>Call the clinic</a>
-        </Button>
-      </section>
-    )
+    const { data: applications } = await supabase
+      .from("doctor_applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+    return <Registration application={(applications?.[0] as DoctorApplication | undefined) ?? null} email={user.email ?? null} />
   }
 
   const today = clinicToday()

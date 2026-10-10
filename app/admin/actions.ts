@@ -330,6 +330,25 @@ export async function closeAmbulanceRequest(requestId: string, status: "complete
 }
 
 // ---------------------------------------------------------------------------
+// Doctor registrations
+// ---------------------------------------------------------------------------
+
+export async function reviewDoctorApplication(applicationId: string, approve: boolean, note: string): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { data, error } = await supabase.rpc("review_doctor_application", {
+    p_application_id: applicationId,
+    p_approve: approve,
+    p_note: note.trim().slice(0, 300) || null,
+  })
+  if (error?.message.includes("APPLICATION_CLOSED")) return { error: "This application was already reviewed." }
+  if (error) return { error: dbError(error, "Could not review the application.") }
+
+  revalidatePublicPages()
+  if (approve && data) redirect(`/admin/doctors/${data}?created=1`)
+  return { success: "Application declined." }
+}
+
+// ---------------------------------------------------------------------------
 // Operation theatres
 // ---------------------------------------------------------------------------
 

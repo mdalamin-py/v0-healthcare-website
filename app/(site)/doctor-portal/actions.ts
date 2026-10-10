@@ -3,10 +3,16 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getDoctorSession } from "@/lib/doctor/session"
+import { isEmailConfigured, sendDoctorApplicationAlert } from "@/lib/email"
+import { doctorApplicationSchema, type DoctorApplicationInput } from "@/lib/validations/doctor-application"
 
 type Result = { error?: string; success?: string }
 
 const portalErrors: Record<string, string> = {
+  AUTH_REQUIRED: "Please sign in again.",
+  EMAIL_REQUIRED: "Sign in with your email address to register as a doctor.",
+  ALREADY_DOCTOR: "This account is already linked to a doctor profile.",
+  APPLICATION_PENDING: "Your registration is already under review.",
   NOT_A_DOCTOR: "This account isn't linked to a doctor profile.",
   INVALID_DATE: "Choose today or a future date.",
 }
@@ -63,4 +69,37 @@ export async function removeLeave(leaveId: string): Promise<Result> {
 
   revalidatePath("/", "layout")
   return { success: "Day off removed." }
+}
+
+export async function submitApplication(input: DoctorApplicationInput): Promise<Result> {
+  const { supabase, user } = await getDoctorSession()
+  if (!supabase || !user) return { error: portalErrors.AUTH_REQUIRED }
+
+  const parsed = doctorApplicationSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Please check your details." }
+
+  const data = parsed.data
+  const { error } = await supabase.rpc("submit_doctor_application", {
+    p_full_name: data.full_name,
+    p_phone: data.phone,
+    p_specialty: data.specialty,
+    p_qualification: data.qualification,
+    p_license_number: data.license_number,
+    p_experience_years: data.experience_years,
+    p_languages: data.languages,
+    p_bio: data.bio || null,
+  })
+  if (error) return failure(error, "Could not submit your registration.")
+
+  if (isEmailConfigured()) {
+    try {
+      await sendDoctorApplicationAlert({ ...data, email: user.email ?? "" })
+    } catch (cause) {
+      // The application is saved; a failed staff alert must not undo it.
+      console.error("[doctor-portal] application alert failed:", cause)
+    }
+  }
+
+  revalidatePath("/doctor-portal")
+  return { success: "Registration submitted. We'll email you once the clinic reviews it." }
 }

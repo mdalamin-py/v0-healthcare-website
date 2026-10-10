@@ -124,6 +124,29 @@ export type Database = {
           },
         ]
       }
+      doctor_applications: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          full_name: string
+          phone: string
+          specialty: string
+          qualification: string
+          license_number: string
+          experience_years: number
+          languages: string[]
+          bio: string | null
+          status: "pending" | "approved" | "rejected"
+          review_note: string | null
+          doctor_id: string | null
+          created_at: string
+          reviewed_at: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       nearby_facilities: {
         Row: {
           id: string
@@ -404,6 +427,20 @@ export type Database = {
     }
     Functions: {
       current_doctor_id: { Args: Record<never, never>; Returns: string | null }
+      submit_doctor_application: {
+        Args: {
+          p_full_name: string
+          p_phone: string
+          p_specialty: string
+          p_qualification: string
+          p_license_number: string
+          p_experience_years: number
+          p_languages: string[]
+          p_bio: string | null
+        }
+        Returns: string
+      }
+      review_doctor_application: { Args: { p_application_id: string; p_approve: boolean; p_note?: string | null }; Returns: string | null }
       doctor_set_accepting: { Args: { p_accepting: boolean }; Returns: undefined }
       doctor_add_leave: { Args: { p_date: string; p_reason?: string | null }; Returns: string }
       doctor_remove_leave: { Args: { p_leave_id: string }; Returns: boolean }
@@ -556,6 +593,7 @@ export type Patient = Database["public"]["Tables"]["patients"]["Row"]
 export type CallbackRequest = Database["public"]["Tables"]["callback_requests"]["Row"]
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
 export type PublishedReview = Database["public"]["Views"]["published_reviews"]["Row"]
+export type DoctorApplication = Database["public"]["Tables"]["doctor_applications"]["Row"]
 export type DoctorAppointment = Database["public"]["Functions"]["doctor_appointments"]["Returns"][number]
 export type PublicStats = Database["public"]["Functions"]["get_public_stats"]["Returns"][number]
 export type DoctorRating = { average: number; total: number }

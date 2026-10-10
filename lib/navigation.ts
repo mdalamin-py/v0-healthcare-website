@@ -66,6 +66,7 @@ export const navigation: NavEntry[] = [
     items: [
       { href: "/about", label: "About Us", description: "Our mission, values and leadership", icon: Users },
       { href: "/reviews", label: "Patient Reviews", description: "What families say about our care", icon: Star },
+      { href: "/doctor-portal", label: "For Doctors", description: "Register and manage your schedule", icon: Stethoscope },
     ],
     feature: {
       eyebrow: "Rated 4.9 on Google",

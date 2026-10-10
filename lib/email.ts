@@ -210,6 +210,26 @@ export async function sendCallbackAlert(request: { name: string; phone: string; 
   })
 }
 
+export async function sendDoctorApplicationAlert(application: { full_name: string; email: string; specialty: string; license_number: string }) {
+  const html = layout(
+    "New doctor registration",
+    `<p style="font-size:14px">A doctor applied to join the clinic and is waiting for review.</p>
+    <table cellpadding="6" style="font-size:14px">
+      <tr><td style="color:#64748b">Name</td><td><strong>${escapeHtml(application.full_name)}</strong></td></tr>
+      <tr><td style="color:#64748b">Specialty</td><td>${escapeHtml(application.specialty)}</td></tr>
+      <tr><td style="color:#64748b">License</td><td>${escapeHtml(application.license_number)}</td></tr>
+      <tr><td style="color:#64748b">Email</td><td>${escapeHtml(application.email)}</td></tr>
+    </table>
+    <p><a href="${site.url}/admin/doctors">Review it in the dashboard</a></p>`,
+  )
+  await sendEmail({
+    to: process.env.CONTACT_TO_EMAIL!.split(",").map((address) => address.trim()),
+    subject: `Doctor registration: ${application.full_name} · ${application.specialty}`,
+    html,
+    text: `New doctor registration\n${application.full_name} · ${application.specialty}\nLicense: ${application.license_number}\nEmail: ${application.email}`,
+  })
+}
+
 export async function sendBookingConfirmation(to: string, booking: CalendarAppointment & { instructions: string }) {
   const date = formatDate(booking.appointment_date, { weekday: "long", year: "numeric" })
   const session = formatTimeRange(booking.start_time, booking.end_time)

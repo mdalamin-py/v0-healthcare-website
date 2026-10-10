@@ -4,11 +4,20 @@ import { Button } from "@/components/ui/button"
 import { AdminPageHeader } from "@/components/admin/admin-page-header"
 import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { weekdays, weekOrder } from "@/lib/clinic/format"
+import { ApplicationReview } from "@/components/admin/application-review"
+import { requireAdmin } from "@/lib/admin/auth"
 import { listAllDoctors } from "@/lib/admin/queries"
+import { formatDateTime } from "@/lib/clinic/format"
+import type { DoctorApplication } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
 export default async function AdminDoctorsPage() {
-  const doctors = await listAllDoctors()
+  const { supabase } = await requireAdmin()
+  const [doctors, { data: applicationData }] = await Promise.all([
+    listAllDoctors(),
+    supabase.from("doctor_applications").select("*").eq("status", "pending").order("created_at"),
+  ])
+  const applications = (applicationData ?? []) as DoctorApplication[]
 
   return (
     <>
@@ -24,6 +33,37 @@ export default async function AdminDoctorsPage() {
           </Button>
         }
       />
+
+      {applications.length > 0 && (
+        <section className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+          <h2 className="font-semibold text-foreground">
+            Doctor registrations awaiting review ({applications.length})
+          </h2>
+          <ul className="mt-4 space-y-3">
+            {applications.map((application) => (
+              <li
+                key={application.id}
+                className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-start sm:justify-between"
+              >
+                <div className="min-w-0 text-sm">
+                  <p className="font-semibold text-foreground">
+                    {application.full_name} · <span className="text-primary">{application.specialty}</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    {application.qualification} · {application.experience_years} yrs · License {application.license_number}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {application.email} · {application.phone} · {application.languages.join(", ")}
+                  </p>
+                  {application.bio && <p className="mt-1 text-foreground/80">{application.bio}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">Applied {formatDateTime(application.created_at)}</p>
+                </div>
+                <ApplicationReview id={application.id} name={application.full_name} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {doctors.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-muted-foreground">
