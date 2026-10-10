@@ -9,6 +9,8 @@ export type AmbulanceType = "bls" | "als" | "icu" | "transport" | "neonatal"
 export type AmbulanceStatus = "available" | "on_trip" | "maintenance" | "offline"
 export type AmbulanceRequestStatus = "pending" | "dispatched" | "completed" | "cancelled"
 export type FacilityType = "hospital" | "urgent_care" | "clinic" | "pharmacy" | "diagnostic"
+export type TheatreStatus = "available" | "in_use" | "cleaning" | "maintenance"
+export type SurgeryStatus = "scheduled" | "pre_op" | "in_progress" | "recovery" | "completed" | "delayed" | "cancelled"
 
 export type Database = {
   public: {
@@ -62,6 +64,65 @@ export type Database = {
         Insert: never
         Update: never
         Relationships: []
+      }
+      operation_theatres: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          location: string | null
+          status: TheatreStatus
+          created_at: string
+          updated_at: string
+        }
+        Insert: { code: string; name: string; location?: string | null; status?: TheatreStatus }
+        Update: Partial<Database["public"]["Tables"]["operation_theatres"]["Insert"]>
+        Relationships: []
+      }
+      surgeries: {
+        Row: {
+          id: string
+          case_code: string
+          theatre_id: string
+          surgeon_id: string
+          procedure: string
+          patient_name: string
+          scheduled_at: string
+          duration_minutes: number
+          status: SurgeryStatus
+          note: string | null
+          started_at: string | null
+          ended_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          theatre_id: string
+          surgeon_id: string
+          procedure: string
+          patient_name: string
+          scheduled_at: string
+          duration_minutes: number
+          status?: SurgeryStatus
+          note?: string | null
+        }
+        Update: Partial<Database["public"]["Tables"]["surgeries"]["Insert"]>
+        Relationships: [
+          {
+            foreignKeyName: "surgeries_theatre_id_fkey"
+            columns: ["theatre_id"]
+            isOneToOne: false
+            referencedRelation: "operation_theatres"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surgeries_surgeon_id_fkey"
+            columns: ["surgeon_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nearby_facilities: {
         Row: {
@@ -400,6 +461,23 @@ export type Database = {
         }[]
       }
       get_doctor_ratings: { Args: Record<never, never>; Returns: { doctor_id: string; average: number; total: number }[] }
+      get_ot_board: {
+        Args: { p_date?: string }
+        Returns: {
+          case_code: string
+          theatre_code: string
+          theatre_name: string
+          procedure: string
+          surgeon_name: string
+          surgeon_specialty: string
+          scheduled_at: string
+          duration_minutes: number
+          status: SurgeryStatus
+          note: string | null
+          started_at: string | null
+          ended_at: string | null
+        }[]
+      }
       get_today_queue: {
         Args: Record<never, never>
         Returns: {
@@ -435,6 +513,9 @@ export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row
 export type Ambulance = Database["public"]["Tables"]["ambulances"]["Row"]
 export type AmbulanceRequest = Database["public"]["Tables"]["ambulance_requests"]["Row"]
 export type NearbyFacility = Database["public"]["Tables"]["nearby_facilities"]["Row"]
+export type OperationTheatre = Database["public"]["Tables"]["operation_theatres"]["Row"]
+export type Surgery = Database["public"]["Tables"]["surgeries"]["Row"]
+export type OtBoardCase = Database["public"]["Functions"]["get_ot_board"]["Returns"][number]
 export type RosterEntry = Database["public"]["Functions"]["get_doctor_roster"]["Returns"][number]
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

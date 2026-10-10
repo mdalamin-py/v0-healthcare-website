@@ -16,6 +16,7 @@ const staticRoutes = [
   { path: "/emergency", priority: 0.7 },
   { path: "/ambulance", priority: 0.7 },
   { path: "/nearby", priority: 0.6 },
+  { path: "/ot", priority: 0.6 },
   { path: "/interns", priority: 0.5 },
   { path: "/about", priority: 0.7 },
   { path: "/reviews", priority: 0.7 },

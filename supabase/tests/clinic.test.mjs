@@ -307,6 +307,33 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   await q(`update nearby_facilities set is_active = true`)
 }
 
+// Operation theatres
+{
+  const theatres = await q(`select count(*)::int c from operation_theatres`)
+  const cases = await q(`select count(*)::int c, min(case_code) first from surgeries`)
+  check("theatres and today's cases seeded", theatres[0].c === 3 && cases[0].c === 5 && cases[0].first === "S-1001", JSON.stringify(cases[0]))
+  await db.exec(`set role anon`)
+  const board = await q(`select * from get_ot_board()`)
+  const hidden = await q(`select count(*)::int c from surgeries`)
+  await db.exec(`reset role`)
+  check("public board lists today's cases", board.length === 5, `${board.length}`)
+  check("public board hides patient details", !("patient_name" in board[0]) && hidden[0].c === 0)
+
+  const hernia = (await q(`select id, theatre_id from surgeries where procedure = 'Hernia repair'`))[0]
+  await q(`update surgeries set status = 'in_progress' where id = $1`, [hernia.id])
+  const live = (await q(`select s.started_at, t.status from surgeries s join operation_theatres t on t.id = s.theatre_id where s.id = $1`, [hernia.id]))[0]
+  check("starting a case stamps the time and occupies the theatre", live.started_at !== null && live.status === "in_use", live.status)
+  await expectError(
+    "a theatre cannot run two cases at once",
+    `update surgeries set status = 'in_progress' where procedure = 'Hip fracture fixation'`,
+    [],
+    "surgeries_one_active_per_theatre",
+  )
+  await q(`update surgeries set status = 'recovery' where id = $1`, [hernia.id])
+  const done = (await q(`select s.ended_at, t.status from surgeries s join operation_theatres t on t.id = s.theatre_id where s.id = $1`, [hernia.id]))[0]
+  check("finishing a case frees the theatre for cleaning", done.ended_at !== null && done.status === "cleaning", done.status)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

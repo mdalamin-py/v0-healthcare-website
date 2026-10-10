@@ -144,3 +144,30 @@ values
    36.8079, -119.8720, false, false, array['Primary care', 'Physicals'], null, null),
   ('Clovis Urgent Care', 'urgent_care', '1555 Shaw Ave Ste 101, Clovis, CA 93611', 'Clovis', '(559) 324-7001',
    36.8086, -119.6900, false, false, array['Walk-in care', 'Minor injuries'], null, null);
+
+-- Operation theatres and today's surgery list
+insert into public.operation_theatres (code, name, location, status) values
+  ('OT-1', 'General Surgery Theatre', 'Level 2, East wing', 'available'),
+  ('OT-2', 'Cardiac & Vascular Theatre', 'Level 2, West wing', 'available'),
+  ('OT-3', 'Day Surgery Theatre', 'Ground floor', 'maintenance');
+
+with today as (select public.clinic_today() as d)
+insert into public.surgeries
+  (theatre_id, surgeon_id, procedure, patient_name, scheduled_at, duration_minutes, status, started_at, ended_at, note)
+select t.id, d.id, v.procedure, v.patient, (today.d + v.at) at time zone 'America/Los_Angeles', v.minutes, v.status,
+       case when v.status in ('recovery', 'completed') then (today.d + v.at) at time zone 'America/Los_Angeles' end,
+       case when v.status in ('recovery', 'completed') then (today.d + v.at) at time zone 'America/Los_Angeles' + make_interval(mins => v.minutes) end,
+       v.note
+from today,
+  (values
+    ('OT-1', 'michael-patel', 'Laparoscopic cholecystectomy', 'Robert Hayes', time '08:00', 90, 'completed', null),
+    ('OT-2', 'emily-nguyen', 'Coronary angioplasty', 'Linda Moore', time '09:00', 120, 'recovery', null),
+    ('OT-1', 'daniel-ramirez', 'Hernia repair', 'James Carter', time '11:30', 75, 'scheduled', null),
+    ('OT-2', 'emily-nguyen', 'Pacemaker implantation', 'Patricia Lee', time '14:00', 90, 'scheduled', null),
+    ('OT-1', 'sarah-johnson', 'Hip fracture fixation', 'Dorothy Evans', time '15:30', 120, 'delayed', 'Waiting on pre-op labs')
+  ) as v(theatre, surgeon, procedure, patient, at, minutes, status, note)
+join public.operation_theatres t on t.code = v.theatre
+join public.doctors d on d.slug = v.surgeon
+order by v.at;
+
+update public.operation_theatres set status = 'cleaning' where code = 'OT-2';

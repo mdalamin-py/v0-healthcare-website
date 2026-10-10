@@ -3,6 +3,7 @@ import { visitTypeValues } from "@/lib/clinic/visit-types"
 import { dutyTypeValues } from "@/lib/clinic/duty"
 import { ambulanceStatusValues, ambulanceTypeValues } from "@/lib/clinic/ambulance"
 import { facilityTypeValues } from "@/lib/clinic/facilities"
+import { surgeryStatusValues, theatreStatusValues } from "@/lib/clinic/ot"
 
 const optionalText = (max: number) =>
   z
@@ -118,6 +119,28 @@ export const facilitySchema = z.object({
     .trim()
     .refine((value) => !value || /^https:\/\/\S+$/.test(value), "Website must start with https://")
     .transform((value) => value || null),
+})
+
+export const theatreSchema = z.object({
+  code: z.string().trim().toUpperCase().min(2, "Enter a code").max(20),
+  name: z.string().trim().min(2, "Enter a name").max(80),
+  location: optionalText(80),
+  status: z.enum(theatreStatusValues),
+})
+
+export const surgerySchema = z.object({
+  theatre_id: z.string().uuid("Choose a theatre"),
+  surgeon_id: z.string().uuid("Choose a surgeon"),
+  procedure: z.string().trim().min(2, "Enter the procedure").max(120),
+  patient_name: z.string().trim().min(2, "Enter the patient's name").max(100),
+  scheduled_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose a start time"),
+  duration_minutes: z.coerce.number().int().min(15, "At least 15 minutes").max(720, "At most 12 hours"),
+  note: optionalText(200),
+})
+
+export const surgeryUpdateSchema = z.object({
+  status: z.enum(surgeryStatusValues),
+  note: optionalText(200),
 })
 
 export const leaveSchema = z.object({

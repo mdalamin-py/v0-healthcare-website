@@ -1,18 +1,19 @@
 import {
+  Activity,
   Ambulance,
-  Hospital,
   Building2,
-  GraduationCap,
   CalendarClock,
   CalendarPlus,
-  ListOrdered,
-  Siren,
+  GraduationCap,
   HeartHandshake,
+  Hospital,
+  ListOrdered,
   type LucideIcon,
   Search,
+  Siren,
   Star,
-  UserRound,
   Stethoscope,
+  UserRound,
   Users,
 } from "lucide-react"
 
@@ -48,6 +49,7 @@ export const navigation: NavEntry[] = [
     items: [
       { href: "/appointments/book", label: "Book Appointment", description: "Pick a doctor and get a serial number", icon: CalendarPlus },
       { href: "/queue", label: "Live Queue", description: "See the serial each doctor is serving now", icon: ListOrdered },
+      { href: "/ot", label: "OT Live Board", description: "Track an operation with your case code", icon: Activity },
       { href: "/account", label: "My Account", description: "Your appointments and profile", icon: UserRound },
       { href: "/appointments/status", label: "Check Appointment", description: "Look up a booking by reference", icon: Search },
     ],

@@ -1,6 +1,7 @@
 import "server-only"
 import { requireAdmin } from "@/lib/admin/auth"
-import type { Appointment, AppointmentStatus, Doctor, DoctorSchedule, OnCallShift } from "@/lib/supabase/types"
+import { clinicLocalToIso, clinicToday } from "@/lib/clinic/time"
+import type { Appointment, AppointmentStatus, Doctor, DoctorSchedule, OnCallShift, OperationTheatre, Surgery } from "@/lib/supabase/types"
 
 export type AdminAppointment = Appointment & {
   doctor: Pick<Doctor, "full_name" | "specialty"> | null
@@ -72,6 +73,26 @@ export async function listUpcomingShifts(days = 14) {
     .order("starts_at")
   if (error) throw new Error(`Failed to load shifts: ${error.message}`)
   return data as unknown as (OnCallShift & { doctor: Pick<Doctor, "full_name" | "slug" | "specialty" | "kind"> })[]
+}
+
+export type AdminSurgery = Surgery & {
+  theatre: Pick<OperationTheatre, "code" | "name">
+  surgeon: Pick<Doctor, "full_name" | "specialty">
+}
+
+/** Operations from the start of today (clinic time) for the next `days` days. */
+export async function listSurgeries(days = 7) {
+  const { supabase } = await requireAdmin()
+  const from = clinicLocalToIso(`${clinicToday()}T00:00`)
+  const until = new Date(new Date(from).getTime() + days * 86_400_000).toISOString()
+  const { data, error } = await supabase
+    .from("surgeries")
+    .select("*, theatre:operation_theatres(code, name), surgeon:doctors(full_name, specialty)")
+    .gte("scheduled_at", from)
+    .lt("scheduled_at", until)
+    .order("scheduled_at")
+  if (error) throw new Error(`Failed to load operations: ${error.message}`)
+  return data as unknown as AdminSurgery[]
 }
 
 export async function listRecentPatients(since: string) {

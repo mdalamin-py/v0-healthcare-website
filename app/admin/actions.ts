@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin/auth"
 import { clinicLocalToIso } from "@/lib/clinic/time"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
-import type { AppointmentStatus } from "@/lib/supabase/types"
+import type { AmbulanceStatus, AppointmentStatus, TheatreStatus } from "@/lib/supabase/types"
 import {
   ambulanceSchema,
   appointmentStatuses,
@@ -16,8 +16,10 @@ import {
   leaveSchema,
   onCallSchema,
   scheduleSchema,
+  surgerySchema,
+  surgeryUpdateSchema,
+  theatreSchema,
 } from "@/lib/validations/admin"
-import type { AmbulanceStatus } from "@/lib/supabase/types"
 import { sendDailySerialDigests, type DigestResult } from "@/lib/digest"
 import { isResendConfigured } from "@/lib/email"
 import { clinicToday } from "@/lib/clinic/time"
@@ -298,6 +300,64 @@ export async function closeAmbulanceRequest(requestId: string, status: "complete
 
   revalidatePath("/", "layout")
   return { success: status === "completed" ? "Trip completed." : "Request cancelled." }
+}
+
+// ---------------------------------------------------------------------------
+// Operation theatres
+// ---------------------------------------------------------------------------
+
+export async function saveTheatre(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = theatreSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    return { error: "Please fix the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { error } = await supabase.from("operation_theatres").insert(parsed.data)
+  if (error) return { error: dbError(error, "Could not add the theatre.") }
+
+  revalidatePublicPages()
+  return { success: "Theatre added." }
+}
+
+export async function setTheatreStatus(theatreId: string, status: TheatreStatus): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from("operation_theatres").update({ status }).eq("id", theatreId)
+  if (error) return { error: dbError(error, "Could not update the theatre.") }
+
+  revalidatePublicPages()
+  return { success: "Theatre updated." }
+}
+
+export async function scheduleSurgery(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = surgerySchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    return { error: "Please fix the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { data, error } = await supabase
+    .from("surgeries")
+    .insert({ ...parsed.data, scheduled_at: clinicLocalToIso(parsed.data.scheduled_at) })
+    .select("case_code")
+    .single()
+  if (error) return { error: dbError(error, "Could not schedule the operation.") }
+
+  revalidatePublicPages()
+  return { success: `Operation scheduled. Case code ${data.case_code} — share it with the family.` }
+}
+
+export async function updateSurgery(surgeryId: string, input: { status: string; note: string }): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = surgeryUpdateSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid update." }
+
+  const { error } = await supabase.from("surgeries").update(parsed.data).eq("id", surgeryId)
+  if (error?.code === "23505") return { error: "Another operation is already in progress in this theatre." }
+  if (error) return { error: dbError(error, "Could not update the operation.") }
+
+  revalidatePublicPages()
+  return { success: "Operation updated." }
 }
 
 // ---------------------------------------------------------------------------

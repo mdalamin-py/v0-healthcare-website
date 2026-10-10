@@ -10,6 +10,8 @@ import type {
   DoctorReview,
   DoctorWithSchedules,
   NearbyFacility,
+  OperationTheatre,
+  OtBoardCase,
   OnCallShift,
   QueueSession,
   RosterEntry,
@@ -179,4 +181,18 @@ export async function getNearbyFacilities(): Promise<NearbyFacility[]> {
     return []
   }
   return data
+}
+
+export async function getOtBoard(): Promise<{ theatres: OperationTheatre[]; cases: OtBoardCase[] }> {
+  if (!isSupabaseConfigured()) return { theatres: [], cases: [] }
+  const client = createPublicClient()
+  const [theatres, cases] = await Promise.all([
+    client.from("operation_theatres").select("*").order("code"),
+    client.rpc("get_ot_board"),
+  ])
+  if (theatres.error || cases.error) {
+    logError("OT board", (theatres.error ?? cases.error)!)
+    return { theatres: [], cases: [] }
+  }
+  return { theatres: theatres.data, cases: cases.data }
 }
