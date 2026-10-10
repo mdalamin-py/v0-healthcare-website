@@ -16,6 +16,11 @@ export const statusTone: Record<AppointmentStatus, string> = {
 
 export function StatusSelect({ id, status, label }: { id: string; status: AppointmentStatus; label: string }) {
   const [value, setValue] = useState(status)
+  const [synced, setSynced] = useState(status)
+  if (synced !== status) {
+    setSynced(status)
+    setValue(status)
+  }
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 

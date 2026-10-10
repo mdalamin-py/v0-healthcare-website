@@ -10,10 +10,10 @@ import { clinicToday } from "@/lib/clinic/time"
 import type { DoctorLeave } from "@/lib/supabase/types"
 import { getDoctorForAdmin } from "@/lib/admin/queries"
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; contact?: string }> }
 
 export default async function EditDoctorPage({ params, searchParams }: Props) {
-  const [{ id }, { created }] = await Promise.all([params, searchParams])
+  const [{ id }, { created, contact: contactStatus }] = await Promise.all([params, searchParams])
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound()
 
   const doctor = await getDoctorForAdmin(id)
@@ -55,6 +55,11 @@ export default async function EditDoctorPage({ params, searchParams }: Props) {
         <p className="mb-6 flex items-center gap-2 rounded-xl bg-accent/10 px-4 py-3 text-sm text-accent">
           <CheckCircle2 className="size-4" />
           Doctor created. Add weekly sessions below so patients can book.
+        </p>
+      )}
+      {contactStatus === "failed" && (
+        <p role="alert" className="mb-6 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          The contact emails could not be saved. Please enter them again below.
         </p>
       )}
       <div className="grid gap-6 xl:grid-cols-5">

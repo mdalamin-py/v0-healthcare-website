@@ -23,28 +23,38 @@ function sanitizeSearch(value: string) {
   return value.replace(/[,()%*\\]/g, " ").trim().slice(0, 60)
 }
 
+const PAGE_SIZE = 1000
+const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+
 export async function listAppointments(filters: AppointmentFilters): Promise<AdminAppointment[]> {
   const { supabase } = await requireAdmin()
-  let query = supabase
-    .from("appointments")
-    .select("*, doctor:doctors(full_name, specialty), schedule:doctor_schedules(start_time, end_time)")
-    .order("appointment_date")
-    .order("serial_no")
-    .limit(filters.limit ?? 500)
-
-  if (filters.date) query = query.eq("appointment_date", filters.date)
-  if (filters.from) query = query.gte("appointment_date", filters.from)
-  if (filters.to) query = query.lte("appointment_date", filters.to)
-  if (filters.doctorId) query = query.eq("doctor_id", filters.doctorId)
-  if (filters.status) query = query.eq("status", filters.status)
+  const limit = filters.limit ?? 5000
   const term = filters.search ? sanitizeSearch(filters.search) : ""
-  if (term) {
-    query = query.or(`patient_name.ilike.%${term}%,patient_phone.ilike.%${term}%,reference.ilike.%${term}%`)
-  }
+  const rows: AdminAppointment[] = []
 
-  const { data, error } = await query
-  if (error) throw new Error(`Failed to load appointments: ${error.message}`)
-  return data as unknown as AdminAppointment[]
+  // PostgREST caps each response, so read in pages until the limit or the end.
+  for (let offset = 0; offset < limit; offset += PAGE_SIZE) {
+    let query = supabase
+      .from("appointments")
+      .select("*, doctor:doctors(full_name, specialty), schedule:doctor_schedules(start_time, end_time)")
+      .order("appointment_date")
+      .order("serial_no")
+      .order("id")
+      .range(offset, Math.min(offset + PAGE_SIZE, limit) - 1)
+
+    if (filters.date) query = query.eq("appointment_date", filters.date)
+    if (filters.from) query = query.gte("appointment_date", filters.from)
+    if (filters.to) query = query.lte("appointment_date", filters.to)
+    if (filters.doctorId && isUuid(filters.doctorId)) query = query.eq("doctor_id", filters.doctorId)
+    if (filters.status) query = query.eq("status", filters.status)
+    if (term) query = query.or(`patient_name.ilike.%${term}%,patient_phone.ilike.%${term}%,reference.ilike.%${term}%`)
+
+    const { data, error } = await query
+    if (error) throw new Error(`Failed to load appointments: ${error.message}`)
+    rows.push(...(data as unknown as AdminAppointment[]))
+    if (data.length < PAGE_SIZE) break
+  }
+  return rows
 }
 
 export async function listAllDoctors() {

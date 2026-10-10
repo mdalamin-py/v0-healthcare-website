@@ -15,7 +15,8 @@ const control =
 
 export default async function AdminAppointmentsPage({ searchParams }: Props) {
   const params = await searchParams
-  const date = params.date === "all" ? undefined : /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date : clinicToday()
+  const date =
+    params.date === "all" || params.date === "" ? undefined : /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "") ? params.date : clinicToday()
   const status = appointmentStatuses.includes(params.status as AppointmentStatus)
     ? (params.status as AppointmentStatus)
     : undefined

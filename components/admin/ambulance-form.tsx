@@ -20,28 +20,29 @@ export function AmbulanceForm({ ambulance, onSaved }: { ambulance?: Ambulance; o
     return result
   }, {})
   const errors = state.fieldErrors ?? {}
+  const field = (name: string) => `${ambulance?.id ?? "new"}-${name}`
 
   return (
     <form {...form} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
-          <Label htmlFor="code">Code</Label>
-          <Input id="code" name="code" defaultValue={ambulance?.code} placeholder="AMB-06" required />
+          <Label htmlFor={field("code")}>Code</Label>
+          <Input id={field("code")} name="code" defaultValue={ambulance?.code} placeholder="AMB-06" required />
           <FieldMessage messages={errors.code} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="registration">Registration</Label>
-          <Input id="registration" name="registration" defaultValue={ambulance?.registration} required />
+          <Label htmlFor={field("registration")}>Registration</Label>
+          <Input id={field("registration")} name="registration" defaultValue={ambulance?.registration} required />
           <FieldMessage messages={errors.registration} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="vehicle_model">Model</Label>
-          <Input id="vehicle_model" name="vehicle_model" defaultValue={ambulance?.vehicle_model} required />
+          <Label htmlFor={field("vehicle_model")}>Model</Label>
+          <Input id={field("vehicle_model")} name="vehicle_model" defaultValue={ambulance?.vehicle_model} required />
           <FieldMessage messages={errors.vehicle_model} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="type">Type</Label>
-          <select id="type" name="type" defaultValue={ambulance?.type ?? "bls"} className={select}>
+          <Label htmlFor={field("type")}>Type</Label>
+          <select id={field("type")} name="type" defaultValue={ambulance?.type ?? "bls"} className={select}>
             {(Object.keys(ambulanceTypes) as AmbulanceType[]).map((type) => (
               <option key={type} value={type}>
                 {ambulanceTypes[type].label}
@@ -50,8 +51,8 @@ export function AmbulanceForm({ ambulance, onSaved }: { ambulance?: Ambulance; o
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="status">Status</Label>
-          <select id="status" name="status" defaultValue={ambulance?.status ?? "available"} className={select}>
+          <Label htmlFor={field("status")}>Status</Label>
+          <select id={field("status")} name="status" defaultValue={ambulance?.status ?? "available"} className={select}>
             {(Object.keys(ambulanceStatuses) as AmbulanceStatus[]).map((status) => (
               <option key={status} value={status}>
                 {ambulanceStatuses[status].label}
@@ -60,16 +61,16 @@ export function AmbulanceForm({ ambulance, onSaved }: { ambulance?: Ambulance; o
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="driver_name">Driver</Label>
-          <Input id="driver_name" name="driver_name" defaultValue={ambulance?.driver_name ?? ""} />
+          <Label htmlFor={field("driver_name")}>Driver</Label>
+          <Input id={field("driver_name")} name="driver_name" defaultValue={ambulance?.driver_name ?? ""} />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="equipment">Equipment (comma separated)</Label>
-          <Input id="equipment" name="equipment" defaultValue={ambulance?.equipment.join(", ")} placeholder="Oxygen, AED, Stretcher" />
+          <Label htmlFor={field("equipment")}>Equipment (comma separated)</Label>
+          <Input id={field("equipment")} name="equipment" defaultValue={ambulance?.equipment.join(", ")} placeholder="Oxygen, AED, Stretcher" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="base_location">Base</Label>
-          <Input id="base_location" name="base_location" defaultValue={ambulance?.base_location ?? ""} />
+          <Label htmlFor={field("base_location")}>Base</Label>
+          <Input id={field("base_location")} name="base_location" defaultValue={ambulance?.base_location ?? ""} />
         </div>
       </div>
       <FormStatus state={state} />

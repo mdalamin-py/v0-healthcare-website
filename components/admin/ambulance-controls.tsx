@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { Check, Loader2, Pencil, Send, X } from "lucide-react"
 import { AmbulanceForm } from "@/components/admin/ambulance-form"
+import { useAdminAction } from "@/components/admin/use-admin-action"
 import { closeAmbulanceRequest, dispatchAmbulance, setAmbulanceStatus } from "@/app/admin/actions"
 import { ambulanceStatuses } from "@/lib/clinic/ambulance"
 import type { Ambulance, AmbulanceStatus } from "@/lib/supabase/types"
@@ -11,21 +12,22 @@ const select =
   "h-9 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 export function AmbulanceStatusControl({ ambulance }: { ambulance: Ambulance }) {
-  const [pending, startTransition] = useTransition()
+  const { pending, error, run } = useAdminAction()
   const [editing, setEditing] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex items-center gap-2">
         {pending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
         <select
-          key={ambulance.status}
+          key={`${ambulance.status}-${attempt}`}
           aria-label={`Status of ${ambulance.code}`}
           defaultValue={ambulance.status}
           disabled={pending}
           onChange={(event) => {
             const status = event.target.value as AmbulanceStatus
-            startTransition(async () => void (await setAmbulanceStatus(ambulance.id, status)))
+            run(() => setAmbulanceStatus(ambulance.id, status), () => setAttempt((value) => value + 1))
           }}
           className={select}
         >
@@ -44,6 +46,7 @@ export function AmbulanceStatusControl({ ambulance }: { ambulance: Ambulance }) 
           {editing ? <X className="size-4" /> : <Pencil className="size-4" />}
         </button>
       </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
       {editing && (
         <div className="w-full rounded-xl border border-border bg-muted/30 p-4">
           <AmbulanceForm ambulance={ambulance} onSaved={() => setEditing(false)} />
@@ -62,15 +65,10 @@ export function RequestControls({
   status: "pending" | "dispatched"
   available: Pick<Ambulance, "id" | "code" | "type">[]
 }) {
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const [ambulanceId, setAmbulanceId] = useState(available[0]?.id ?? "")
-
-  const run = (action: () => Promise<{ error?: string }>) =>
-    startTransition(async () => {
-      const result = await action()
-      setError(result.error ?? null)
-    })
+  const { pending, error, run } = useAdminAction()
+  const [choice, setChoice] = useState("")
+  // Fall back to the first free vehicle when the chosen one has just been dispatched elsewhere.
+  const ambulanceId = available.some((ambulance) => ambulance.id === choice) ? choice : (available[0]?.id ?? "")
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -80,7 +78,7 @@ export function RequestControls({
             <select
               aria-label="Ambulance to dispatch"
               value={ambulanceId}
-              onChange={(event) => setAmbulanceId(event.target.value)}
+              onChange={(event) => setChoice(event.target.value)}
               disabled={available.length === 0}
               className={select}
             >

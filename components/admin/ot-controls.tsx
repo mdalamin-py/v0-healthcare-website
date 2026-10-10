@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { ArrowRight, CalendarPlus, Loader2, Plus, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FieldMessage, FormStatus } from "@/components/admin/form-status"
+import { useAdminAction } from "@/components/admin/use-admin-action"
 import { useFormAction } from "@/components/admin/use-form-action"
 import { saveTheatre, scheduleSurgery, setTheatreStatus, updateSurgery } from "@/app/admin/actions"
 import { nextSurgeryStatus, surgeryStatuses, theatreStatuses } from "@/lib/clinic/ot"
@@ -19,19 +20,21 @@ const select =
 // ---------------------------------------------------------------------------
 
 export function TheatreStatusControl({ theatre }: { theatre: OperationTheatre }) {
-  const [pending, startTransition] = useTransition()
+  const { pending, error, run } = useAdminAction()
+  const [attempt, setAttempt] = useState(0)
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex w-full items-center gap-2">
       {pending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
       <select
-        key={theatre.status}
+        key={`${theatre.status}-${attempt}`}
         aria-label={`Status of ${theatre.code}`}
         defaultValue={theatre.status}
         disabled={pending}
         onChange={(event) => {
           const status = event.target.value as TheatreStatus
-          startTransition(async () => void (await setTheatreStatus(theatre.id, status)))
+          run(() => setTheatreStatus(theatre.id, status), () => setAttempt((value) => value + 1))
         }}
         className={select}
       >
@@ -41,6 +44,8 @@ export function TheatreStatusControl({ theatre }: { theatre: OperationTheatre })
           </option>
         ))}
       </select>
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -160,17 +165,19 @@ export function ScheduleSurgeryForm({
 }
 
 export function SurgeryControls({ id, status, note }: { id: string; status: SurgeryStatus; note: string | null }) {
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const { pending, error, run } = useAdminAction()
   const [nextStatus, setNextStatus] = useState<SurgeryStatus>(status)
   const [nextNote, setNextNote] = useState(note ?? "")
+  const [synced, setSynced] = useState({ status, note })
+  // Re-sync the drafts when the server sends a newer status or note.
+  if (synced.status !== status || synced.note !== note) {
+    setSynced({ status, note })
+    setNextStatus(status)
+    setNextNote(note ?? "")
+  }
   const advance = nextSurgeryStatus[status]
 
-  const save = (input: { status: SurgeryStatus; note: string }) =>
-    startTransition(async () => {
-      const result = await updateSurgery(id, input)
-      setError(result.error ?? null)
-    })
+  const save = (input: { status: SurgeryStatus; note: string }) => run(() => updateSurgery(id, input))
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -187,9 +194,8 @@ export function SurgeryControls({ id, status, note }: { id: string; status: Surg
           </button>
         )}
         <select
-          key={status}
           aria-label="Status"
-          defaultValue={status}
+          value={nextStatus}
           onChange={(event) => setNextStatus(event.target.value as SurgeryStatus)}
           className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
         >

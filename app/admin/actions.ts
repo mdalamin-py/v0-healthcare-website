@@ -132,10 +132,10 @@ export async function saveDoctor(doctorId: string | null, _: ActionState, formDa
   }
 
   const { error: contactError } = await supabase.from("doctor_contacts").upsert({ doctor_id: id, ...contact.data })
-  if (contactError) return { error: dbError(contactError, "Doctor saved, but contact details could not be saved.") }
-
   revalidatePublicPages()
-  if (!doctorId) redirect(`/admin/doctors/${id}?created=1`)
+  // A new doctor exists even if the contact save failed, so always move to its page.
+  if (!doctorId) redirect(`/admin/doctors/${id}?created=1${contactError ? "&contact=failed" : ""}`)
+  if (contactError) return { error: dbError(contactError, "Doctor saved, but contact details could not be saved.") }
   return { success: "Doctor saved." }
 }
 

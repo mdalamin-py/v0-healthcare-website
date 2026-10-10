@@ -29,7 +29,7 @@ import {
   statusCounts,
   visitTypeCounts,
 } from "@/lib/admin/analytics"
-import { clinicToday } from "@/lib/clinic/time"
+import { clinicLocalToIso, clinicToday } from "@/lib/clinic/time"
 import { listAppointments, listRecentPatients, listUpcomingShifts } from "@/lib/admin/queries"
 import { formatDate, formatDateTime } from "@/lib/clinic/format"
 import { visitTypes } from "@/lib/clinic/visit-types"
@@ -99,7 +99,7 @@ export default async function AdminDashboardPage() {
     listAppointments({ from: addDays(today, -20), to: today }),
     listAppointments({ from: addDays(today, 1), to: addDays(today, 7) }),
     listUpcomingShifts(1),
-    listRecentPatients(`${addDays(today, -6)}T00:00:00Z`),
+    listRecentPatients(clinicLocalToIso(`${addDays(today, -6)}T00:00`)),
   ])
 
   const todays = recent.filter((item) => item.appointment_date === today)
