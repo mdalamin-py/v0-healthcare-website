@@ -16,7 +16,7 @@ const benefits = [
   { icon: ShieldCheck, text: "Secure, password-free sign in" },
 ]
 
-type Props = { searchParams: Promise<{ next?: string; error?: string }> }
+type Props = { searchParams: Promise<{ next?: string | string[]; error?: string }> }
 
 export default async function AccountLoginPage({ searchParams }: Props) {
   const { next, error } = await searchParams
@@ -58,7 +58,7 @@ export default async function AccountLoginPage({ searchParams }: Props) {
           <p className="mt-1 text-sm text-muted-foreground">Continue with your email or mobile number.</p>
           <div className="mt-6">
             {isSupabaseConfigured() ? (
-              <OtpLogin next={next} initialError={error === "link" ? "That sign-in link is invalid or has expired." : undefined} />
+              <OtpLogin next={safeNext(next)} initialError={error === "link" ? "That sign-in link is invalid or has expired." : undefined} />
             ) : (
               <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
                 Patient accounts are temporarily unavailable. Please call us to book an appointment.

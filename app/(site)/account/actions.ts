@@ -7,6 +7,7 @@ import { getPatientSession, safeNext } from "@/lib/auth/patient"
 import { clientIpFrom, createRateLimiter } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
+import { site } from "@/lib/site"
 import { otpRequestSchema, otpVerifySchema, profileSchema, type OtpChannel, type ProfileInput } from "@/lib/validations/account"
 
 type Result<T = null> = { ok: true; data: T } | { ok: false; error: string }
@@ -16,7 +17,7 @@ const verifyLimiter = createRateLimiter({ limit: 15, windowMs: 10 * 60_000 })
 
 const NOT_CONFIGURED = "Patient accounts are temporarily unavailable. Please call us to book."
 
-export async function sendOtp(channel: OtpChannel, identifier: string): Promise<Result<{ identifier: string }>> {
+export async function sendOtp(channel: OtpChannel, identifier: string, next?: string): Promise<Result<{ identifier: string }>> {
   if (!isSupabaseConfigured()) return { ok: false, error: NOT_CONFIGURED }
   if (otpLimiter(clientIpFrom(await headers()))) {
     return { ok: false, error: "Too many codes requested. Please wait a few minutes." }
@@ -25,10 +26,14 @@ export async function sendOtp(channel: OtpChannel, identifier: string): Promise<
   const parsed = otpRequestSchema.safeParse({ channel, identifier })
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid details." }
 
+  const requestHeaders = await headers()
+  const origin = requestHeaders.get("origin") ?? site.url
+  const emailRedirectTo = `${origin}/auth/confirm?next=${encodeURIComponent(safeNext(next))}`
+
   const supabase = await createClient()
   const { error } =
     parsed.data.channel === "email"
-      ? await supabase.auth.signInWithOtp({ email: parsed.data.identifier, options: { shouldCreateUser: true } })
+      ? await supabase.auth.signInWithOtp({ email: parsed.data.identifier, options: { shouldCreateUser: true, emailRedirectTo } })
       : await supabase.auth.signInWithOtp({ phone: parsed.data.identifier, options: { shouldCreateUser: true } })
 
   if (error) {

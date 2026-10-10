@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { phoneNumber } from "@/lib/validations/phone"
 
 /** Normalizes a phone number to E.164. US numbers may omit the +1 prefix. */
 export function toE164(value: string) {
@@ -27,18 +28,12 @@ export const otpRequestSchema = z.discriminatedUnion("channel", [
 
 export const otpVerifySchema = z.intersection(
   otpRequestSchema,
-  z.object({ token: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code") }),
+  z.object({ token: z.string().trim().regex(/^\d{6,8}$/, "Enter the code from your message") }),
 )
 
 export const profileSchema = z.object({
   full_name: z.string().trim().min(2, "Enter your full name").max(100),
-  phone: z
-    .string()
-    .trim()
-    .refine((value) => {
-      const digits = value.replace(/\D/g, "")
-      return digits.length >= 10 && digits.length <= 15
-    }, "Enter a valid phone number"),
+  phone: phoneNumber,
   email: z.union([z.string().trim().toLowerCase().email("Enter a valid email address"), z.literal("")]),
   date_of_birth: z
     .string()

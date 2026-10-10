@@ -18,7 +18,11 @@ export const getPatientSession = cache(async () => {
   return { supabase, user, profile: (profile as Patient | null) ?? null }
 })
 
-/** Only allow same-site relative redirects. */
-export function safeNext(next: string | null | undefined, fallback = "/account") {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : fallback
+/** Only allow same-site relative redirects, never back to the login page. */
+export function safeNext(next: string | string[] | null | undefined, fallback = "/account") {
+  const value = Array.isArray(next) ? next[0] : next
+  if (!value || !value.startsWith("/") || /[\\\u0000-\u001f]/.test(value)) return fallback
+  const url = new URL(value, "http://local")
+  if (url.origin !== "http://local" || url.pathname.startsWith("/account/login")) return fallback
+  return url.pathname + url.search + url.hash
 }

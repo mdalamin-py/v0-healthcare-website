@@ -15,7 +15,7 @@ export type Availability = Fn["get_availability"]["Returns"][number]
 export type Booking = Fn["book_appointment"]["Returns"][number]
 export type AppointmentLookup = Fn["lookup_appointment"]["Returns"][number]
 
-type Result<T> = { ok: true; data: T } | { ok: false; error: string }
+type Result<T> = { ok: true; data: T } | { ok: false; error: string; code?: string }
 
 const bookingLimiter = createRateLimiter({ limit: 5, windowMs: 10 * 60_000 })
 const lookupLimiter = createRateLimiter({ limit: 20, windowMs: 10 * 60_000 })
@@ -58,14 +58,14 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
   }
 
   const parsed = bookingSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: "Please check the highlighted details and try again." }
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the details and try again." }
 
   const { scheduleId, date, name, phone, email, age, gender, reason, visitType, address } = parsed.data
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: bookingErrors.AUTH_REQUIRED }
+  if (!user) return { ok: false, error: bookingErrors.AUTH_REQUIRED, code: "AUTH_REQUIRED" }
 
   const { data, error } = await supabase.rpc("book_appointment", {
     p_schedule_id: scheduleId,
@@ -83,7 +83,7 @@ export async function bookAppointment(input: BookingInput): Promise<Result<Booki
   if (error) {
     const code = Object.keys(bookingErrors).find((key) => error.message.includes(key))
     if (!code) console.error("[appointments] booking failed:", error.message)
-    return { ok: false, error: code ? bookingErrors[code] : "We couldn't complete your booking. Please try again." }
+    return { ok: false, error: code ? bookingErrors[code] : "We couldn't complete your booking. Please try again.", code }
   }
 
   const booking = data[0]

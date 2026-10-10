@@ -28,7 +28,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
     event?.preventDefault()
     setError(null)
     startTransition(async () => {
-      const result = await sendOtp(channel, identifier)
+      const result = await sendOtp(channel, identifier, next)
       if (result.ok) {
         setSentTo(result.data.identifier)
         setToken("")
@@ -52,13 +52,12 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
     <div>
       {!sentTo ? (
         <form onSubmit={requestCode} className="space-y-5">
-          <div role="tablist" aria-label="Sign in with" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+          <div role="group" aria-label="Sign in with" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             {channels.map((item) => (
               <button
                 key={item.value}
                 type="button"
-                role="tab"
-                aria-selected={channel === item.value}
+                aria-pressed={channel === item.value}
                 onClick={() => {
                   setChannel(item.value)
                   setIdentifier("")
@@ -108,7 +107,8 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
             Use a different {channel === "email" ? "email" : "number"}
           </button>
           <p className="text-sm text-muted-foreground">
-            We sent a 6-digit code to <strong className="text-foreground">{sentTo}</strong>.
+            We sent a verification code to <strong className="text-foreground">{sentTo}</strong>.
+            {channel === "email" && " Enter the code below, or simply tap the sign-in link in the email."}
           </p>
           <div className="space-y-2">
             <Label htmlFor="token">Verification code</Label>
@@ -116,7 +116,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
               id="token"
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={8}
               placeholder="••••••"
               value={token}
               onChange={(event) => setToken(event.target.value.replace(/\D/g, ""))}
@@ -125,7 +125,7 @@ export function OtpLogin({ next, initialError }: { next?: string; initialError?:
             />
           </div>
           {error && <ErrorMessage message={error} />}
-          <Button type="submit" disabled={pending || token.length !== 6} className="h-11 w-full rounded-full">
+          <Button type="submit" disabled={pending || token.length < 6} className="h-11 w-full rounded-full">
             {pending && <Loader2 className="size-4 animate-spin" />}
             Verify & continue
           </Button>

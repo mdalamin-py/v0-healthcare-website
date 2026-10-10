@@ -8,6 +8,7 @@ import { PageHero } from "@/components/page-hero"
 import { Button } from "@/components/ui/button"
 import { getPatientSession } from "@/lib/auth/patient"
 import { getDoctors } from "@/lib/clinic/queries"
+import { clinicToday } from "@/lib/clinic/time"
 
 export const metadata: Metadata = {
   title: "Book an Appointment",
@@ -20,6 +21,13 @@ const highlights = [
   { icon: ShieldCheck, title: "Private & secure", body: "Your details are only visible to our care team." },
 ]
 
+/** Whole years between two YYYY-MM-DD dates. */
+function ageOn(birth: string, today: string) {
+  const [by, bm, bd] = birth.split("-").map(Number)
+  const [ty, tm, td] = today.split("-").map(Number)
+  return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0)
+}
+
 type Props = { searchParams: Promise<{ doctor?: string }> }
 
 export default async function BookAppointmentPage({ searchParams }: Props) {
@@ -28,9 +36,7 @@ export default async function BookAppointmentPage({ searchParams }: Props) {
 
   if (user && !profile) redirect(`/account?next=${encodeURIComponent(here)}`)
 
-  const age = profile?.date_of_birth
-    ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / (365.25 * 86_400_000))
-    : undefined
+  const age = profile?.date_of_birth ? ageOn(profile.date_of_birth, clinicToday()) : undefined
 
   return (
     <>

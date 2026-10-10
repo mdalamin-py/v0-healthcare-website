@@ -62,14 +62,18 @@ function Stepper({ current }: { current: number }) {
   )
 }
 
-function ErrorBanner({ message }: { message: string }) {
+const staleSlotErrors = ["SESSION_FULL", "INVALID_DATE", "DOCTOR_ON_LEAVE", "SESSION_NOT_FOUND"]
+
+function ErrorBanner({ message, children }: { message: string; children?: React.ReactNode }) {
   return (
     <div
       role="alert"
       className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
     >
       <AlertCircle className="mt-0.5 size-4 shrink-0" />
-      {message}
+      <span>
+        {message} {children}
+      </span>
     </div>
   )
 }
@@ -95,27 +99,34 @@ export function BookingWizard({
   initialSlug?: string
   patient?: PatientDefaults
 }) {
-  const initialDoctor = doctors.find((doctor) => doctor.slug === initialSlug) ?? null
+  const initialDoctor = doctors.find((doctor) => doctor.slug === initialSlug && doctor.accepting_appointments) ?? null
   const [step, setStep] = useState(initialDoctor ? 1 : 0)
   const [doctor, setDoctor] = useState<BookableDoctor | null>(initialDoctor)
   const [slots, setSlots] = useState<Availability[] | null>(null)
   const [slot, setSlot] = useState<Availability | null>(null)
   const [visitType, setVisitType] = useState<VisitType>(initialDoctor?.visit_types[0] ?? "in_clinic")
   const [booking, setBooking] = useState<Booking | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null)
+  const [slotError, setSlotError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
+  const [reloadKey, setReloadKey] = useState(0)
   const [loadingSlots, startLoadingSlots] = useTransition()
 
+  // Ignore responses for a doctor that is no longer selected.
   useEffect(() => {
     if (!doctor) return
+    let current = true
     setSlots(null)
-    setError(null)
     startLoadingSlots(async () => {
       const result = await getAvailability(doctor.id)
+      if (!current) return
       if (result.ok) setSlots(result.data)
-      else setError(result.error)
+      else setSlotError(result.error)
     })
-  }, [doctor])
+    return () => {
+      current = false
+    }
+  }, [doctor, reloadKey])
 
   const topRef = useRef<HTMLDivElement>(null)
   const firstRender = useRef(true)
@@ -156,12 +167,22 @@ export function BookingWizard({
       scheduleId: slot.schedule_id,
       date: slot.appointment_date,
       visitType,
-    })
+    }).catch(() => ({ ok: false as const, error: "We couldn't reach the server. Please check your connection and try again.", code: undefined }))
     if (result.ok) {
       setBooking(result.data)
       setStep(3)
+    } else if (result.code && staleSlotErrors.includes(result.code)) {
+      // The chosen session changed under us: refresh dates and send the patient back.
+      setSlot(null)
+      setSlotError(result.error)
+      setReloadKey((key) => key + 1)
+      setStep(1)
+    } else if (result.code === "NOT_ACCEPTING") {
+      setDoctor(null)
+      setStep(0)
+      setError({ message: result.error })
     } else {
-      setError(result.error)
+      setError({ message: result.error, code: result.code })
     }
   })
 
@@ -188,6 +209,11 @@ export function BookingWizard({
             <h2 id="step-doctor" className="text-2xl font-bold text-foreground">
               Choose a doctor
             </h2>
+            {error && (
+              <div className="mt-4">
+                <ErrorBanner message={error.message} />
+              </div>
+            )}
             <label className="relative mt-5 block">
               <span className="sr-only">Search doctors</span>
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -208,6 +234,8 @@ export function BookingWizard({
                     onClick={() => {
                       setDoctor(item)
                       setSlot(null)
+                      setSlotError(null)
+                      setError(null)
                       setVisitType(item.visit_types[0] ?? "in_clinic")
                       setStep(1)
                     }}
@@ -296,13 +324,13 @@ export function BookingWizard({
 
             <h3 className="mt-8 text-sm font-semibold text-foreground">Choose a session</h3>
 
-            {error && (
+            {slotError && (
               <div className="mt-4">
-                <ErrorBanner message={error} />
+                <ErrorBanner message={slotError} />
               </div>
             )}
 
-            {loadingSlots || (!slots && !error) ? (
+            {loadingSlots || (!slots && !slotError) ? (
               <div className="mt-8 flex items-center justify-center gap-2 py-12 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
                 Loading available dates…
@@ -461,7 +489,15 @@ export function BookingWizard({
               </label>
               <FieldError id="consent-error" message={errors.consent?.message} />
 
-              {error && <ErrorBanner message={error} />}
+              {error && (
+                <ErrorBanner message={error.message}>
+                  {error.code === "AUTH_REQUIRED" && (
+                    <Link href={`/account/login?next=${encodeURIComponent(`/appointments/book?doctor=${doctor.slug}`)}`} className="font-semibold underline">
+                      Sign in again
+                    </Link>
+                  )}
+                </ErrorBanner>
+              )}
 
               <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 w-full rounded-full">
                 {isSubmitting ? (
