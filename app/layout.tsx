@@ -25,7 +25,6 @@ export const metadata: Metadata = {
     locale: 'en_US',
   },
   robots: 'index, follow',
-    generator: 'v0.app'
 }
 
 export const viewport: Viewport = {
