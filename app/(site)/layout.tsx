@@ -1,6 +1,8 @@
 import { FloatingCallButton } from "@/components/floating-call-button"
 import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
+import { I18nProvider } from "@/components/i18n-provider"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import { serviceAreas, site } from "@/lib/site"
 
 const structuredData = {
@@ -30,9 +32,11 @@ const structuredData = {
   aggregateRating: { "@type": "AggregateRating", ratingValue: site.rating.value, reviewCount: 16 },
 }
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const [locale, t] = await Promise.all([getLocale(), getDictionary()])
+
   return (
-    <>
+    <I18nProvider locale={locale} t={t}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
@@ -41,12 +45,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
       >
-        Skip to content
+        {t.common.skipToContent}
       </a>
       <Header />
       <main id="main">{children}</main>
       <Footer />
       <FloatingCallButton />
-    </>
+    </I18nProvider>
   )
 }

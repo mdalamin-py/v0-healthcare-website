@@ -1,16 +1,23 @@
 import { getPublicStats } from "@/lib/clinic/queries"
+import { fill, intlLocale } from "@/lib/i18n/config"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import { site } from "@/lib/site"
 import { cn } from "@/lib/utils"
 
 export async function StatsStrip({ className }: { className?: string }) {
-  const stats = await getPublicStats()
+  const [stats, t, locale] = await Promise.all([getPublicStats(), getDictionary(), getLocale()])
+  const number = (value: number, digits = 0) =>
+    value.toLocaleString(intlLocale[locale], { minimumFractionDigits: digits, maximumFractionDigits: digits })
   const items = [
     stats?.reviews
-      ? { value: stats.rating != null ? Number(stats.rating).toFixed(1) : "–", label: `Patient rating · ${stats.reviews} reviews` }
-      : { value: site.rating.value, label: "Google rating" },
-    { value: stats ? String(stats.doctors) : "–", label: stats ? `Doctors · ${stats.specialties} specialties` : "Doctors" },
-    { value: stats ? stats.completed_visits.toLocaleString("en-US") : "–", label: "Visits completed" },
-    { value: "24/7", label: stats ? `On-call · ${stats.ambulances_ready} ambulances ready` : "On-call support" },
+      ? {
+          value: stats.rating != null ? number(Number(stats.rating), 1) : "–",
+          label: fill(t.stats.patientRating, { count: number(stats.reviews) }),
+        }
+      : { value: site.rating.value, label: t.stats.googleRating },
+    { value: stats ? number(stats.doctors) : "–", label: stats ? fill(t.stats.doctors, { count: number(stats.specialties) }) : t.stats.doctorsPlain },
+    { value: stats ? number(stats.completed_visits) : "–", label: t.stats.visits },
+    { value: "24/7", label: stats ? fill(t.stats.onCall, { count: number(stats.ambulances_ready) }) : t.stats.onCallPlain },
   ]
 
   return (

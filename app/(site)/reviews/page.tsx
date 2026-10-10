@@ -7,6 +7,7 @@ import { ReviewList } from "@/components/review-list"
 import { StatsStrip } from "@/components/stats-strip"
 import { getPublishedReviews } from "@/lib/clinic/queries"
 import { toReview } from "@/lib/clinic/reviews"
+import { getLocale } from "@/lib/i18n/server"
 import { site } from "@/lib/site"
 
 export const metadata: Metadata = {
@@ -19,7 +20,8 @@ const googleReviewsUrl = "https://www.google.com/maps/place/1589+W+Shaw+Ave+Ste+
 export const dynamic = "force-dynamic"
 
 export default async function ReviewsPage() {
-  const reviews = (await getPublishedReviews()).filter((review) => review.comment).map(toReview)
+  const [published, locale] = await Promise.all([getPublishedReviews(), getLocale()])
+  const reviews = published.filter((review) => review.comment).map((review) => toReview(review, locale))
 
   return (
     <>

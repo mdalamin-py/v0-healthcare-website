@@ -2,10 +2,12 @@
 
 import { useEffect } from "react"
 import { AlertTriangle, Phone, RotateCcw } from "lucide-react"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { site } from "@/lib/site"
 
 export default function SiteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const { t } = useI18n()
   useEffect(() => {
     console.error(error)
   }, [error])
@@ -15,14 +17,14 @@ export default function SiteError({ error, reset }: { error: Error & { digest?: 
       <span className="flex size-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
         <AlertTriangle className="size-8" />
       </span>
-      <h1 className="mt-5 text-3xl font-bold text-foreground">Something went wrong</h1>
+      <h1 className="mt-5 text-3xl font-bold text-foreground">{t.errors.errorTitle}</h1>
       <p className="mt-3 max-w-md text-muted-foreground">
-        We couldn&apos;t load this page right now. Please try again, or call us and our team will help.
+        {t.errors.errorText}
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Button onClick={reset} className="rounded-full">
           <RotateCcw className="size-4" />
-          Try again
+          {t.common.tryAgain}
         </Button>
         <Button asChild variant="outline" className="rounded-full">
           <a href={site.phone.href}>

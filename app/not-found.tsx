@@ -1,9 +1,12 @@
 import Link from "next/link"
 import { ArrowLeft, CalendarPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getDictionary } from "@/lib/i18n/server"
 import SiteLayout from "./(site)/layout"
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getDictionary()
+
   return (
     <SiteLayout>
       <section className="relative overflow-hidden">
@@ -12,21 +15,21 @@ export default function NotFound() {
           <p className="bg-gradient-to-br from-primary to-accent bg-clip-text font-display text-8xl font-extrabold text-transparent">
             404
           </p>
-          <h1 className="mt-4 text-3xl font-bold text-foreground">Page not found</h1>
+          <h1 className="mt-4 text-3xl font-bold text-foreground">{t.errors.notFoundTitle}</h1>
           <p className="mt-3 max-w-md text-muted-foreground">
-            The page you are looking for doesn&apos;t exist or has moved. Let&apos;s get you back on track.
+            {t.errors.notFoundText}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild variant="outline" className="rounded-full">
               <Link href="/">
                 <ArrowLeft className="size-4" />
-                Back to home
+                {t.errors.backHome}
               </Link>
             </Button>
             <Button asChild className="rounded-full">
               <Link href="/appointments/book">
                 <CalendarPlus className="size-4" />
-                Book an appointment
+                {t.home.bookCta}
               </Link>
             </Button>
           </div>
