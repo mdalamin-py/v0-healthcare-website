@@ -1,4 +1,5 @@
 import {
+  Ambulance,
   Building2,
   GraduationCap,
   CalendarClock,
@@ -29,6 +30,7 @@ export const navigation: NavEntry[] = [
       { href: "/services", label: "Services", description: "Nursing, therapy and personal care", icon: HeartHandshake },
       { href: "/schedule", label: "Schedule & On-call", description: "Clinic hours and who is on call now", icon: CalendarClock },
       { href: "/interns", label: "Intern Doctors", description: "Intern list and ward & emergency duties", icon: GraduationCap },
+      { href: "/ambulance", label: "Ambulance Service", description: "Live fleet status and transport requests", icon: Ambulance },
       { href: "/emergency", label: "Emergency & Urgent Care", description: "When to call 911 and urgent callbacks", icon: Siren },
     ],
     feature: {

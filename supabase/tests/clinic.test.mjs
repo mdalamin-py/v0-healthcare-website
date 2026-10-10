@@ -261,6 +261,37 @@ await db.exec(`set request.jwt.claim.sub = ''`)
   check("doctor contact emails are hidden from the public", contacts[0].c === 0 && all[0].c === 6, `${contacts[0].c}/${all[0].c}`)
 }
 
+// Ambulances
+{
+  const fleet = await q(`select count(*)::int c, count(*) filter (where status = 'available')::int a from ambulances`)
+  check("ambulance fleet seeded", fleet[0].c === 5 && fleet[0].a === 3, JSON.stringify(fleet[0]))
+  const requestId = (await q(`select request_ambulance('Ana Ruiz', '559-777-1000', '12 Elm St, Fresno', 'Dialysis transport') id`))[0].id
+  const again = (await q(`select request_ambulance('Ana Ruiz', '5597771000', '12 Elm St, Fresno') id`))[0].id
+  check("duplicate pending ambulance request is merged", requestId === again)
+  await expectError("invalid ambulance request rejected", `select request_ambulance('A', '1', 'x')`, [], "INVALID_REQUEST")
+  const amb = (await q(`select id from ambulances where code = 'AMB-02'`))[0].id
+  const busy = (await q(`select id from ambulances where code = 'AMB-03'`))[0].id
+  await asPatient(PATIENT_2)
+  await expectError("only admins can dispatch", `select dispatch_ambulance($1, $2)`, [requestId, amb], "FORBIDDEN")
+  await q(`insert into admins values ($1) on conflict do nothing`, [PATIENT_1])
+  await asPatient(PATIENT_1)
+  await expectError("busy ambulance cannot be dispatched", `select dispatch_ambulance($1, $2)`, [requestId, busy], "AMBULANCE_UNAVAILABLE")
+  await q(`select dispatch_ambulance($1, $2)`, [requestId, amb])
+  const onTrip = (await q(`select status from ambulances where id = $1`, [amb]))[0].status
+  check("dispatched ambulance goes on trip", onTrip === "on_trip")
+  await q(`select close_ambulance_request($1, 'completed')`, [requestId])
+  const back = (await q(`select status from ambulances where id = $1`, [amb]))[0].status
+  check("completing the request frees the ambulance", back === "available")
+  await expectError("closed request cannot be closed again", `select close_ambulance_request($1, 'cancelled')`, [requestId], "REQUEST_CLOSED")
+  await q(`delete from admins where user_id = $1`, [PATIENT_1])
+  await db.exec(`set request.jwt.claim.sub = ''`)
+  await db.exec(`set role anon`)
+  const anonRequests = await q(`select count(*)::int c from ambulance_requests`)
+  const anonFleet = await q(`select count(*)::int c from ambulances`)
+  await db.exec(`reset role`)
+  check("requests are private, fleet is public", anonRequests[0].c === 0 && anonFleet[0].c === 5)
+}
+
 // RLS: anon cannot read appointments or inactive doctors.
 await db.exec(`set role anon`)
 const anonAppts = await q(`select count(*)::int c from appointments`)

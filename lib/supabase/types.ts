@@ -5,6 +5,9 @@ export type AppointmentStatus = "pending" | "confirmed" | "completed" | "cancell
 export type VisitType = "in_clinic" | "video" | "home_visit"
 export type DoctorKind = "consultant" | "intern"
 export type DutyType = "on_call" | "emergency" | "ward"
+export type AmbulanceType = "bls" | "als" | "icu" | "transport" | "neonatal"
+export type AmbulanceStatus = "available" | "on_trip" | "maintenance" | "offline"
+export type AmbulanceRequestStatus = "pending" | "dispatched" | "completed" | "cancelled"
 
 export type Database = {
   public: {
@@ -13,6 +16,50 @@ export type Database = {
         Row: { user_id: string; created_at: string }
         Insert: { user_id: string; created_at?: string }
         Update: { user_id?: string; created_at?: string }
+        Relationships: []
+      }
+      ambulances: {
+        Row: {
+          id: string
+          code: string
+          vehicle_model: string
+          registration: string
+          type: AmbulanceType
+          status: AmbulanceStatus
+          equipment: string[]
+          base_location: string | null
+          driver_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          vehicle_model: string
+          registration: string
+          type: AmbulanceType
+          status?: AmbulanceStatus
+          equipment?: string[]
+          base_location?: string | null
+          driver_name?: string | null
+        }
+        Update: Partial<Database["public"]["Tables"]["ambulances"]["Insert"]>
+        Relationships: []
+      }
+      ambulance_requests: {
+        Row: {
+          id: string
+          full_name: string
+          phone: string
+          pickup_address: string
+          details: string | null
+          status: AmbulanceRequestStatus
+          ambulance_id: string | null
+          created_at: string
+          dispatched_at: string | null
+          completed_at: string | null
+        }
+        Insert: never
+        Update: never
         Relationships: []
       }
       doctor_contacts: {
@@ -296,6 +343,9 @@ export type Database = {
       cancel_my_appointment: { Args: { p_appointment_id: string }; Returns: boolean }
       call_next_patient: { Args: { p_schedule_id: string }; Returns: number }
       request_callback: { Args: { p_name: string; p_phone: string; p_concern: string }; Returns: string }
+      request_ambulance: { Args: { p_name: string; p_phone: string; p_address: string; p_details?: string | null }; Returns: string }
+      dispatch_ambulance: { Args: { p_request_id: string; p_ambulance_id: string }; Returns: undefined }
+      close_ambulance_request: { Args: { p_request_id: string; p_status: "completed" | "cancelled" }; Returns: undefined }
       submit_review: { Args: { p_appointment_id: string; p_rating: number; p_comment?: string | null }; Returns: string }
       get_doctor_roster: {
         Args: { p_from?: string; p_days?: number }
@@ -344,6 +394,8 @@ export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"]
 export type DoctorRating = { average: number; total: number }
 export type DoctorLeave = Database["public"]["Tables"]["doctor_leaves"]["Row"]
 export type DoctorContact = Database["public"]["Tables"]["doctor_contacts"]["Row"]
+export type Ambulance = Database["public"]["Tables"]["ambulances"]["Row"]
+export type AmbulanceRequest = Database["public"]["Tables"]["ambulance_requests"]["Row"]
 export type RosterEntry = Database["public"]["Functions"]["get_doctor_roster"]["Returns"][number]
 export type QueueSession = Database["public"]["Functions"]["get_today_queue"]["Returns"][number]
 export type DoctorWithSchedules = Doctor & { doctor_schedules: DoctorSchedule[] }

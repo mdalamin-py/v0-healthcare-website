@@ -7,7 +7,16 @@ import { clinicLocalToIso } from "@/lib/clinic/time"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/public"
 import type { AppointmentStatus } from "@/lib/supabase/types"
-import { appointmentStatuses, contactSchema, doctorSchema, leaveSchema, onCallSchema, scheduleSchema } from "@/lib/validations/admin"
+import {
+  ambulanceSchema,
+  appointmentStatuses,
+  contactSchema,
+  doctorSchema,
+  leaveSchema,
+  onCallSchema,
+  scheduleSchema,
+} from "@/lib/validations/admin"
+import type { AmbulanceStatus } from "@/lib/supabase/types"
 import { sendDailySerialDigests, type DigestResult } from "@/lib/digest"
 import { isResendConfigured } from "@/lib/email"
 import { clinicToday } from "@/lib/clinic/time"
@@ -230,6 +239,64 @@ export async function moderateReview(id: string, status: "approved" | "rejected"
 
   revalidatePath("/", "layout")
   return { success: status === "approved" ? "Review published." : "Review hidden." }
+}
+
+// ---------------------------------------------------------------------------
+// Ambulances
+// ---------------------------------------------------------------------------
+
+const ambulanceErrors: Record<string, string> = {
+  AMBULANCE_UNAVAILABLE: "That ambulance is no longer available.",
+  REQUEST_NOT_PENDING: "This request has already been handled.",
+  REQUEST_CLOSED: "This request is already closed.",
+}
+
+function ambulanceError(error: { message: string; code?: string }, fallback: string) {
+  const code = Object.keys(ambulanceErrors).find((key) => error.message.includes(key))
+  return code ? ambulanceErrors[code] : dbError(error, fallback)
+}
+
+export async function saveAmbulance(ambulanceId: string | null, _: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const parsed = ambulanceSchema.safeParse(Object.fromEntries(formData))
+  if (!parsed.success) {
+    return { error: "Please fix the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { error } = ambulanceId
+    ? await supabase.from("ambulances").update(parsed.data).eq("id", ambulanceId)
+    : await supabase.from("ambulances").insert(parsed.data)
+  if (error) return { error: dbError(error, "Could not save the ambulance.") }
+
+  revalidatePath("/", "layout")
+  return { success: ambulanceId ? "Ambulance updated." : "Ambulance added." }
+}
+
+export async function setAmbulanceStatus(ambulanceId: string, status: AmbulanceStatus): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from("ambulances").update({ status }).eq("id", ambulanceId)
+  if (error) return { error: dbError(error, "Could not update the status.") }
+
+  revalidatePath("/", "layout")
+  return { success: "Status updated." }
+}
+
+export async function dispatchAmbulance(requestId: string, ambulanceId: string): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.rpc("dispatch_ambulance", { p_request_id: requestId, p_ambulance_id: ambulanceId })
+  if (error) return { error: ambulanceError(error, "Could not dispatch the ambulance.") }
+
+  revalidatePath("/", "layout")
+  return { success: "Ambulance dispatched." }
+}
+
+export async function closeAmbulanceRequest(requestId: string, status: "completed" | "cancelled"): Promise<ActionState> {
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.rpc("close_ambulance_request", { p_request_id: requestId, p_status: status })
+  if (error) return { error: ambulanceError(error, "Could not close the request.") }
+
+  revalidatePath("/", "layout")
+  return { success: status === "completed" ? "Trip completed." : "Request cancelled." }
 }
 
 // ---------------------------------------------------------------------------

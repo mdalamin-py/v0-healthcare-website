@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { visitTypeValues } from "@/lib/clinic/visit-types"
 import { dutyTypeValues } from "@/lib/clinic/duty"
+import { ambulanceStatusValues, ambulanceTypeValues } from "@/lib/clinic/ambulance"
 
 const optionalText = (max: number) =>
   z
@@ -59,6 +60,25 @@ export const contactSchema = z.object({
   email: optionalEmail,
   assistant_name: optionalText(100),
   assistant_email: optionalEmail,
+})
+
+export const ambulanceSchema = z.object({
+  code: z.string().trim().toUpperCase().min(2, "Enter a code").max(20),
+  vehicle_model: z.string().trim().min(2, "Enter the vehicle model").max(80),
+  registration: z.string().trim().toUpperCase().min(2, "Enter the registration").max(20),
+  type: z.enum(ambulanceTypeValues),
+  status: z.enum(ambulanceStatusValues),
+  equipment: z
+    .string()
+    .trim()
+    .transform((value) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  base_location: optionalText(120),
+  driver_name: optionalText(100),
 })
 
 export const leaveSchema = z.object({

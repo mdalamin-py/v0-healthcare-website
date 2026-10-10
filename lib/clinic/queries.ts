@@ -1,6 +1,7 @@
 import "server-only"
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public"
 import type {
+  Ambulance,
   Doctor,
   DoctorKind,
   DutyType,
@@ -154,6 +155,16 @@ export async function getUpcomingLeaves(doctorId: string): Promise<DoctorLeave[]
     .limit(10)
   if (error) {
     logError("leaves", error)
+    return []
+  }
+  return data
+}
+
+export async function getAmbulances(): Promise<Ambulance[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data, error } = await createPublicClient().from("ambulances").select("*").order("code")
+  if (error) {
+    logError("ambulances", error)
     return []
   }
   return data

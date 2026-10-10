@@ -109,3 +109,17 @@ insert into public.doctor_contacts (doctor_id, email, assistant_name, assistant_
 select id, slug || '@dignityhomehealthcare.com', 'Front desk', 'frontdesk@dignityhomehealthcare.com'
 from public.doctors
 where kind = 'consultant';
+
+-- Sample ambulance fleet.
+insert into public.ambulances (code, vehicle_model, registration, type, status, equipment, base_location, driver_name)
+values
+  ('AMB-01', 'Ford E-450 Type III', '8ABC123', 'als', 'available',
+   array['Cardiac monitor', 'Defibrillator', 'Ventilator', 'Oxygen', 'IV supplies'], 'Fresno main station', 'Carlos Vega'),
+  ('AMB-02', 'Mercedes-Benz Sprinter 3500', '8DEF456', 'bls', 'available',
+   array['AED', 'Oxygen', 'Stretcher', 'First aid kit'], 'Fresno main station', 'Linda Park'),
+  ('AMB-03', 'Ram ProMaster 3500', '8GHI789', 'transport', 'on_trip',
+   array['Wheelchair lift', 'Stretcher', 'Oxygen'], 'Clovis satellite', 'Marcus Lee'),
+  ('AMB-04', 'Ford F-550 Type I', '8JKL012', 'icu', 'available',
+   array['Ventilator', 'Infusion pumps', 'Cardiac monitor', 'Defibrillator', 'Suction unit'], 'Fresno main station', 'Priya Nair'),
+  ('AMB-05', 'Chevrolet G4500 Type III', '8MNO345', 'neonatal', 'maintenance',
+   array['Transport incubator', 'Neonatal ventilator', 'Oxygen'], 'Fresno main station', null);

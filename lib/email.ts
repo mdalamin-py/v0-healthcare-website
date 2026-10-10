@@ -171,6 +171,25 @@ export async function sendSerialDigest({
   await sendEmail({ to, subject: `Serial list · ${day} · ${total} patients`, html, text })
 }
 
+export async function sendAmbulanceAlert(request: { name: string; phone: string; address: string; details?: string }) {
+  const html = layout(
+    "Ambulance requested",
+    `<table cellpadding="6" style="font-size:14px">
+      <tr><td style="color:#64748b">Name</td><td><strong>${escapeHtml(request.name)}</strong></td></tr>
+      <tr><td style="color:#64748b">Phone</td><td><strong>${escapeHtml(request.phone)}</strong></td></tr>
+      <tr><td style="color:#64748b">Pickup</td><td><strong>${escapeHtml(request.address)}</strong></td></tr>
+    </table>
+    ${request.details ? `<p style="font-size:14px;white-space:pre-wrap">${escapeHtml(request.details)}</p>` : ""}
+    <p><a href="${site.url}/admin/ambulances">Dispatch from the dashboard</a></p>`,
+  )
+  await sendEmail({
+    to: process.env.CONTACT_TO_EMAIL!.split(",").map((address) => address.trim()),
+    subject: `Ambulance request: ${request.name} · ${request.phone}`,
+    html,
+    text: `Ambulance requested\nName: ${request.name}\nPhone: ${request.phone}\nPickup: ${request.address}\n\n${request.details ?? ""}`,
+  })
+}
+
 export async function sendCallbackAlert(request: { name: string; phone: string; concern: string }) {
   const html = layout(
     "Urgent callback requested",

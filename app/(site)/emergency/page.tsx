@@ -2,8 +2,9 @@ import type { Metadata } from "next"
 import { AlertTriangle, CheckCircle2, Phone, Siren, Stethoscope } from "lucide-react"
 import { CallbackForm } from "@/components/emergency/callback-form"
 import { DutyNow } from "@/components/emergency/duty-now"
+import { FleetSummary } from "@/components/ambulance/fleet-summary"
 import { OnCallNow, currentShift } from "@/components/schedule/on-call-now"
-import { getOnCallShifts } from "@/lib/clinic/queries"
+import { getAmbulances, getOnCallShifts } from "@/lib/clinic/queries"
 import { site } from "@/lib/site"
 
 export const revalidate = 60
@@ -30,7 +31,10 @@ const callUs = [
 ]
 
 export default async function EmergencyPage() {
-  const shifts = await getOnCallShifts({ days: 1, dutyTypes: ["on_call", "emergency", "ward"] })
+  const [shifts, fleet] = await Promise.all([
+    getOnCallShifts({ days: 1, dutyTypes: ["on_call", "emergency", "ward"] }),
+    getAmbulances(),
+  ])
   const onCall = currentShift(shifts.filter((shift) => (shift.duty_type ?? "on_call") === "on_call"))
 
   return (
@@ -106,8 +110,9 @@ export default async function EmergencyPage() {
       </section>
 
       <section className="pb-10">
-        <div className="container-page">
+        <div className="container-page space-y-6">
           <DutyNow shifts={shifts} />
+          {fleet.length > 0 && <FleetSummary fleet={fleet} link />}
         </div>
       </section>
 
