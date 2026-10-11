@@ -1,9 +1,15 @@
 import type { Metadata } from "next"
-import { Award, CheckCircle, Eye, Heart, MapPin, Shield, Target, Users } from "lucide-react"
+import Link from "next/link"
+import { ArrowRight, Award, CheckCircle, Eye, Heart, MapPin, Shield, Target, Users } from "lucide-react"
 import { CtaSection } from "@/components/cta-section"
+import { DoctorAvatar } from "@/components/doctors/doctor-avatar"
 import { PageHero } from "@/components/page-hero"
 import { SectionHeading } from "@/components/section-heading"
+import { Button } from "@/components/ui/button"
+import { getDoctors } from "@/lib/clinic/queries"
 import { serviceAreas } from "@/lib/site"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -38,30 +44,6 @@ const values = [
   },
 ]
 
-const team = [
-  {
-    name: "Dr. Sarah Johnson",
-    role: "Medical Director",
-    description: "Board-certified physician with over 20 years of experience in geriatric and home health care.",
-  },
-  {
-    name: "Maria Rodriguez, RN",
-    role: "Director of Nursing",
-    description: "Registered nurse specializing in home health with a passion for patient-centered care.",
-  },
-  {
-    name: "James Chen, PT",
-    role: "Lead Physical Therapist",
-    description: "Licensed physical therapist dedicated to helping patients regain mobility and independence.",
-  },
-  {
-    name: "Lisa Thompson",
-    role: "Care Coordinator",
-    description:
-      "Experienced healthcare administrator ensuring seamless coordination between patients, families, and care teams.",
-  },
-]
-
 const differentiators = [
   "Medicare, Medicaid, and most private insurances accepted",
   "Comprehensive care coordination with your physicians",
@@ -73,17 +55,12 @@ const differentiators = [
   "Personalized care plans for each patient",
 ]
 
-function initials(name: string) {
-  return name
-    .replace(/^Dr\.\s*/, "")
-    .split(",")[0]
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-}
+export default async function AboutPage() {
+  // The most experienced consultants, straight from the doctor directory.
+  const doctors = (await getDoctors())
+    .sort((a, b) => b.experience_years - a.experience_years || a.full_name.localeCompare(b.full_name))
+    .slice(0, 4)
 
-export default function AboutPage() {
   return (
     <>
       <PageHero
@@ -160,31 +137,54 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team */}
-      <section className="py-16 lg:py-24">
-        <div className="container-page">
-          <SectionHeading
-            eyebrow="Leadership"
-            title="Meet our leadership team"
-            description="Decades of combined healthcare expertise, united by a shared commitment to exceptional patient care."
-          />
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {team.map((member) => (
-              <article
-                key={member.name}
-                className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
-              >
-                <span className="mx-auto flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-display text-2xl font-bold text-white ring-4 ring-primary/10">
-                  {initials(member.name)}
-                </span>
-                <h3 className="mt-5 text-lg font-semibold text-foreground">{member.name}</h3>
-                <p className="mt-1 text-sm font-medium text-primary">{member.role}</p>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{member.description}</p>
-              </article>
-            ))}
+      {/* Doctors */}
+      {doctors.length > 0 && (
+        <section className="py-16 lg:py-24">
+          <div className="container-page">
+            <SectionHeading
+              eyebrow="Our Doctors"
+              title="Meet some of our doctors"
+              description="Experienced physicians and specialists, united by a shared commitment to exceptional patient care."
+            />
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {doctors.map((doctor) => (
+                <article
+                  key={doctor.id}
+                  className="group relative rounded-2xl border border-border bg-card p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+                >
+                  <DoctorAvatar
+                    name={doctor.full_name}
+                    photoUrl={doctor.photo_url}
+                    className="mx-auto size-20 rounded-full text-2xl ring-4 ring-primary/10"
+                  />
+                  <h3 className="mt-5 text-lg font-semibold text-foreground">
+                    <Link href={`/doctors/${doctor.slug}`} className="after:absolute after:inset-0 focus:outline-none">
+                      {doctor.full_name}
+                    </Link>
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-primary">{doctor.specialty}</p>
+                  {doctor.qualification && (
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{doctor.qualification}</p>
+                  )}
+                  {doctor.experience_years > 0 && (
+                    <p className="mt-2 text-xs font-medium text-muted-foreground">
+                      {doctor.experience_years}+ years of experience
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+            <div className="mt-10 text-center">
+              <Button asChild variant="outline">
+                <Link href="/doctors">
+                  View all doctors
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Why us & service area */}
       <section className="bg-muted/50 py-16 lg:py-24">
