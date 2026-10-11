@@ -6,7 +6,7 @@ import { BookingToggle, LeaveManager } from "@/components/doctor/portal-controls
 import { RegistrationForm } from "@/components/doctor/registration-form"
 import { Button } from "@/components/ui/button"
 import { getDoctorSession } from "@/lib/doctor/session"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import { clinicToday } from "@/lib/clinic/time"
 import { site } from "@/lib/site"
 import type { DoctorApplication, DoctorAppointment, DoctorLeave } from "@/lib/supabase/types"
@@ -207,7 +207,12 @@ export default async function DoctorPortalPage() {
                                   {item.patient_age != null && <span className="text-muted-foreground"> · {item.patient_age}y</span>}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {formatTimeRange(item.start_time, item.end_time)} · {item.patient_phone}
+                                  {item.reporting_time ? (
+                                    <span className="font-medium text-foreground">{formatTime(item.reporting_time)}</span>
+                                  ) : (
+                                    formatTimeRange(item.start_time, item.end_time)
+                                  )}{" "}
+                                  · {item.patient_phone}
                                   {item.reason && ` · ${item.reason}`}
                                 </p>
                                 {item.visit_type === "home_visit" && item.patient_address && (

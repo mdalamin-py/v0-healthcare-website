@@ -379,6 +379,7 @@ export type Database = {
           schedule_id: string
           appointment_date: string
           serial_no: number
+          reporting_time: string | null
           patient_name: string
           patient_phone: string
           patient_email: string | null
@@ -454,6 +455,7 @@ export type Database = {
           start_time: string
           end_time: string
           serial_no: number
+          reporting_time: string | null
           status: AppointmentStatus
           visit_type: VisitType
           patient_name: string
@@ -503,6 +505,7 @@ export type Database = {
         Returns: {
           reference: string
           serial_no: number
+          reporting_time: string
           appointment_date: string
           start_time: string
           end_time: string
@@ -517,6 +520,7 @@ export type Database = {
           reference: string
           status: AppointmentStatus
           serial_no: number
+          reporting_time: string | null
           appointment_date: string
           start_time: string
           end_time: string

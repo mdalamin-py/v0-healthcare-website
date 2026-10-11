@@ -1,5 +1,5 @@
 import { StatusSelect } from "@/components/admin/status-select"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import { VisitTypeBadge } from "@/components/visit-type-badge"
 import type { AdminAppointment } from "@/lib/admin/queries"
 
@@ -32,6 +32,11 @@ export function AppointmentsTable({ appointments, showDate = true }: { appointme
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 font-display font-bold text-primary">
                   {appointment.serial_no}
                 </span>
+                {appointment.reporting_time && (
+                  <span className="mt-1 block whitespace-nowrap text-xs font-medium text-muted-foreground">
+                    {formatTime(appointment.reporting_time)}
+                  </span>
+                )}
               </td>
               <td className="px-4 py-3">
                 <p className="font-semibold text-foreground">{appointment.patient_name}</p>

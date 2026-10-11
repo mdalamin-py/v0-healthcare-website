@@ -1,6 +1,6 @@
 import "server-only"
 import { buildAppointmentIcs, type CalendarAppointment } from "@/lib/clinic/ics"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import type { VisitType } from "@/lib/supabase/types"
 import { patientRelations, type ContactInput } from "@/lib/validations/contact"
@@ -105,6 +105,7 @@ export type DigestSession = {
   end_time: string
   patients: {
     serial: number
+    time: string | null
     name: string
     phone: string
     age: number | null
@@ -135,11 +136,12 @@ export async function sendSerialDigest({
       (session) => `
       <h3 style="font-size:15px;margin:20px 0 8px">${session.start_time ? formatTimeRange(session.start_time, session.end_time) : "Session"} · ${session.patients.length} patients</h3>
       <table cellpadding="6" style="border-collapse:collapse;width:100%;font-size:13px">
-        <tr style="background:#f1f5f9;text-align:left"><th>#</th><th>Patient</th><th>Phone</th><th>Visit</th><th>Reason</th></tr>
+        <tr style="background:#f1f5f9;text-align:left"><th>#</th><th>Time</th><th>Patient</th><th>Phone</th><th>Visit</th><th>Reason</th></tr>
         ${session.patients
           .map(
             (patient) => `<tr style="border-bottom:1px solid #e2e8f0">
               <td><strong>${patient.serial}</strong></td>
+              <td>${patient.time ? formatTime(patient.time) : ""}</td>
               <td>${escapeHtml(patient.name)}${patient.age != null ? ` (${patient.age})` : ""}</td>
               <td>${escapeHtml(patient.phone)}</td>
               <td>${escapeHtml(visitTypeMeta(patient.visitType).label)}</td>
@@ -164,7 +166,7 @@ export async function sendSerialDigest({
       "",
       session.start_time ? formatTimeRange(session.start_time, session.end_time) : "Session",
       ...session.patients.map(
-        (patient) => `#${patient.serial} ${patient.name} · ${patient.phone} · ${visitTypeMeta(patient.visitType).label}${patient.reason ? ` · ${patient.reason}` : ""}${patient.address ? ` · ${patient.address}` : ""}`,
+        (patient) => `#${patient.serial}${patient.time ? ` ${formatTime(patient.time)}` : ""} ${patient.name} · ${patient.phone} · ${visitTypeMeta(patient.visitType).label}${patient.reason ? ` · ${patient.reason}` : ""}${patient.address ? ` · ${patient.address}` : ""}`,
       ),
     ]),
   ].join("\n")
@@ -233,10 +235,12 @@ export async function sendDoctorApplicationAlert(application: { full_name: strin
 export async function sendBookingConfirmation(to: string, booking: CalendarAppointment & { instructions: string }) {
   const date = formatDate(booking.appointment_date, { weekday: "long", year: "numeric" })
   const session = formatTimeRange(booking.start_time, booking.end_time)
+  const arrival = booking.reporting_time ? formatTime(booking.reporting_time) : null
   const rows: Array<[string, string]> = [
     ["Reference", booking.reference],
     ["Doctor", `${booking.doctor_name} · ${booking.specialty}`],
     ["Date", date],
+    ...(arrival ? [["Arrive by", arrival] as [string, string]] : []),
     ["Session", session],
     ["Visit type", booking.visitLabel],
   ]
@@ -247,6 +251,7 @@ export async function sendBookingConfirmation(to: string, booking: CalendarAppoi
     <div style="text-align:center;background:#f0fdfa;border-radius:12px;padding:16px;margin-bottom:16px">
       <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#0f766e">Your serial number</div>
       <div style="font-size:40px;font-weight:bold;color:#0d9488">${booking.serial_no}</div>
+      ${arrival ? `<div style="font-size:14px;color:#0f766e">Please arrive by <strong>${arrival}</strong></div>` : ""}
     </div>
     <table cellpadding="6" style="border-collapse:collapse;font-size:14px;width:100%">
       ${rows.map(([label, value]) => `<tr><td style="color:#64748b">${label}</td><td align="right"><strong>${escapeHtml(value)}</strong></td></tr>`).join("")}

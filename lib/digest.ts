@@ -17,6 +17,7 @@ export type DigestResult = {
 type Row = {
   doctor_id: string
   serial_no: number
+  reporting_time: string | null
   status: string
   patient_name: string
   patient_phone: string
@@ -37,7 +38,7 @@ export async function sendDailySerialDigests(client: Client, date = clinicToday(
   const [{ data: appointments, error }, { data: contacts }, { data: log }] = await Promise.all([
     client
       .from("appointments")
-      .select("doctor_id, serial_no, status, patient_name, patient_phone, patient_age, patient_address, visit_type, reason, doctor:doctors(full_name), schedule:doctor_schedules(start_time, end_time)")
+      .select("doctor_id, serial_no, reporting_time, status, patient_name, patient_phone, patient_age, patient_address, visit_type, reason, doctor:doctors(full_name), schedule:doctor_schedules(start_time, end_time)")
       .eq("appointment_date", date)
       .neq("status", "cancelled")
       .order("serial_no"),
@@ -74,6 +75,7 @@ export async function sendDailySerialDigests(client: Client, date = clinicToday(
       const session = sessions.get(key) ?? { start_time: row.schedule?.start_time ?? "", end_time: row.schedule?.end_time ?? "", patients: [] }
       session.patients.push({
         serial: row.serial_no,
+        time: row.reporting_time,
         name: row.patient_name,
         phone: row.patient_phone,
         age: row.patient_age,

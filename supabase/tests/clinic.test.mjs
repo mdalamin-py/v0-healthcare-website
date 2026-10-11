@@ -105,7 +105,41 @@ const again = (await q(`select cancel_appointment($1,'5591112222') ok`, [b1.refe
 check("cancel is not repeatable", again === false)
 
 const b3 = (await q(`select * from book_appointment($1,$2,'New Person','5599990000')`, [sid, day]))[0]
-check("freed slot can be rebooked with next serial (3)", b3.serial_no === 3, `serial ${b3.serial_no}`)
+check("cancelled serial is offered again (1)", b3.serial_no === 1, `serial ${b3.serial_no}`)
+
+// Serials follow the clock: serial k reports at the start of slot k.
+{
+  const session = (await q(`select start_time, end_time, max_patients from doctor_schedules where id = $1`, [sid]))[0]
+  const minutes = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
+  const slot = Math.floor((minutes(session.end_time) - minutes(session.start_time)) / session.max_patients)
+  const at = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}:00`
+  check("serial 1 reports at the session start", b3.reporting_time === session.start_time, b3.reporting_time)
+  check("serial 2 reports one slot later", b2.reporting_time === at(minutes(session.start_time) + slot), b2.reporting_time)
+
+  await q(`update doctor_schedules set max_patients = 2 where id = $1`, [sid])
+  await expectError("reopening into a full session is refused", `update appointments set status = 'confirmed' where reference = $1`, [b1.reference], "SESSION_FULL")
+  await q(`update doctor_schedules set max_patients = $2 where id = $1`, [sid, session.max_patients])
+  await q(`update appointments set status = 'cancelled' where reference = $1`, [b2.reference])
+  await q(`update appointments set status = 'confirmed' where reference = $1`, [b1.reference])
+  const reopened = (await q(`select serial_no, reporting_time from appointments where reference = $1`, [b1.reference]))[0]
+  check("reopened visit moves to the free slot with its time", reopened.serial_no === 2 && reopened.reporting_time === b2.reporting_time, JSON.stringify(reopened))
+  const order = await q(`select serial_no, reporting_time from appointments where schedule_id = $1 and appointment_date = $2 and status <> 'cancelled' order by serial_no`, [sid, day])
+  check("active serials are unique and ordered by time", order.length === 2 && order[0].reporting_time < order[1].reporting_time, JSON.stringify(order))
+}
+
+// Today's booking never hands out a slot whose time has passed or a serial already called.
+{
+  const now = (await q(`select (now() at time zone 'America/Los_Angeles')::time(0)::text t, extract(dow from clinic_today())::int dow`))[0]
+  const today = await q(`insert into doctor_schedules (doctor_id, weekday, start_time, end_time, max_patients) values ($1, $2, '00:00', '23:59', 48) returning id`, [doctor, now.dow])
+  const todaySid = today[0].id
+  await q(`insert into queue_state (schedule_id, queue_date, now_serving) values ($1, clinic_today(), 1)`, [todaySid])
+  const free = await q(`select k, serial_time('00:00', '23:59', 48, k)::text t from free_serials($1, clinic_today()) k`, [todaySid])
+  check("today's free serials start after the clock and the queue", free.length > 0 && free.every((f) => f.t >= now.t && f.k > 1), `${free[0]?.k} at ${free[0]?.t}, now ${now.t}`)
+  const slot = (await q(`select * from get_availability($1, 1) where schedule_id = $2`, [doctor, todaySid]))[0]
+  check("today's remaining spots match the free serials", slot && slot.max_patients - slot.booked === free.length, `${slot?.max_patients - slot?.booked} vs ${free.length}`)
+  await q(`delete from queue_state where schedule_id = $1`, [todaySid])
+  await q(`delete from doctor_schedules where id = $1`, [todaySid])
+}
 
 // Visit types
 const emily = (await q(`select id from doctors where slug='emily-nguyen'`))[0].id
@@ -146,7 +180,7 @@ await db.exec(`set request.jwt.claim.sub = ''`)
 {
   const todaySession = (await q(`select id from doctor_schedules where weekday = extract(dow from clinic_today()) limit 1`))[0]
   if (todaySession) {
-    await db.exec(`update doctor_schedules set end_time = '23:59' where id = '${todaySession.id}'`)
+    await db.exec(`update doctor_schedules set start_time = '00:00', end_time = '23:59', max_patients = 200 where id = '${todaySession.id}'`)
     await asPatient(PATIENT_2)
     const today = (await q(`select clinic_today()::text d`))[0].d
     const a1 = (await q(`select * from book_appointment($1, $2, 'Queue One', '5552220001')`, [todaySession.id, today]))[0]

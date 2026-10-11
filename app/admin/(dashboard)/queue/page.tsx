@@ -3,6 +3,7 @@ import { CallNextButton } from "@/components/admin/call-next-button"
 import { AutoRefresh } from "@/components/queue/auto-refresh"
 import { QueueCard } from "@/components/queue/queue-card"
 import { requireAdmin } from "@/lib/admin/auth"
+import { formatTime } from "@/lib/clinic/format"
 import { clinicToday } from "@/lib/clinic/time"
 import { listAppointments } from "@/lib/admin/queries"
 import type { QueueSession } from "@/lib/supabase/types"
@@ -58,6 +59,9 @@ export default async function AdminQueuePage() {
                         )}
                       >
                         <span className="w-8 font-display font-bold tabular-nums text-primary">#{patient.serial_no}</span>
+                        {patient.reporting_time && (
+                          <span className="w-16 text-xs tabular-nums text-muted-foreground">{formatTime(patient.reporting_time)}</span>
+                        )}
                         <span className="min-w-0 flex-1 truncate text-foreground">{patient.patient_name}</span>
                         <span className="text-xs capitalize text-muted-foreground">
                           {patient.serial_no === session.now_serving && isActive(patient.status) ? "With doctor" : patient.status}

@@ -10,7 +10,7 @@ import { ReviewForm } from "@/components/account/review-form"
 import { StarRating } from "@/components/star-rating"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { cancelMyAppointment } from "@/app/(site)/account/actions"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import type { Appointment, AppointmentStatus, Doctor, DoctorSchedule } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
@@ -62,11 +62,14 @@ function AppointmentRow({
           <p className="text-sm text-primary">{appointment.doctor?.specialty}</p>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span>{formatDate(appointment.appointment_date, { weekday: "long", year: "numeric" })}</span>
-            {appointment.schedule && (
-              <span className="inline-flex items-center gap-1">
+            {appointment.reporting_time ? (
+              <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 <Clock className="size-3.5" />
-                {formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time)}
+                Arrive by {formatTime(appointment.reporting_time)}
               </span>
+            ) : null}
+            {appointment.schedule && (
+              <span>Session {formatTimeRange(appointment.schedule.start_time, appointment.schedule.end_time)}</span>
             )}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -103,6 +106,7 @@ function AppointmentRow({
                   doctor_name: appointment.doctor.full_name,
                   specialty: appointment.doctor.specialty,
                   serial_no: appointment.serial_no,
+                  reporting_time: appointment.reporting_time,
                   visitLabel: visitTypeMeta(appointment.visit_type).label,
                 }}
               />
@@ -184,7 +188,12 @@ export function MyAppointments({
 }) {
   const upcoming = appointments
     .filter((item) => item.appointment_date >= today && (item.status === "pending" || item.status === "confirmed"))
-    .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date) || a.serial_no - b.serial_no)
+    .sort(
+      (a, b) =>
+        a.appointment_date.localeCompare(b.appointment_date) ||
+        (a.reporting_time ?? a.schedule?.start_time ?? "").localeCompare(b.reporting_time ?? b.schedule?.start_time ?? "") ||
+        a.serial_no - b.serial_no,
+    )
   const history = appointments.filter((item) => !upcoming.includes(item))
 
   return (

@@ -38,6 +38,7 @@ export async function listAppointments(filters: AppointmentFilters): Promise<Adm
       .from("appointments")
       .select("*, doctor:doctors(full_name, specialty), schedule:doctor_schedules(start_time, end_time)")
       .order("appointment_date")
+      .order("reporting_time")
       .order("serial_no")
       .order("id")
       .range(offset, Math.min(offset + PAGE_SIZE, limit) - 1)

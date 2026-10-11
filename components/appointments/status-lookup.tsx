@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cancelAppointment, lookupAppointment, type AppointmentLookup } from "@/app/(site)/appointments/actions"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import { visitTypeMeta } from "@/lib/clinic/visit-types"
 import { lookupSchema, type LookupInput } from "@/lib/validations/appointment"
 import type { AppointmentStatus } from "@/lib/supabase/types"
@@ -133,6 +133,9 @@ export function StatusLookup() {
             <div>
               <dt className="text-xs uppercase tracking-wider text-muted-foreground">Serial number</dt>
               <dd className="font-display text-3xl font-extrabold text-foreground">{result.serial_no}</dd>
+              {result.reporting_time && (
+                <p className="text-sm font-medium text-primary">Arrive by {formatTime(result.reporting_time)}</p>
+              )}
             </div>
             <div>
               <dt className="text-xs uppercase tracking-wider text-muted-foreground">Date</dt>

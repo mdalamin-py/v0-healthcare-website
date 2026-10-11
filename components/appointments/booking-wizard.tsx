@@ -25,7 +25,7 @@ import {
   type Availability,
   type Booking,
 } from "@/app/(site)/appointments/actions"
-import { formatDate, formatTimeRange } from "@/lib/clinic/format"
+import { formatDate, formatTime, formatTimeRange } from "@/lib/clinic/format"
 import { visitInstructions, visitTypeMeta, visitTypes } from "@/lib/clinic/visit-types"
 import { AddToCalendar } from "@/components/appointments/add-to-calendar"
 import { patientSchema, type PatientInput } from "@/lib/validations/appointment"
@@ -531,6 +531,10 @@ export function BookingWizard({
               <div className="bg-gradient-to-br from-primary to-accent p-6 text-center text-white">
                 <p className="text-sm uppercase tracking-wider text-white/80">Your serial number</p>
                 <p className="font-display text-6xl font-extrabold">{booking.serial_no}</p>
+                <p className="mt-2 text-sm font-medium text-white/90">
+                  {booking.visit_type === "in_clinic" ? "Please arrive by" : "Your turn is around"}{" "}
+                  <strong className="text-white">{formatTime(booking.reporting_time)}</strong>
+                </p>
               </div>
               <dl className="divide-y divide-border bg-background text-sm">
                 {[

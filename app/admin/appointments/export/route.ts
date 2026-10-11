@@ -26,12 +26,13 @@ export async function GET(request: NextRequest) {
     limit: 5000,
   })
 
-  const header = ["Reference", "Date", "Session", "Serial", "Status", "Visit type", "Doctor", "Specialty", "Patient", "Phone", "Email", "Age", "Address", "Reason"]
+  const header = ["Reference", "Date", "Session", "Serial", "Arrive by", "Status", "Visit type", "Doctor", "Specialty", "Patient", "Phone", "Email", "Age", "Address", "Reason"]
   const rows = appointments.map((item) => [
     item.reference,
     item.appointment_date,
     item.schedule ? `${item.schedule.start_time.slice(0, 5)}-${item.schedule.end_time.slice(0, 5)}` : "",
     item.serial_no,
+    item.reporting_time?.slice(0, 5) ?? "",
     item.status,
     visitTypeMeta(item.visit_type).label,
     item.doctor?.full_name,
