@@ -17,6 +17,28 @@ const verifyLimiter = createRateLimiter({ limit: 15, windowMs: 10 * 60_000 })
 
 const NOT_CONFIGURED = "Patient accounts are temporarily unavailable. Please call us to book."
 
+/** Turns a Supabase Auth error into a message the visitor can act on. */
+function otpErrorMessage(error: { code?: string; status?: number }, channel: OtpChannel) {
+  const unavailable = `${channel === "phone" ? "Text message" : "Email"} sign-in isn't available right now. Please call us at ${site.phone.display}.`
+  switch (error.code) {
+    case "over_email_send_rate_limit":
+    case "over_sms_send_rate_limit":
+    case "over_request_rate_limit":
+      return "Too many codes were sent. Please wait a few minutes and try again."
+    case "email_address_invalid":
+      return "This email address can't receive codes. Please use a different email."
+    case "email_address_not_authorized":
+    case "signup_disabled":
+    case "otp_disabled":
+    case "email_provider_disabled":
+    case "phone_provider_disabled":
+    case "sms_send_failed":
+      return unavailable
+  }
+  if (error.status === 429) return "Too many codes were sent. Please wait a few minutes and try again."
+  return channel === "phone" ? "We couldn't send a text message. Please try email instead." : "We couldn't send the code. Please try again."
+}
+
 export async function sendOtp(channel: OtpChannel, identifier: string, next?: string): Promise<Result<{ identifier: string }>> {
   if (!isSupabaseConfigured()) return { ok: false, error: NOT_CONFIGURED }
   if (otpLimiter(clientIpFrom(await headers()))) {
@@ -37,14 +59,8 @@ export async function sendOtp(channel: OtpChannel, identifier: string, next?: st
       : await supabase.auth.signInWithOtp({ phone: parsed.data.identifier, options: { shouldCreateUser: true } })
 
   if (error) {
-    console.error("[account] OTP request failed:", error.message)
-    return {
-      ok: false,
-      error:
-        parsed.data.channel === "phone"
-          ? "We couldn't send a text message. Please try email instead."
-          : "We couldn't send the code. Please try again.",
-    }
+    console.error("[account] OTP request failed:", error.status, error.code, error.message)
+    return { ok: false, error: otpErrorMessage(error, parsed.data.channel) }
   }
   return { ok: true, data: { identifier: parsed.data.identifier } }
 }
