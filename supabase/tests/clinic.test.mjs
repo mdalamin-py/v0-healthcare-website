@@ -173,9 +173,10 @@ await db.exec(`set request.jwt.claim.sub = ''`)
 
 // Callback requests
 {
-  const id1 = (await q(`select request_callback('Rita Gomez', '(559) 444-1111', 'Chest tightness since morning') id`))[0].id
-  const id2 = (await q(`select request_callback('Rita G', '559-444-1111', 'Following up on my call') id`))[0].id
-  check("duplicate open callback for same phone is merged", id1 === id2)
+  const first = (await q(`select request_callback('Rita Gomez', '(559) 444-1111', 'Chest tightness since morning') r`))[0].r
+  const repeat = (await q(`select request_callback('Rita G', '559-444-1111', 'Following up on my call') r`))[0].r
+  check("duplicate open callback for same phone is merged", first.id === repeat.id)
+  check("only the first callback request reports a new row", first.created === true && repeat.created === false)
   await expectError("invalid callback rejected", `select request_callback('R', '12', 'x')`, [], "INVALID_REQUEST")
   await db.exec(`set role anon`)
   const visible = await q(`select count(*)::int c from callback_requests`)
@@ -265,9 +266,11 @@ await db.exec(`set request.jwt.claim.sub = ''`)
 {
   const fleet = await q(`select count(*)::int c, count(*) filter (where status = 'available')::int a from ambulances`)
   check("ambulance fleet seeded", fleet[0].c === 5 && fleet[0].a === 3, JSON.stringify(fleet[0]))
-  const requestId = (await q(`select request_ambulance('Ana Ruiz', '559-777-1000', '12 Elm St, Fresno', 'Dialysis transport') id`))[0].id
-  const again = (await q(`select request_ambulance('Ana Ruiz', '5597771000', '12 Elm St, Fresno') id`))[0].id
-  check("duplicate pending ambulance request is merged", requestId === again)
+  const request = (await q(`select request_ambulance('Ana Ruiz', '559-777-1000', '12 Elm St, Fresno', 'Dialysis transport') r`))[0].r
+  const again = (await q(`select request_ambulance('Ana Ruiz', '5597771000', '12 Elm St, Fresno') r`))[0].r
+  const requestId = request.id
+  check("duplicate pending ambulance request is merged", requestId === again.id)
+  check("only the first ambulance request reports a new row", request.created === true && again.created === false)
   await expectError("invalid ambulance request rejected", `select request_ambulance('A', '1', 'x')`, [], "INVALID_REQUEST")
   const amb = (await q(`select id from ambulances where code = 'AMB-02'`))[0].id
   const busy = (await q(`select id from ambulances where code = 'AMB-03'`))[0].id

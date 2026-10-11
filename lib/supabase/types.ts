@@ -6,6 +6,8 @@ export type VisitType = "in_clinic" | "video" | "home_visit"
 export type DoctorKind = "consultant" | "intern"
 export type DutyType = "on_call" | "emergency" | "ward"
 export type AmbulanceType = "bls" | "als" | "icu" | "transport" | "neonatal"
+/** Result of a public request RPC; `created` is false when an open request from the same phone already exists. */
+export type RequestResult = { id: string; created: boolean }
 export type AmbulanceStatus = "available" | "on_trip" | "maintenance" | "offline"
 export type AmbulanceRequestStatus = "pending" | "dispatched" | "completed" | "cancelled"
 export type FacilityType = "hospital" | "urgent_care" | "clinic" | "pharmacy" | "diagnostic"
@@ -526,8 +528,8 @@ export type Database = {
       cancel_appointment: { Args: { p_reference: string; p_phone: string }; Returns: boolean }
       cancel_my_appointment: { Args: { p_appointment_id: string }; Returns: boolean }
       call_next_patient: { Args: { p_schedule_id: string }; Returns: number }
-      request_callback: { Args: { p_name: string; p_phone: string; p_concern: string }; Returns: string }
-      request_ambulance: { Args: { p_name: string; p_phone: string; p_address: string; p_details?: string | null }; Returns: string }
+      request_callback: { Args: { p_name: string; p_phone: string; p_concern: string }; Returns: RequestResult }
+      request_ambulance: { Args: { p_name: string; p_phone: string; p_address: string; p_details?: string | null }; Returns: RequestResult }
       dispatch_ambulance: { Args: { p_request_id: string; p_ambulance_id: string }; Returns: undefined }
       close_ambulance_request: { Args: { p_request_id: string; p_status: "completed" | "cancelled" }; Returns: undefined }
       submit_review: { Args: { p_appointment_id: string; p_rating: number; p_comment?: string | null }; Returns: string }

@@ -31,7 +31,7 @@ export async function requestCallback(input: CallbackInput): Promise<{ ok: true 
   const parsed = callbackSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check your details." }
 
-  const { error } = await createPublicClient().rpc("request_callback", {
+  const { data, error } = await createPublicClient().rpc("request_callback", {
     p_name: parsed.data.name,
     p_phone: parsed.data.phone,
     p_concern: parsed.data.concern,
@@ -41,7 +41,8 @@ export async function requestCallback(input: CallbackInput): Promise<{ ok: true 
     return { ok: false, error: `We couldn't submit your request. ${fallback}` }
   }
 
-  if (isEmailConfigured()) {
+  // A repeat from the same phone joins the open request; staff were already alerted.
+  if (data?.created && isEmailConfigured()) {
     try {
       await sendCallbackAlert(parsed.data)
     } catch (cause) {

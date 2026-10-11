@@ -32,7 +32,7 @@ export async function requestAmbulance(input: AmbulanceRequestInput): Promise<{ 
   const parsed = requestSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the details." }
 
-  const { error } = await createPublicClient().rpc("request_ambulance", {
+  const { data, error } = await createPublicClient().rpc("request_ambulance", {
     p_name: parsed.data.name,
     p_phone: parsed.data.phone,
     p_address: parsed.data.address,
@@ -43,7 +43,8 @@ export async function requestAmbulance(input: AmbulanceRequestInput): Promise<{ 
     return { ok: false, error: `We couldn't submit the request. ${fallback}` }
   }
 
-  if (isEmailConfigured()) {
+  // A repeat from the same phone joins the open request; staff were already alerted.
+  if (data?.created && isEmailConfigured()) {
     try {
       await sendAmbulanceAlert(parsed.data)
     } catch (cause) {
